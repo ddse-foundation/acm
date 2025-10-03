@@ -1,0 +1,42 @@
+{
+  "name": "@acm/adapters",
+  "version": "0.1.0",
+  "description": "Framework adapters for ACM (LangGraph, Microsoft Agent Framework)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@acm/sdk": "workspace:*",
+    "@acm/runtime": "workspace:*"
+  },
+  "peerDependencies": {
+    "@langchain/langgraph": "^0.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@langchain/langgraph": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "acm",
+    "langgraph",
+    "microsoft-agent-framework",
+    "adapters"
+  ],
+  "license": "Apache-2.0"
+}
