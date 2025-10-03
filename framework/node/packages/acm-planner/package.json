@@ -1,0 +1,25 @@
+{
+  "name": "@acm/planner",
+  "version": "0.1.0",
+  "description": "ACM v0.5 Planner - LLM-based plan generation",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@acm/sdk": "workspace:*",
+    "@acm/llm": "workspace:*"
+  },
+  "keywords": ["acm", "planner", "llm"],
+  "license": "Apache-2.0"
+}
