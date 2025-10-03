@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "composite": true
+  },
+  "include": ["src/**/*", "bin/**/*", "tests/**/*"],
+  "references": [
+    { "path": "../acm-sdk" },
+    { "path": "../acm-runtime" },
+    { "path": "../acm-llm" },
+    { "path": "../acm-planner" },
+    { "path": "../acm-replay" }
+  ]
+}

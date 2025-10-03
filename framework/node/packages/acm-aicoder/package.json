@@ -1,0 +1,46 @@
+{
+  "name": "@acm/aicoder",
+  "version": "0.1.0",
+  "description": "ACM AI Coder Demo - Production-ready developer workflow automation",
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "bin": {
+    "acm-aicoder": "./dist/bin/aicoder.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "tsc && node ./dist/tests/integration.test.js",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@acm/sdk": "workspace:*",
+    "@acm/runtime": "workspace:*",
+    "@acm/llm": "workspace:*",
+    "@acm/planner": "workspace:*",
+    "@acm/replay": "workspace:*",
+    "enquirer": "^2.4.1",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1",
+    "execa": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "acm",
+    "ai",
+    "coder",
+    "developer",
+    "automation"
+  ],
+  "license": "MIT"
+}
