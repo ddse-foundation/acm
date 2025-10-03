@@ -1,0 +1,23 @@
+{
+  "name": "@acm/examples",
+  "version": "0.1.0",
+  "description": "ACM v0.5 Examples - CLI demo and sample implementations",
+  "type": "module",
+  "bin": {
+    "acm-demo": "./dist/bin/acm-demo.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "tsc --watch",
+    "demo": "node ./dist/bin/acm-demo.js"
+  },
+  "dependencies": {
+    "@acm/sdk": "workspace:*",
+    "@acm/runtime": "workspace:*",
+    "@acm/llm": "workspace:*",
+    "@acm/planner": "workspace:*"
+  },
+  "keywords": ["acm", "examples", "cli"],
+  "license": "Apache-2.0"
+}

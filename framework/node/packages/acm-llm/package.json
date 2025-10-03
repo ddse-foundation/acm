@@ -1,0 +1,24 @@
+{
+  "name": "@acm/llm",
+  "version": "0.1.0",
+  "description": "ACM v0.5 LLM - Provider-agnostic LLM client",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@acm/sdk": "workspace:*"
+  },
+  "keywords": ["acm", "llm", "openai"],
+  "license": "Apache-2.0"
+}

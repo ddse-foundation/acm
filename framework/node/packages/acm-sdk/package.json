@@ -1,0 +1,21 @@
+{
+  "name": "@acm/sdk",
+  "version": "0.1.0",
+  "description": "ACM v0.5 SDK - Abstract classes and types",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "tsc --watch"
+  },
+  "keywords": ["acm", "sdk", "types"],
+  "license": "Apache-2.0"
+}
