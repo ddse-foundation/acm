@@ -155,7 +155,7 @@ export function createOllamaClient(model: string, baseUrl?: string): OpenAICompa
 
 export function createVLLMClient(model: string, baseUrl?: string): OpenAICompatClient {
   return new OpenAICompatClient({
-    baseUrl: baseUrl || 'http://localhost:8000/v1',
+    baseUrl: baseUrl || 'http://localhost:8001/v1',
     model,
     name: 'vllm',
   });
