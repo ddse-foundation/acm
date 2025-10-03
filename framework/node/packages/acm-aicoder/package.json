@@ -6,7 +6,8 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "bin": {
-    "acm-aicoder": "./dist/bin/aicoder.js"
+    "acm-aicoder": "./dist/bin/aicoder.js",
+    "acm-aicoder-demo": "./dist/bin/demo.js"
   },
   "exports": {
     ".": {
@@ -18,7 +19,8 @@
     "build": "tsc",
     "clean": "rm -rf dist",
     "test": "tsc && node ./dist/tests/integration.test.js",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "demo": "tsc && node ./dist/bin/demo.js"
   },
   "dependencies": {
     "@acm/sdk": "workspace:*",

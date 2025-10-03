@@ -103,8 +103,42 @@ packages/
 ├── acm-mcp/          # MCP tool integration
 ├── acm-adapters/     # LangGraph and MS Agent Framework adapters
 ├── acm-replay/       # Replay bundle export/import
+├── acm-aicoder/      # AI Coder demo - production-ready developer workflows (NEW)
 └── acm-examples/     # Demo CLI and sample implementations
 ```
+
+### AI Coder Demo (NEW)
+
+The **AI Coder** package (`@acm/aicoder`) showcases ACM's capabilities for real developer workflows:
+
+```bash
+# Run the interactive demo (no LLM required)
+pnpm --filter @acm/aicoder demo
+
+# Analyze a codebase
+acm-aicoder --goal analyze
+
+# Fix bugs with AI assistance
+acm-aicoder --goal fixBug --dry-run
+
+# Implement new features
+acm-aicoder --goal implementFeature
+
+# Run tests
+acm-aicoder --goal runTests
+
+# Full help
+acm-aicoder --help
+```
+
+**Features:**
+- **Code Intelligence Tools**: Read, edit, analyze code with safety checks
+- **AI-Powered Tasks**: Analyze, fix bugs, implement features, run tests
+- **Safety First**: Dry-run mode, approval workflows, policy enforcement
+- **Checkpointing**: Resume long-running operations from any point
+- **Beautiful CLI**: Interactive prompts and streaming progress updates
+
+See [`packages/acm-aicoder/README.md`](packages/acm-aicoder/README.md) for detailed documentation.
 
 ### Core Concepts
 
