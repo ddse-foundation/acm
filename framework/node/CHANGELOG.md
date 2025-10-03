@@ -98,53 +98,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known Limitations
 
-- Replay bundle export structure defined but not implemented
-- MCP tool integration not yet available
-- LangGraph adapter placeholder only
-- MS Agent Framework adapter placeholder only
-- No unit tests (manual testing only)
 - Guard expressions use JavaScript eval (not sandboxed)
+- No advanced DSL for guards or verification (code-first approach)
 
 ### Deferred Features
 
 These features are planned for future releases:
-- MCP tool bridge integration
-- LangGraph adapter implementation
-- Microsoft Agent Framework adapter implementation
-- Complete replay bundle export/import
 - OPA/Rego policy integration
 - JSONLogic verification DSL
+- Advanced guard expression grammar
 - Distributed tracing support
-- Unit and integration tests
 - Performance benchmarks
+- Cloud provider integrations
 
 ## Future Versions
 
 ### [0.2.0] - Planned
-- Add MCP tool integration
-- Implement replay bundle export
-- Add unit tests for core packages
+- Performance optimizations and benchmarks
 - Additional example workflows
-- Performance optimizations
+- Advanced error handling and recovery
 
 ### [0.3.0] - Planned
-- LangGraph adapter implementation
-- MS Agent Framework adapter implementation
-- Integration tests
-- Advanced error handling
-
-### [0.4.0] - Planned
 - OPA/Rego policy integration
 - JSONLogic verification DSL
 - Advanced guard expression grammar
+
+### [0.4.0] - Planned
 - Distributed tracing
+- Cloud provider integrations
+- Visual workflow designer
 
 ### [1.0.0] - Future
 - Production-ready stability
-- Complete test coverage
-- Performance benchmarks
-- Cloud provider integrations
-- Visual workflow designer
+- Complete documentation
+- Enterprise features
 
 ## Links
 

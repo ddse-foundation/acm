@@ -11,11 +11,16 @@ The ACM Node.js Framework provides a comprehensive toolkit for building determin
 - **Code-First**: No YAML/JSON authoring required - everything is defined in TypeScript/JavaScript
 - **Full ACM v0.5 Coverage**: Context lifecycle, plan alternatives, guards, policy hooks, verification, memory ledger, and replay bundles
 - **LLM Integration**: OpenAI-compatible client supporting local providers (Ollama, vLLM)
+- **MCP Tool Integration**: Connect to any MCP server for tool discovery and execution
+- **Framework Adapters**: Built-in adapters for LangGraph and Microsoft Agent Framework
+- **Replay Bundles**: Complete execution artifact export for audit and compliance
+- **BM25 Search**: Built-in full-text search with synthetic test data
 - **Streaming Support**: Real-time progress updates for planning and execution
 - **Multiple Execution Engines**: Built-in runtime with adapters for LangGraph and Microsoft Agent Framework
 - **Deterministic Execution**: Reproducible runs with complete audit trails
 - **Policy & Verification**: Hook points for authorization and validation
 - **Memory Ledger**: Complete decision history capture
+- **Comprehensive Tests**: Unit and integration test suites included
 
 ## Quick Start
 
@@ -44,11 +49,21 @@ pnpm --filter @acm/examples demo -- --provider ollama --model llama3.1 --goal re
 # Run with vLLM
 pnpm --filter @acm/examples demo -- --provider vllm --model qwen2.5:7b --goal issues
 
-# With LangGraph engine (when available)
+# With LangGraph engine
 pnpm --filter @acm/examples demo -- --engine langgraph --goal refund
+
+# With MS Agent Framework engine
+pnpm --filter @acm/examples demo -- --engine msaf --goal refund
 
 # Save replay bundle for audit
 pnpm --filter @acm/examples demo -- --save-bundle --goal refund
+
+# Use MCP tools (e.g., filesystem server)
+pnpm --filter @acm/examples demo -- --use-mcp --mcp-server 'npx -y @modelcontextprotocol/server-filesystem /tmp' --goal issues
+
+# Run tests
+pnpm --filter @acm/examples test
+pnpm --filter @acm/examples test:bm25
 ```
 
 ### Prerequisites
@@ -78,6 +93,9 @@ packages/
 ├── acm-runtime/      # Plan execution engine
 ├── acm-llm/          # LLM client (OpenAI-compatible)
 ├── acm-planner/      # LLM-based plan generation
+├── acm-mcp/          # MCP tool integration
+├── acm-adapters/     # LangGraph and MS Agent Framework adapters
+├── acm-replay/       # Replay bundle export/import
 └── acm-examples/     # Demo CLI and sample implementations
 ```
 
@@ -203,6 +221,29 @@ Plan generation:
 
 - `LLMPlanner.plan(options)`: Generate Plan-A and Plan-B from goal
 
+### @acm/mcp
+
+MCP tool integration:
+
+- `McpClientManager`: Connect to MCP servers
+- `McpToolRegistry`: Tool registry for MCP tools
+- `CombinedToolRegistry`: Merge local and MCP tools
+
+### @acm/adapters
+
+Framework adapters:
+
+- `asLangGraph(options)`: Create LangGraph adapter
+- `wrapAgentNodes(options)`: Create MS Agent Framework adapter
+
+### @acm/replay
+
+Replay bundle management:
+
+- `ReplayBundleExporter.export(options)`: Export execution bundle
+- `ReplayBundleExporter.load(dir)`: Load existing bundle
+- `ReplayBundleExporter.validate(dir)`: Validate bundle structure
+
 ## Configuration
 
 The framework uses code-first configuration. The CLI demo accepts flags:
@@ -215,6 +256,8 @@ The framework uses code-first configuration. The CLI demo accepts flags:
 --goal <refund|issues>      Example goal
 --no-stream                 Disable streaming
 --save-bundle               Export replay bundle
+--use-mcp                   Enable MCP tool integration
+--mcp-server <command>      MCP server command
 ```
 
 ## ACM v0.5 Compliance
@@ -228,8 +271,10 @@ This framework implements all normative requirements from ACM v0.5:
 - ✅ Policy hooks: Pre/post evaluation with PDP integration
 - ✅ Verification: Assertion-based validation
 - ✅ Memory Ledger: Complete decision history
-- ✅ Replay Bundle: Optional JSON export for audit
+- ✅ Replay Bundle: Complete JSON export for audit
 - ✅ Engine integration: Adapters for LangGraph and MS AF
+- ✅ MCP tool integration: Connect to any MCP server
+- ✅ BM25 search: Full-text search with test data
 
 ## Development
 
@@ -239,6 +284,7 @@ This framework implements all normative requirements from ACM v0.5:
 pnpm build          # Build all packages
 pnpm clean          # Clean build artifacts
 pnpm dev            # Watch mode for development
+pnpm test           # Run all tests
 ```
 
 ### Package Structure
@@ -259,15 +305,22 @@ The `@acm/examples` package includes:
 
 1. **Refund Flow**: Multi-step workflow with risk assessment, policy gates, and notifications
 2. **Issues Flow**: Read-only workflow for finding and mitigating issues
+3. **Synthetic Data**: Sample documents, orders, and issues for testing
+4. **BM25 Search**: Full-text search implementation with test data
+5. **Integration Tests**: Unit and integration test suites
+6. **MCP Integration**: Example MCP server usage
+7. **Framework Adapters**: LangGraph and MS Agent Framework examples
 
 See `packages/acm-examples/` for complete implementations.
 
 ## Roadmap
 
-- [ ] MCP tool integration (acm-mcp package)
-- [ ] LangGraph adapter implementation
-- [ ] Microsoft Agent Framework adapter
-- [ ] Replay bundle export/import
+- [x] MCP tool integration (acm-mcp package)
+- [x] LangGraph adapter implementation
+- [x] Microsoft Agent Framework adapter
+- [x] Replay bundle export/import
+- [x] BM25 search with synthetic data
+- [x] Unit and integration tests
 - [ ] Advanced guard expression DSL
 - [ ] OPA/Rego policy integration
 - [ ] Verification DSL (JSONLogic)
