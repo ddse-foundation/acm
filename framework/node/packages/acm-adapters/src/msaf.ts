@@ -22,6 +22,8 @@ export interface MSAgentFrameworkAdapterOptions {
   policy?: PolicyEngine;
   stream?: StreamSink;
   ledger?: MemoryLedger;
+  resumeFrom?: string; // Checkpoint ID to resume from (optional, may not be supported)
+  checkpointStore?: any; // Checkpoint store (optional, may not be supported)
 }
 
 /**
@@ -50,6 +52,13 @@ export class MSAgentFrameworkAdapter {
   private activities: Map<string, ActivityHandler> = new Map();
 
   constructor(private options: MSAgentFrameworkAdapterOptions) {
+    // Warn if resume options are provided but not supported
+    if (options.resumeFrom || options.checkpointStore) {
+      console.warn(
+        '⚠️  MS Agent Framework adapter does not support resume functionality. ' +
+        'Use the runtime engine (--engine runtime) for resumable executions.'
+      );
+    }
     this.buildActivities();
   }
 

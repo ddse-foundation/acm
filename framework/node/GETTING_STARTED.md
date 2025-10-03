@@ -70,9 +70,33 @@ pnpm --filter @acm/examples demo -- --no-stream --goal refund
 
 # Save replay bundle for audit
 pnpm --filter @acm/examples demo -- --save-bundle --goal refund
+
+# Try resumable execution (NEW in Phase 2)
+pnpm --filter @acm/examples demo -- --goal refund --checkpoint-dir ./my-checkpoints
 ```
 
-## Step 5: Understand the Output
+## Step 5: Resumable Execution (Phase 2 Feature)
+
+The ACM runtime now supports checkpointing and resume functionality, enabling fault-tolerant long-running workflows:
+
+```bash
+# Run with automatic checkpointing (checkpoints after each task)
+pnpm --filter @acm/examples demo -- --goal refund --checkpoint-dir ./checkpoints
+
+# If execution is interrupted, resume from the latest checkpoint
+# Use the run ID from the original execution (shown in the output)
+pnpm --filter @acm/examples demo -- --resume run-1234567890 --checkpoint-dir ./checkpoints
+```
+
+**Key Benefits:**
+- ✅ Resume interrupted executions without re-running completed tasks
+- ✅ Fault tolerance for long-running workflows
+- ✅ Cost optimization by avoiding duplicate expensive operations
+- ✅ State inspection via checkpoint files
+
+**Note:** Resume functionality is currently only supported with the `runtime` engine (default). LangGraph and MSAF adapters will show a warning if resume flags are used.
+
+## Step 6: Understand the Output
 
 ### Planning Output
 ```

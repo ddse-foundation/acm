@@ -10,6 +10,7 @@ The ACM Node.js Framework provides a comprehensive toolkit for building determin
 
 - **Code-First**: No YAML/JSON authoring required - everything is defined in TypeScript/JavaScript
 - **Full ACM v0.5 Coverage**: Context lifecycle, plan alternatives, guards, policy hooks, verification, memory ledger, and replay bundles
+- **Resumable Execution** (NEW): Checkpoint and resume support for fault-tolerant long-running workflows
 - **LLM Integration**: OpenAI-compatible client supporting local providers (Ollama, vLLM)
 - **MCP Tool Integration**: Connect to any MCP server for tool discovery and execution
 - **Framework Adapters**: Built-in adapters for LangGraph and Microsoft Agent Framework
@@ -60,6 +61,12 @@ pnpm --filter @acm/examples demo -- --save-bundle --goal refund
 
 # Use MCP tools (e.g., filesystem server)
 pnpm --filter @acm/examples demo -- --use-mcp --mcp-server 'npx -y @modelcontextprotocol/server-filesystem /tmp' --goal issues
+
+# NEW: Run with automatic checkpointing
+pnpm --filter @acm/examples demo -- --goal refund --checkpoint-dir ./checkpoints
+
+# NEW: Resume from a checkpoint
+pnpm --filter @acm/examples demo -- --resume run-1234567890 --checkpoint-dir ./checkpoints
 
 # Run tests
 pnpm --filter @acm/examples test

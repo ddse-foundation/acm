@@ -22,6 +22,8 @@ export interface LangGraphAdapterOptions {
   policy?: PolicyEngine;
   stream?: StreamSink;
   ledger?: MemoryLedger;
+  resumeFrom?: string; // Checkpoint ID to resume from (optional, may not be supported)
+  checkpointStore?: any; // Checkpoint store (optional, may not be supported)
 }
 
 /**
@@ -43,7 +45,15 @@ export interface GraphState {
  * Each ACM task becomes a LangGraph node, and guards become conditional edges.
  */
 export class LangGraphAdapter {
-  constructor(private options: LangGraphAdapterOptions) {}
+  constructor(private options: LangGraphAdapterOptions) {
+    // Warn if resume options are provided but not supported
+    if (options.resumeFrom || options.checkpointStore) {
+      console.warn(
+        '⚠️  LangGraph adapter does not support resume functionality. ' +
+        'Use the runtime engine (--engine runtime) for resumable executions.'
+      );
+    }
+  }
 
   /**
    * Create a LangGraph-compatible node function from an ACM task
