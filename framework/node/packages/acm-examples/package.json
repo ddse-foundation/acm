@@ -24,5 +24,5 @@
     "@acm/replay": "workspace:*"
   },
   "keywords": ["acm", "examples", "cli"],
-  "license": "Apache-2.0"
+  "license": "MIT"
 }

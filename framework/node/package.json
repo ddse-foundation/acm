@@ -29,5 +29,5 @@
     "url": "https://github.com/ddse-foundation/acm.git",
     "directory": "framework/node"
   },
-  "license": "Apache-2.0"
+  "license": "MIT"
 }

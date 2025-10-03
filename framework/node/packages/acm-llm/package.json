@@ -20,5 +20,5 @@
     "@acm/sdk": "workspace:*"
   },
   "keywords": ["acm", "llm", "openai"],
-  "license": "Apache-2.0"
+  "license": "MIT"
 }

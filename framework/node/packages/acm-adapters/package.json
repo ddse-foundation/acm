@@ -38,5 +38,5 @@
     "microsoft-agent-framework",
     "adapters"
   ],
-  "license": "Apache-2.0"
+  "license": "MIT"
 }

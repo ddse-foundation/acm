@@ -30,5 +30,5 @@
     "model-context-protocol",
     "tools"
   ],
-  "license": "Apache-2.0"
+  "license": "MIT"
 }

@@ -78,14 +78,30 @@ Add to each package's package.json:
 
 ### 4. Add LICENSE Files
 
-Create LICENSE in root and each package (if using Apache-2.0):
+Create a LICENSE file in the root and each package using the MIT template:
 
 ```
-Apache License
-Version 2.0, January 2004
-http://www.apache.org/licenses/
+MIT License
 
-[Full Apache 2.0 license text]
+Copyright (c) <year> DDSE Foundation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
 ### 5. Clean and Rebuild
@@ -190,7 +206,7 @@ git push origin v0.1.0
 
 ### 2. Create GitHub Release
 
-1. Go to https://github.com/ddse-foundation/acm/releases
+1. Go to [https://github.com/ddse-foundation/acm/releases](https://github.com/ddse-foundation/acm/releases)
 2. Click "Draft a new release"
 3. Select tag v0.1.0
 4. Title: "ACM Node.js Framework v0.1.0"
@@ -235,30 +251,34 @@ Use semantic versioning (semver):
 ### Regular Updates
 
 1. Update dependencies monthly:
-   ```bash
-   pnpm update -r
-   ```
 
-2. Rebuild and test:
-   ```bash
-   pnpm clean && pnpm build
-   ```
+  ```bash
+  pnpm update -r
+  ```
 
-3. Publish patch version if needed
+1. Rebuild and test:
+
+  ```bash
+  pnpm clean && pnpm build
+  ```
+
+1. Publish patch version if needed
 
 ### Security Updates
 
 1. Check for vulnerabilities:
-   ```bash
-   pnpm audit
-   ```
 
-2. Fix critical issues immediately:
-   ```bash
-   pnpm audit fix
-   ```
+  ```bash
+  pnpm audit
+  ```
 
-3. Publish patch version
+1. Fix critical issues immediately:
+
+  ```bash
+  pnpm audit fix
+  ```
+
+1. Publish patch version
 
 ### Breaking Changes
 
@@ -270,19 +290,23 @@ Use semantic versioning (semver):
 ## Troubleshooting
 
 ### "403 Forbidden"
+
 - Check npm authentication: `npm whoami`
 - Login: `npm login`
 - Check organization access
 
 ### "Version already exists"
+
 - Increment version in package.json
 - Cannot republish same version
 
 ### "Package name taken"
+
 - Use scoped package (@yourorg/acm-sdk)
 - Or choose different name
 
 ### "Build artifacts missing"
+
 - Run `pnpm build` before publishing
 - Check `files` field in package.json
 - Verify dist/ directory exists
@@ -325,7 +349,7 @@ Add NPM_TOKEN to repository secrets.
 
 After publishing:
 
-1. Monitor npm downloads: https://npm-stat.com
+1. Monitor npm downloads: [https://npm-stat.com](https://npm-stat.com)
 2. Watch GitHub issues
 3. Respond to questions
 4. Update documentation based on feedback

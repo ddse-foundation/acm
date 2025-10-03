@@ -29,7 +29,9 @@ export interface BM25Params {
 /**
  * Simple tokenizer
  */
-function tokenize(text: string): string[] {
+function tokenize(text?: string | null): string[] {
+  if (!text) return [];
+
   return text
     .toLowerCase()
     .replace(/[^\w\s]/g, ' ')

@@ -45,7 +45,7 @@ export class LLMPlanner {
       stream.emit('planner', { done: true });
 
       // Parse response
-      return this.parseResponse(fullResponse, contextRef, capabilityMapVersion);
+  return this.parseResponse(fullResponse, contextRef, capabilityMapVersion, capabilities);
     } else {
       // Non-streaming
       const response = await llm.generate(
@@ -53,7 +53,7 @@ export class LLMPlanner {
         { temperature: 0.7 }
       );
 
-      return this.parseResponse(response.text, contextRef, capabilityMapVersion);
+  return this.parseResponse(response.text, contextRef, capabilityMapVersion, capabilities);
     }
   }
 
@@ -96,7 +96,8 @@ Respond with valid JSON only.`;
   private parseResponse(
     response: string,
     contextRef: string,
-    capabilityMapVersion: string
+    capabilityMapVersion: string,
+    capabilities: Capability[]
   ): PlannerResult {
     try {
       // Extract JSON from response
@@ -141,24 +142,33 @@ Respond with valid JSON only.`;
       };
     } catch (err) {
       console.error('Failed to parse LLM response, using fallback plan:', err);
-      return this.createFallbackPlan(contextRef, capabilityMapVersion);
+      return this.createFallbackPlan(contextRef, capabilityMapVersion, capabilities);
     }
   }
 
-  private createFallbackPlan(contextRef: string, capabilityMapVersion: string): PlannerResult {
-    // Simple linear fallback plan
+  private createFallbackPlan(
+    contextRef: string,
+    capabilityMapVersion: string,
+    capabilities: Capability[]
+  ): PlannerResult {
+    const selectedCapabilities = capabilities.slice(0, Math.min(capabilities.length, 3));
+
+    const tasks = selectedCapabilities.map((capability, index) => ({
+      id: `t${index + 1}`,
+      capability: capability.name,
+      input: {},
+    }));
+
+    const edges = tasks
+      .slice(0, -1)
+      .map((task, index) => ({ from: task.id, to: tasks[index + 1].id }));
+
     const plan: Plan = {
       id: 'plan-fallback',
       contextRef,
       capabilityMapVersion,
-      tasks: [
-        {
-          id: 't1',
-          capability: 'search',
-          input: {},
-        },
-      ],
-      edges: [],
+      tasks,
+      edges,
     };
 
     return {

@@ -17,5 +17,5 @@
     "dev": "tsc --watch"
   },
   "keywords": ["acm", "sdk", "types"],
-  "license": "Apache-2.0"
+  "license": "MIT"
 }
