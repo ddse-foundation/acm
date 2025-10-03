@@ -10,13 +10,18 @@
     "build": "tsc",
     "clean": "rm -rf dist",
     "dev": "tsc --watch",
-    "demo": "node ./dist/bin/acm-demo.js"
+    "demo": "node ./dist/bin/acm-demo.js",
+    "test": "node ./dist/tests/integration.test.js",
+    "test:bm25": "node ./dist/tests/bm25.test.js"
   },
   "dependencies": {
     "@acm/sdk": "workspace:*",
     "@acm/runtime": "workspace:*",
     "@acm/llm": "workspace:*",
-    "@acm/planner": "workspace:*"
+    "@acm/planner": "workspace:*",
+    "@acm/mcp": "workspace:*",
+    "@acm/adapters": "workspace:*",
+    "@acm/replay": "workspace:*"
   },
   "keywords": ["acm", "examples", "cli"],
   "license": "Apache-2.0"

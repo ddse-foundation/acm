@@ -1,0 +1,99 @@
+[
+  {
+    "issueId": "ISS-001",
+    "title": "Unable to complete checkout",
+    "description": "Payment processing fails at the final step with error code 500",
+    "severity": "high",
+    "status": "open",
+    "reportedBy": "C-789",
+    "reportedAt": "2025-01-15T10:30:00Z",
+    "category": "payment",
+    "affectedUsers": 45,
+    "region": "US-EAST"
+  },
+  {
+    "issueId": "ISS-002",
+    "title": "Product images not loading",
+    "description": "Product detail pages show broken image placeholders instead of actual product photos",
+    "severity": "medium",
+    "status": "investigating",
+    "reportedBy": "C-456",
+    "reportedAt": "2025-01-14T14:20:00Z",
+    "category": "ui",
+    "affectedUsers": 120,
+    "region": "EU-WEST"
+  },
+  {
+    "issueId": "ISS-003",
+    "title": "Email notifications delayed",
+    "description": "Order confirmation emails are arriving 2-3 hours after order placement instead of immediately",
+    "severity": "low",
+    "status": "resolved",
+    "reportedBy": "C-123",
+    "reportedAt": "2025-01-13T09:15:00Z",
+    "resolvedAt": "2025-01-14T16:00:00Z",
+    "category": "notifications",
+    "affectedUsers": 200,
+    "region": "global"
+  },
+  {
+    "issueId": "ISS-004",
+    "title": "Search results inaccurate",
+    "description": "Product search returns irrelevant results and misses exact matches",
+    "severity": "high",
+    "status": "open",
+    "reportedBy": "C-555",
+    "reportedAt": "2025-01-16T11:45:00Z",
+    "category": "search",
+    "affectedUsers": 300,
+    "region": "global"
+  },
+  {
+    "issueId": "ISS-005",
+    "title": "Mobile app crashes on iOS",
+    "description": "App crashes when attempting to view order history on iOS 17",
+    "severity": "critical",
+    "status": "in_progress",
+    "reportedBy": "C-888",
+    "reportedAt": "2025-01-17T08:00:00Z",
+    "category": "mobile",
+    "affectedUsers": 500,
+    "region": "global"
+  },
+  {
+    "issueId": "ISS-006",
+    "title": "Slow page load times",
+    "description": "Homepage and category pages taking 10+ seconds to load during peak hours",
+    "severity": "medium",
+    "status": "open",
+    "reportedBy": "C-777",
+    "reportedAt": "2025-01-16T19:30:00Z",
+    "category": "performance",
+    "affectedUsers": 1000,
+    "region": "US-WEST"
+  },
+  {
+    "issueId": "ISS-007",
+    "title": "Incorrect tax calculation",
+    "description": "Sales tax is being calculated incorrectly for orders in California",
+    "severity": "high",
+    "status": "investigating",
+    "reportedBy": "C-456",
+    "reportedAt": "2025-01-15T13:20:00Z",
+    "category": "billing",
+    "affectedUsers": 75,
+    "region": "US-WEST"
+  },
+  {
+    "issueId": "ISS-008",
+    "title": "Wishlist items disappearing",
+    "description": "Items added to wishlist are randomly being removed after page refresh",
+    "severity": "low",
+    "status": "open",
+    "reportedBy": "C-999",
+    "reportedAt": "2025-01-14T16:45:00Z",
+    "category": "feature",
+    "affectedUsers": 50,
+    "region": "global"
+  }
+]

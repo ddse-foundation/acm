@@ -36,12 +36,21 @@ importers:
 
   packages/acm-examples:
     dependencies:
+      '@acm/adapters':
+        specifier: workspace:*
+        version: link:../acm-adapters
       '@acm/llm':
         specifier: workspace:*
         version: link:../acm-llm
+      '@acm/mcp':
+        specifier: workspace:*
+        version: link:../acm-mcp
       '@acm/planner':
         specifier: workspace:*
         version: link:../acm-planner
+      '@acm/replay':
+        specifier: workspace:*
+        version: link:../acm-replay
       '@acm/runtime':
         specifier: workspace:*
         version: link:../acm-runtime

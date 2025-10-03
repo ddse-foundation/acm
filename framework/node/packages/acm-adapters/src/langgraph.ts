@@ -191,7 +191,7 @@ export class LangGraphAdapter {
    * Note: This is a simplified implementation. In practice, you would use
    * LangGraph's StateGraph API directly with the graph structure.
    */
-  async execute(): Promise<{ outputs: Map<string, any>; ledger?: MemoryLedger }> {
+  async execute(): Promise<{ outputsByTask: Record<string, any>; ledger: readonly any[] }> {
     const { nodes, edges, entryPoint } = this.buildGraph();
     
     // Initialize state
@@ -229,8 +229,8 @@ export class LangGraphAdapter {
     }
 
     return {
-      outputs: state.outputs,
-      ledger: this.options.ledger,
+      outputsByTask: Object.fromEntries(state.outputs),
+      ledger: this.options.ledger?.getEntries() || [],
     };
   }
 }

@@ -5,6 +5,8 @@ import { DefaultStreamSink } from '@acm/sdk';
 import { MemoryLedger, executePlan } from '@acm/runtime';
 import { createOllamaClient, createVLLMClient } from '@acm/llm';
 import { LLMPlanner } from '@acm/planner';
+import { asLangGraph, wrapAgentNodes } from '@acm/adapters';
+import { ReplayBundleExporter, type TaskIORecord } from '@acm/replay';
 import { goals, contexts } from '../src/goals/index.js';
 import {
   SearchTool,
@@ -21,6 +23,7 @@ import {
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '../src/registries.js';
 import { SimplePolicyEngine } from '../src/policy.js';
 import { CLIRenderer } from '../src/renderer.js';
+import * as crypto from 'crypto';
 
 // Parse command-line arguments
 function parseArgs(): {
@@ -31,6 +34,8 @@ function parseArgs(): {
   goal: 'refund' | 'issues';
   stream: boolean;
   saveBundle: boolean;
+  useMcp: boolean;
+  mcpServer?: string;
 } {
   const args = process.argv.slice(2);
   const parsed: any = {
@@ -40,6 +45,7 @@ function parseArgs(): {
     goal: 'refund',
     stream: true,
     saveBundle: false,
+    useMcp: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -65,6 +71,11 @@ function parseArgs(): {
       parsed.stream = false;
     } else if (arg === '--save-bundle') {
       parsed.saveBundle = true;
+    } else if (arg === '--use-mcp') {
+      parsed.useMcp = true;
+    } else if (arg === '--mcp-server' && next) {
+      parsed.mcpServer = next;
+      i++;
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
       process.exit(0);
@@ -88,12 +99,15 @@ Options:
   --goal <refund|issues>      Goal to execute (default: refund)
   --no-stream                 Disable streaming output
   --save-bundle               Save replay bundle to replay/<runId>/
+  --use-mcp                   Enable MCP tool integration
+  --mcp-server <command>      MCP server command (e.g., 'npx -y @modelcontextprotocol/server-filesystem /tmp')
   -h, --help                  Show this help
 
 Examples:
   acm-demo --provider ollama --model llama3.1 --goal refund
-  acm-demo --provider vllm --model qwen2.5:7b --engine runtime
+  acm-demo --provider vllm --model qwen2.5:7b --engine langgraph
   acm-demo --goal issues --save-bundle
+  acm-demo --engine msaf --use-mcp --mcp-server 'npx -y @modelcontextprotocol/server-filesystem /tmp'
   `);
 }
 
@@ -178,7 +192,11 @@ async function main() {
     // Select first plan (Plan-A)
     const plan = plannerResult.plans[0];
     console.log(`\n📋 Executing Plan: ${plan.id}`);
-    console.log(`Context Ref: ${plannerResult.contextRef}`);
+    
+    // Compute context ref (hash)
+    const contextPacket = JSON.stringify(context);
+    const contextRef = crypto.createHash('sha256').update(contextPacket).digest('hex');
+    console.log(`Context Ref: ${contextRef}`);
     console.log(`Tasks: ${plan.tasks.length}`);
     console.log();
 
@@ -187,6 +205,9 @@ async function main() {
 
     // Create ledger
     const ledger = new MemoryLedger();
+    
+    // Track task I/O for replay bundle
+    const taskIO: TaskIORecord[] = [];
 
     // Verification function
     const verify = async (taskId: string, output: any, expressions: string[]): Promise<boolean> => {
@@ -208,6 +229,8 @@ async function main() {
 
     // Execute based on engine
     let result;
+    const runId = `run-${Date.now()}`;
+    const startedAt = new Date().toISOString();
 
     if (config.engine === 'runtime') {
       console.log('⚙️  Executing with ACM runtime...\n');
@@ -223,38 +246,38 @@ async function main() {
         ledger,
       });
     } else if (config.engine === 'langgraph') {
-      console.log('⚙️  LangGraph adapter not yet implemented');
-      console.log('   Falling back to runtime...\n');
-      result = await executePlan({
+      console.log('⚙️  Executing with LangGraph adapter...\n');
+      const adapter = asLangGraph({
         goal,
         context,
         plan,
         capabilityRegistry,
         toolRegistry,
         policy,
-        verify,
         stream: config.stream ? stream : undefined,
         ledger,
       });
+      result = await adapter.execute();
     } else if (config.engine === 'msaf') {
-      console.log('⚙️  MS Agent Framework adapter not yet implemented');
-      console.log('   Falling back to runtime...\n');
-      result = await executePlan({
+      console.log('⚙️  Executing with MS Agent Framework adapter...\n');
+      const adapter = wrapAgentNodes({
         goal,
         context,
         plan,
         capabilityRegistry,
         toolRegistry,
         policy,
-        verify,
         stream: config.stream ? stream : undefined,
         ledger,
       });
+      result = await adapter.execute();
     }
 
     if (!result) {
       throw new Error('Execution failed');
     }
+
+    const completedAt = new Date().toISOString();
 
     // Render summary
     renderer.renderSummary(result);
@@ -262,8 +285,45 @@ async function main() {
     // Save bundle if requested
     if (config.saveBundle) {
       console.log('\n💾 Saving replay bundle...');
-      // TODO: Implement replay bundle export
-      console.log('   (Replay bundle export not yet implemented)');
+      
+      // Prepare task I/O from outputs
+      for (const taskSpec of plan.tasks) {
+        const output = result.outputsByTask?.[taskSpec.id];
+        if (output) {
+          taskIO.push({
+            taskId: taskSpec.id,
+            capability: taskSpec.capability,
+            input: taskSpec.input || {},
+            output,
+            ts: new Date().toISOString(),
+          });
+        }
+      }
+      
+      const bundlePath = await ReplayBundleExporter.export({
+        outputDir: `./replay/${runId}`,
+        goal,
+        context,
+        plans: plannerResult.plans,
+        selectedPlanId: plan.id,
+        ledger: ledger.getEntries() as any[],
+        taskIO,
+        engineTrace: {
+          runId,
+          engine: config.engine,
+          startedAt,
+          completedAt,
+          status: 'success',
+          tasks: plan.tasks.map(t => ({
+            taskId: t.id,
+            status: 'completed',
+            startedAt,
+            completedAt,
+          })),
+        },
+      });
+      
+      console.log(`   ✅ Bundle saved to: ${bundlePath}`);
     }
 
     console.log('\n✅ Demo completed successfully!');

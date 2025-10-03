@@ -1,0 +1,72 @@
+[
+  {
+    "id": "doc-001",
+    "title": "Product Returns Policy",
+    "content": "Our returns policy allows customers to return items within 30 days of purchase. Refunds are processed within 5-7 business days after receiving the returned item. Items must be in original condition with tags attached. Digital products are non-refundable.",
+    "category": "policy",
+    "tags": ["returns", "refunds", "policy"]
+  },
+  {
+    "id": "doc-002",
+    "title": "Shipping Information",
+    "content": "We offer standard and express shipping options. Standard shipping takes 5-7 business days, while express shipping takes 2-3 business days. Free shipping is available on orders over $50. International shipping is available to select countries.",
+    "category": "shipping",
+    "tags": ["shipping", "delivery", "logistics"]
+  },
+  {
+    "id": "doc-003",
+    "title": "Customer Support Hours",
+    "content": "Our customer support team is available Monday through Friday, 9 AM to 6 PM EST. Weekend support is available for urgent issues. You can reach us via email, phone, or live chat. Average response time is under 2 hours during business hours.",
+    "category": "support",
+    "tags": ["support", "hours", "contact"]
+  },
+  {
+    "id": "doc-004",
+    "title": "Payment Methods",
+    "content": "We accept major credit cards including Visa, Mastercard, American Express, and Discover. PayPal and Apple Pay are also accepted. For enterprise customers, we offer invoice payment with NET30 terms. All transactions are secured with SSL encryption.",
+    "category": "payment",
+    "tags": ["payment", "billing", "finance"]
+  },
+  {
+    "id": "doc-005",
+    "title": "Data Privacy Policy",
+    "content": "We are committed to protecting your personal data. We collect only essential information needed to process orders. Data is encrypted at rest and in transit. We never sell customer data to third parties. GDPR compliant for EU customers.",
+    "category": "privacy",
+    "tags": ["privacy", "data", "security", "gdpr"]
+  },
+  {
+    "id": "doc-006",
+    "title": "Product Warranty",
+    "content": "All products come with a 1-year manufacturer warranty covering defects in materials and workmanship. Extended warranty options are available at checkout. Warranty claims can be submitted through our support portal. Turnaround time is typically 7-14 days.",
+    "category": "warranty",
+    "tags": ["warranty", "coverage", "guarantee"]
+  },
+  {
+    "id": "doc-007",
+    "title": "Account Management",
+    "content": "Create an account to track orders, save payment methods, and manage your profile. Two-factor authentication is available for enhanced security. Password must be at least 8 characters with uppercase, lowercase, and numbers. Account can be deleted at any time.",
+    "category": "account",
+    "tags": ["account", "profile", "security"]
+  },
+  {
+    "id": "doc-008",
+    "title": "Bulk Ordering",
+    "content": "Bulk discounts are available for orders of 100 units or more. Volume pricing tiers range from 10% to 30% off retail price. Custom packaging and branding options available for bulk orders. Contact sales team for quote and delivery timeline.",
+    "category": "sales",
+    "tags": ["bulk", "wholesale", "volume"]
+  },
+  {
+    "id": "doc-009",
+    "title": "Product Specifications",
+    "content": "All products include detailed specifications including dimensions, weight, materials, and technical requirements. Safety certifications and compliance information available on request. Product manuals can be downloaded from the support portal.",
+    "category": "product",
+    "tags": ["specifications", "technical", "details"]
+  },
+  {
+    "id": "doc-010",
+    "title": "Loyalty Program",
+    "content": "Join our loyalty program to earn points on every purchase. Points can be redeemed for discounts on future orders. Tier benefits include free shipping, early access to sales, and birthday rewards. No membership fee required.",
+    "category": "rewards",
+    "tags": ["loyalty", "rewards", "points"]
+  }
+]

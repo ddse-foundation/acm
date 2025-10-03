@@ -209,7 +209,7 @@ export class MSAgentFrameworkAdapter {
   /**
    * Execute workflow using MS Agent Framework pattern
    */
-  async execute(): Promise<{ outputs: Map<string, any>; ledger?: MemoryLedger }> {
+  async execute(): Promise<{ outputsByTask: Record<string, any>; ledger: readonly any[] }> {
     const { plan, context } = this.options;
     const outputs = new Map<string, any>();
 
@@ -235,8 +235,8 @@ export class MSAgentFrameworkAdapter {
     }
 
     return {
-      outputs,
-      ledger: this.options.ledger,
+      outputsByTask: Object.fromEntries(outputs),
+      ledger: this.options.ledger?.getEntries() || [],
     };
   }
 

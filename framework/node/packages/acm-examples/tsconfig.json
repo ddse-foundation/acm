@@ -4,11 +4,14 @@
     "rootDir": ".",
     "outDir": "./dist"
   },
-  "include": ["bin/**/*", "src/**/*"],
+  "include": ["bin/**/*", "src/**/*", "tests/**/*"],
   "references": [
     { "path": "../acm-sdk" },
     { "path": "../acm-runtime" },
     { "path": "../acm-llm" },
-    { "path": "../acm-planner" }
+    { "path": "../acm-planner" },
+    { "path": "../acm-mcp" },
+    { "path": "../acm-adapters" },
+    { "path": "../acm-replay" }
   ]
 }
