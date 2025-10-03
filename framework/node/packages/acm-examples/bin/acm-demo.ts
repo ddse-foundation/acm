@@ -2,7 +2,7 @@
 
 // ACM Demo CLI - End-to-end example
 import { DefaultStreamSink } from '@acm/sdk';
-import { MemoryLedger, executePlan } from '@acm/runtime';
+import { MemoryLedger, executePlan, executeResumablePlan, FileCheckpointStore } from '@acm/runtime';
 import { createOllamaClient, createVLLMClient } from '@acm/llm';
 import { LLMPlanner } from '@acm/planner';
 import { asLangGraph, wrapAgentNodes } from '@acm/adapters';
@@ -36,6 +36,8 @@ function parseArgs(): {
   saveBundle: boolean;
   useMcp: boolean;
   mcpServer?: string;
+  resume?: string;
+  checkpointDir?: string;
 } {
   const args = process.argv.slice(2);
   const parsed: any = {
@@ -76,6 +78,12 @@ function parseArgs(): {
     } else if (arg === '--mcp-server' && next) {
       parsed.mcpServer = next;
       i++;
+    } else if (arg === '--resume' && next) {
+      parsed.resume = next;
+      i++;
+    } else if (arg === '--checkpoint-dir' && next) {
+      parsed.checkpointDir = next;
+      i++;
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
       process.exit(0);
@@ -101,6 +109,8 @@ Options:
   --save-bundle               Save replay bundle to replay/<runId>/
   --use-mcp                   Enable MCP tool integration
   --mcp-server <command>      MCP server command (e.g., 'npx -y @modelcontextprotocol/server-filesystem /tmp')
+  --resume <runId>            Resume from a previous execution
+  --checkpoint-dir <path>     Directory for checkpoint storage (default: ./checkpoints)
   -h, --help                  Show this help
 
 Examples:
@@ -108,6 +118,7 @@ Examples:
   acm-demo --provider vllm --model qwen2.5:7b --engine langgraph
   acm-demo --goal issues --save-bundle
   acm-demo --engine msaf --use-mcp --mcp-server 'npx -y @modelcontextprotocol/server-filesystem /tmp'
+  acm-demo --resume run-1234567890 --checkpoint-dir ./checkpoints
   `);
 }
 
@@ -229,24 +240,60 @@ async function main() {
 
     // Execute based on engine
     let result;
-    const runId = `run-${Date.now()}`;
+    const runId = config.resume || `run-${Date.now()}`;
     const startedAt = new Date().toISOString();
+    
+    // Setup checkpoint store if resume is enabled or runtime engine
+    const checkpointDir = config.checkpointDir || './checkpoints';
+    const checkpointStore = new FileCheckpointStore(checkpointDir);
+
+    // Add checkpoint event listener
+    if (config.stream) {
+      stream.attach('checkpoint', (update: any) => {
+        console.log(`💾 Checkpoint created: ${update.checkpointId} (${update.tasksCompleted} tasks completed)`);
+      });
+    }
 
     if (config.engine === 'runtime') {
-      console.log('⚙️  Executing with ACM runtime...\n');
-      result = await executePlan({
-        goal,
-        context,
-        plan,
-        capabilityRegistry,
-        toolRegistry,
-        policy,
-        verify,
-        stream: config.stream ? stream : undefined,
-        ledger,
-      });
+      if (config.resume) {
+        console.log(`⚙️  Resuming execution from checkpoint...\n`);
+        result = await executeResumablePlan({
+          goal,
+          context,
+          plan,
+          capabilityRegistry,
+          toolRegistry,
+          policy,
+          verify,
+          stream: config.stream ? stream : undefined,
+          ledger,
+          runId,
+          resumeFrom: config.resume,
+          checkpointStore,
+          checkpointInterval: 1,
+        });
+      } else {
+        console.log('⚙️  Executing with ACM runtime (with checkpointing)...\n');
+        result = await executeResumablePlan({
+          goal,
+          context,
+          plan,
+          capabilityRegistry,
+          toolRegistry,
+          policy,
+          verify,
+          stream: config.stream ? stream : undefined,
+          ledger,
+          runId,
+          checkpointStore,
+          checkpointInterval: 1,
+        });
+      }
     } else if (config.engine === 'langgraph') {
       console.log('⚙️  Executing with LangGraph adapter...\n');
+      if (config.resume) {
+        console.warn('⚠️  Resume not supported for LangGraph adapter, ignoring --resume flag');
+      }
       const adapter = asLangGraph({
         goal,
         context,
@@ -260,6 +307,9 @@ async function main() {
       result = await adapter.execute();
     } else if (config.engine === 'msaf') {
       console.log('⚙️  Executing with MS Agent Framework adapter...\n');
+      if (config.resume) {
+        console.warn('⚠️  Resume not supported for MSAF adapter, ignoring --resume flag');
+      }
       const adapter = wrapAgentNodes({
         goal,
         context,

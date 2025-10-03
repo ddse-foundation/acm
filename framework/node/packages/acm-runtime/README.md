@@ -22,6 +22,7 @@ pnpm add @acm/runtime @acm/sdk
 - ✅ Memory ledger (append-only decision log)
 - ✅ Streaming progress updates
 - ✅ Error handling and compensation
+- ✅ **Resumable execution with checkpointing** (NEW in Phase 2)
 
 ## Usage
 
@@ -134,6 +135,82 @@ for (const entry of ledger.getEntries()) {
 }
 ```
 
+### Resumable Execution (Phase 2)
+
+Execute plans with automatic checkpointing and resume support:
+
+```typescript
+import { executeResumablePlan, FileCheckpointStore } from '@acm/runtime';
+
+// Setup checkpoint storage
+const checkpointStore = new FileCheckpointStore('./checkpoints');
+const runId = 'my-run-123';
+
+// Execute with checkpointing
+const result = await executeResumablePlan({
+  goal,
+  context,
+  plan,
+  capabilityRegistry,
+  toolRegistry,
+  runId,
+  checkpointStore,
+  checkpointInterval: 1, // Checkpoint after each task
+});
+```
+
+Resume from a previous execution:
+
+```typescript
+// Resume from checkpoint
+const result = await executeResumablePlan({
+  goal,
+  context,
+  plan,
+  capabilityRegistry,
+  toolRegistry,
+  runId: 'my-run-123',
+  resumeFrom: 'checkpoint-xyz', // Resume from specific checkpoint
+  checkpointStore,
+});
+```
+
+Using the ResumableExecutor class:
+
+```typescript
+import { ResumableExecutor, FileCheckpointStore } from '@acm/runtime';
+
+const executor = new ResumableExecutor(
+  new FileCheckpointStore('./checkpoints')
+);
+
+// Execute with checkpointing
+const result = await executor.execute({
+  goal,
+  context,
+  plan,
+  capabilityRegistry,
+  toolRegistry,
+  runId: 'my-run-123',
+});
+
+// List checkpoints
+const checkpoints = await executor.listCheckpoints('my-run-123');
+console.log(`Available checkpoints: ${checkpoints.length}`);
+
+// Resume from latest checkpoint
+const latest = await executor.getCheckpoint('my-run-123');
+const resumed = await executor.execute({
+  goal,
+  context,
+  plan,
+  capabilityRegistry,
+  toolRegistry,
+  runId: 'my-run-123',
+  resumeFrom: latest?.id,
+});
+```
+
 ## API Reference
 
 ### executePlan(options)
@@ -187,6 +264,45 @@ Append-only decision log.
 - `append(type, details)` - Add entry
 - `getEntries()` - Get all entries
 - `clear()` - Clear ledger (for testing)
+
+### executeResumablePlan(options)
+
+Execute a plan with checkpoint and resume support.
+
+**Additional Options (extends executePlan):**
+- `runId?: string` - Unique run identifier (generated if not provided)
+- `checkpointStore?: CheckpointStore` - Storage backend (default: MemoryCheckpointStore)
+- `checkpointInterval?: number` - Checkpoint after N tasks (default: 1)
+- `resumeFrom?: string` - Checkpoint ID to resume from
+
+**Returns:** Same as `executePlan`
+
+### CheckpointStore
+
+Interface for checkpoint storage backends.
+
+**Implementations:**
+- `MemoryCheckpointStore` - In-memory storage (for testing)
+- `FileCheckpointStore(basePath)` - File-based storage
+
+**Methods:**
+- `put(runId, checkpoint)` - Store a checkpoint
+- `get(runId, checkpointId?)` - Retrieve checkpoint (latest if no ID)
+- `list(runId)` - List all checkpoints for a run
+- `prune(runId, keepLast)` - Remove old checkpoints
+
+### ResumableExecutor
+
+High-level class for managing resumable executions.
+
+**Constructor:**
+- `new ResumableExecutor(checkpointStore?)` - Create executor with optional store
+
+**Methods:**
+- `execute(options)` - Execute with checkpointing
+- `listCheckpoints(runId)` - List available checkpoints
+- `getCheckpoint(runId, checkpointId?)` - Get specific checkpoint
+- `pruneCheckpoints(runId, keepLast)` - Clean up old checkpoints
 
 ## Guard Expressions
 

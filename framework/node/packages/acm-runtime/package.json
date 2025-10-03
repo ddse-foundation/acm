@@ -14,7 +14,8 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "test": "tsc && node ./dist/tests/resumable.test.js"
   },
   "dependencies": {
     "@acm/sdk": "workspace:*"
