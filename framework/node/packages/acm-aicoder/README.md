@@ -1,60 +1,24 @@
-# ACM AI Coder Demo
+# ACM AI Coder - Phase 2
 
-An advanced AI-powered developer workflow automation tool that showcases the full capabilities of the ACM (Agentic Contract Model) framework with real, working tools and intelligent planning.
+An advanced AI-powered developer workflow automation tool with an interactive full-screen TUI that showcases the complete ACM (Agentic Contract Model) framework v0.5.
 
 ## Overview
 
-The ACM AI Coder demonstrates the complete ACM framework with:
+The ACM AI Coder Phase 2 introduces an **interactive-only experience** with a three-column terminal UI:
 
-- **Intelligent Context Engine**: Deep repository understanding with file indexing, symbol extraction, dependency mapping, and BM25-based code search
-- **Enhanced Developer Tools**: 10+ production-grade tools for reading, searching, editing, testing, and building code
-- **Real Developer Tasks**: 13+ composable tasks for finding symbols, implementing functions, refactoring, fixing errors, and generating tests
-- **Smart Planning**: Context-aware planning with the ACM planner, fed with relevant files, symbols, and dependencies
-- **Safety First**: Dry-run mode, approval workflows, policy enforcement, and automatic backups
-- **Resumable Execution**: Checkpoint/resume support for long-running operations
+- **Left Column**: Chat interface with streaming planner and nucleus reasoning
+- **Middle Column**: Current goal, tasks with live status, and budget metrics
+- **Right Column**: Event stream showing ledger entries, tool calls, and context updates
 
-## Features
+### Key Features
 
-### Context Engine (Intelligent Repository Understanding)
-
-The context engine provides deep understanding of your codebase:
-
-- **Workspace Indexer**: Fast file scanning with gitignore support and caching
-- **Symbol Extraction**: Parse TS/JS for functions, classes, interfaces, types, and exports
-- **Dependency Mapper**: Analyze package.json files and track dependencies
-- **Test Mapper**: Identify test files and infer their target sources
-- **Code Search**: BM25-based semantic search with context and scoring
-- **Context Pack Generator**: Automatically gather relevant files and symbols for planning
-
-### Enhanced Tools (V2)
-
-**Reading & Search:**
-- `FileStatTool` - Check file existence, size, and type
-- `FileReadToolV2` - Read files with offset/limit for large files
-- `FileReadLinesTool` - Precise line-ranged reading
-- `CodeSearchTool` - BM25-based search with context
-- `GrepTool` - Pattern-based multi-file search
-- `DiffTool` - Generate unified diffs
-
-**Editing & Building:**
-- `PatchApplyTool` - Apply diffs with conflict handling
-- `CodeEditToolV2` - Enhanced editing with backups
-- `RunTestsToolV2` - Execute tests with duration tracking
-- `BuildTool` - Run builds with error extraction
-
-### Developer Tasks
-
-**Analysis Tasks:**
-- `AnalyzeWorkspaceTask` - Deep codebase analysis with stats
-- `CollectContextPackTask` - Generate context for planning
-- `SearchCodeTask` - Search with relevance scoring
-
-**Development Tasks:**
-- `FindSymbolDefinitionTask` - Locate symbols across codebase
-- `ImplementFunctionTask` - Create functions with AI assistance
-- `RefactorRenameSymbolTask` - Rename symbols with tracking
-- `FixTypeErrorTask` - Resolve TypeScript errors
-- `GenerateUnitTestsTask` - Generate test templates
+- ✅ **Interactive-Only TUI**: Full-screen terminal interface with real-time updates
+- ✅ **Mandatory Configuration**: Requires `--llm-model`, `--llm-base-url`, `--llm-engine`, `--workspace`
+- ✅ **Budget Governance**: Pre-inference cost checks with live spend tracking
+- ✅ **Streaming Reasoning**: Watch planner and nucleus think in real-time
+- ✅ **File Mentions**: Reference workspace files with `#path/to/file` syntax
+- ✅ **Memory Lifecycle**: Automatic cleanup and replay bundle persistence
+- ✅ **ACM Framework Integration**: Built entirely on ACM primitives (planner, runtime, nucleus, ledger)
 
 ## Installation
 
@@ -66,17 +30,93 @@ pnpm install
 pnpm --filter @acm/aicoder build
 ```
 
-## Usage
+## Quick Start
 
-### Quick Start
+### Phase 2 Interactive Mode (Recommended)
 
 ```bash
-# Analyze your codebase with context engine
-pnpm --filter @acm/aicoder exec acm-aicoder --goal analyze
+# Start the interactive AI Coder
+acm-aicoder \
+  --llm-model gpt-4o \
+  --llm-base-url https://api.openai.com \
+  --llm-engine langgraph \
+  --workspace /path/to/your/project \
+  --budget-usd 10
+```
 
-# Search for code
-pnpm --filter @acm/aicoder exec acm-aicoder --goal custom
-# Then enter: "Find all function definitions in the codebase"
+**Required Parameters:**
+- `--llm-model <model>` - LLM model name (e.g., gpt-4o, claude-3-opus, llama3.1)
+- `--llm-base-url <url>` - LLM API endpoint
+- `--llm-engine <engine>` - ACM runtime engine: `langgraph`, `msaf`, or `runtime`
+- `--workspace <path>` - Project workspace root directory
+
+**Optional Parameters:**
+- `--budget-usd <amount>` - Budget limit in USD (default: unlimited)
+- `--temperature <0-2>` - LLM temperature (default: 0.7)
+- `--seed <number>` - Random seed for reproducibility
+- `--plans <1|2>` - Number of alternative plans to generate (default: 1)
+
+### Commands in Interactive Mode
+
+Once running, you can use these commands:
+
+- `/exit`, `/quit` - Exit the application
+- `/help` - Show available commands
+- `/budget` - Display detailed budget information
+- `/context` - Show current context information
+- `/reset` - Reset the session (clear goal and tasks)
+- `#path/to/file` - Mention files from your workspace in chat
+
+**Example Session:**
+
+```
+> Analyze the src/index.ts file and find potential bugs
+
+[Planner will reason about the task, select appropriate capabilities]
+[Tasks will execute with live status updates]
+[Events will stream in the right column]
+```
+
+### Phase 1 Legacy Mode
+
+For backward compatibility, use:
+
+```bash
+acm-aicoder-legacy --goal analyze --workspace /path/to/project
+```
+
+## ACM Framework Integration
+
+Phase 2 is built strictly on ACM v0.5 components:
+
+### Planner & Nucleus
+- Chat pane visualizes ACM planner tool-call loops and nucleus inferences in real-time
+- Streaming tokens show reasoning as it happens
+- Budget checks run before each inference
+
+### Tools & Tasks
+- All tools extend `Tool<I, O>` from `@acm/sdk`
+- Tasks extend `Task<I, O>` and leverage context builder
+- Tool call envelopes logged to ledger for determinism
+
+### Context Packets
+- Context orchestration uses Phase 4 `ContextBuilder`
+- Immutable packets with provenance and sources
+- View current context with `/context` command
+
+### Ledger & Replay
+- Event stream pane visualizes ledger entries
+- Replay bundles saved automatically to `.aicoder/replays/`
+- Includes session config, ledger, and budget summary
+
+### Budget Enforcement
+- BudgetManager enforces spending limits before inference
+- Provider metadata for OpenAI, Anthropic, Ollama, and more
+- Real-time budget display in Tasks column
+
+## Legacy Features (Phase 1)
+
+The ACM AI Coder also includes all Phase 1 capabilities:
 
 # Fix a bug with AI assistance (dry-run first)
 pnpm --filter @acm/aicoder exec acm-aicoder --goal fixBug --dry-run
