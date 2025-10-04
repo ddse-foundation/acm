@@ -6,3 +6,5 @@ export * from './capability.js';
 export * from './registry.js';
 export * from './policy.js';
 export * from './stream.js';
+export * from './nucleus.js';
+export * from './context.js';

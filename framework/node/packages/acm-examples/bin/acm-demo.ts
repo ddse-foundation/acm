@@ -342,7 +342,7 @@ async function main() {
         if (output) {
           taskIO.push({
             taskId: taskSpec.id,
-            capability: taskSpec.capability,
+            capability: taskSpec.capabilityRef || taskSpec.capability || 'unknown',
             input: taskSpec.input || {},
             output,
             ts: new Date().toISOString(),

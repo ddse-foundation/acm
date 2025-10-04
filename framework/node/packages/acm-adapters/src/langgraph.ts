@@ -70,9 +70,14 @@ export class LangGraphAdapter {
 
       try {
         // Get task implementation
-        const task = capabilityRegistry.resolve(taskSpec.capability);
+        const capabilityName = taskSpec.capabilityRef || taskSpec.capability;
+        if (!capabilityName) {
+          throw new Error(`Task ${taskId} missing capability reference`);
+        }
+
+        const task = capabilityRegistry.resolve(capabilityName);
         if (!task) {
-          throw new Error(`Capability ${taskSpec.capability} not found`);
+          throw new Error(`Capability ${capabilityName} not found`);
         }
 
         // Build run context

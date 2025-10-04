@@ -102,9 +102,14 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
     for (const taskSpec of readyTasks) {
       pending.splice(pending.indexOf(taskSpec), 1);
 
-      const task = capabilityRegistry.resolve(taskSpec.capability);
+      const capabilityName = taskSpec.capabilityRef || taskSpec.capability;
+      if (!capabilityName) {
+        throw new Error(`Task ${taskSpec.id} missing capability reference`);
+      }
+      
+      const task = capabilityRegistry.resolve(capabilityName);
       if (!task) {
-        throw new Error(`Task not found for capability: ${taskSpec.capability}`);
+        throw new Error(`Task not found for capability: ${capabilityName}`);
       }
 
       // Build run context
@@ -142,7 +147,7 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
       // Execute task with retry
       ledger.append('TASK_START', {
         taskId: taskSpec.id,
-        capability: taskSpec.capability,
+        capability: capabilityName,
         input: taskSpec.input,
       });
 
@@ -154,8 +159,13 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
           return result;
         };
 
-        const output = taskSpec.retry
-          ? await withRetry(executeTask, taskSpec.retry)
+        const retryConfig = taskSpec.retry || (taskSpec.retryPolicy ? {
+          attempts: taskSpec.retryPolicy.maxAttempts || 3,
+          backoff: 'exp' as const,
+        } : undefined);
+
+        const output = retryConfig
+          ? await withRetry(executeTask, retryConfig)
           : await executeTask();
 
         outputs[taskSpec.id] = output;

@@ -1,5 +1,5 @@
 // OpenAI-compatible client for Ollama and vLLM
-import type { LLM, ChatMessage, LLMResponse, LLMStreamChunk } from './types.js';
+import type { LLM, ChatMessage, LLMResponse, LLMStreamChunk, ToolDefinition, LLMToolResponse, ToolCall } from './types.js';
 
 export type OpenAICompatConfig = {
   baseUrl: string;
@@ -141,6 +141,79 @@ export class OpenAICompatClient implements LLM {
     } finally {
       reader.releaseLock();
     }
+  }
+
+  async generateWithTools(
+    messages: ChatMessage[],
+    tools: ToolDefinition[],
+    opts?: {
+      temperature?: number;
+      seed?: number;
+      maxTokens?: number;
+    }
+  ): Promise<LLMToolResponse> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (this.config.apiKey) {
+      headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+    }
+
+    // Convert tools to OpenAI format
+    const openaiTools = tools.map(tool => ({
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.inputSchema,
+      },
+    }));
+
+    const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: this.config.model,
+        messages,
+        tools: openaiTools,
+        tool_choice: 'auto',
+        temperature: opts?.temperature ?? 0.7,
+        seed: opts?.seed,
+        max_tokens: opts?.maxTokens,
+        stream: false,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`LLM API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json() as any;
+    const choice = data.choices?.[0];
+    
+    // Extract tool calls if present
+    const toolCalls: ToolCall[] = [];
+    if (choice?.message?.tool_calls) {
+      for (const tc of choice.message.tool_calls) {
+        toolCalls.push({
+          id: tc.id,
+          name: tc.function?.name || '',
+          arguments: tc.function?.arguments 
+            ? (typeof tc.function.arguments === 'string' 
+                ? JSON.parse(tc.function.arguments) 
+                : tc.function.arguments)
+            : {},
+        });
+      }
+    }
+    
+    return {
+      text: choice?.message?.content || '',
+      toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+      tokens: data.usage?.total_tokens,
+      raw: data,
+    };
   }
 }
 
