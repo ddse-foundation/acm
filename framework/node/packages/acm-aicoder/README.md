@@ -44,17 +44,23 @@ pnpm --filter @acm/aicoder build
 ### Basic Commands
 
 ```bash
-# Analyze a codebase
-acm-aicoder --goal analyze
+# From the workspace root, run the packaged CLI (note the `--` before CLI flags)
+pnpm --filter @acm/aicoder run acm-aicoder -- --goal analyze
+
+# Or execute the binary directly after building
+pnpm --filter @acm/aicoder exec acm-aicoder --goal analyze
+
+# Analyze a project in another folder
+pnpm --filter @acm/aicoder exec acm-aicoder --goal analyze --project /path/to/project
 
 # Fix a bug (dry-run first)
-acm-aicoder --goal fixBug --dry-run
+pnpm --filter @acm/aicoder exec acm-aicoder --goal fixBug --dry-run
 
 # Implement a new feature
-acm-aicoder --goal implementFeature
+pnpm --filter @acm/aicoder exec acm-aicoder --goal implementFeature
 
 # Run tests
-acm-aicoder --goal runTests
+pnpm --filter @acm/aicoder exec acm-aicoder --goal runTests
 ```
 
 ### Interactive Custom Goals
@@ -68,19 +74,22 @@ acm-aicoder --goal custom
 
 ```bash
 # Use a specific LLM provider
-acm-aicoder --provider vllm --model qwen2.5:7b --base-url http://localhost:8000
+pnpm --filter @acm/aicoder exec acm-aicoder --provider vllm --model qwen2.5:7b --base-url http://localhost:8000
 
 # Auto-approve all operations (use with caution!)
-acm-aicoder --goal fixBug --auto-approve
+pnpm --filter @acm/aicoder exec acm-aicoder --goal fixBug --auto-approve
 
 # Analysis only mode (no modifications)
-acm-aicoder --goal analyze --analysis-only
+pnpm --filter @acm/aicoder exec acm-aicoder --goal analyze --analysis-only
 
 # Resume from checkpoint
-acm-aicoder --resume run-1234567890
+pnpm --filter @acm/aicoder exec acm-aicoder --resume run-1234567890
 
 # Custom checkpoint directory
-acm-aicoder --goal fixBug --checkpoint-dir ./my-checkpoints
+pnpm --filter @acm/aicoder exec acm-aicoder --goal fixBug --checkpoint-dir ./my-checkpoints
+
+# Operate on a different project root
+pnpm --filter @acm/aicoder exec acm-aicoder --goal analyze --project /path/to/project
 ```
 
 ## Architecture
@@ -126,10 +135,11 @@ pnpm --filter @acm/aicoder dev
 ### Example 1: Analyze a React Project
 
 ```bash
-acm-aicoder --goal analyze
+pnpm --filter @acm/aicoder exec acm-aicoder --goal analyze
 ```
 
 This will:
+
 1. Read the project structure
 2. Analyze TypeScript/JavaScript files
 3. Detect common issues (console.log, TODO comments, etc.)
@@ -139,19 +149,20 @@ This will:
 
 ```bash
 # Preview changes first
-acm-aicoder --goal fixBug --dry-run
+pnpm --filter @acm/aicoder exec acm-aicoder --goal fixBug --dry-run
 
 # Apply changes (requires approval)
-acm-aicoder --goal fixBug
+pnpm --filter @acm/aicoder exec acm-aicoder --goal fixBug
 ```
 
 ### Example 3: Implement Authentication Feature
 
 ```bash
-acm-aicoder --goal implementFeature
+pnpm --filter @acm/aicoder exec acm-aicoder --goal implementFeature
 ```
 
 This will:
+
 1. Scaffold the authentication module
 2. Generate boilerplate code
 3. Add TODO comments for manual implementation
@@ -161,10 +172,10 @@ This will:
 
 ```bash
 # Start a long operation
-acm-aicoder --goal implementFeature
+pnpm --filter @acm/aicoder exec acm-aicoder --goal implementFeature
 
 # If interrupted (Ctrl+C), resume later
-acm-aicoder --resume run-1234567890
+pnpm --filter @acm/aicoder exec acm-aicoder --resume run-1234567890
 ```
 
 ## Configuration

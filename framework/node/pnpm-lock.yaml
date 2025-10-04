@@ -125,6 +125,13 @@ importers:
       '@acm/sdk':
         specifier: workspace:*
         version: link:../acm-sdk
+      json5:
+        specifier: ^2.2.3
+        version: 2.2.3
+    devDependencies:
+      '@types/json5':
+        specifier: ^2.2.0
+        version: 2.2.0
 
   packages/acm-replay:
     dependencies:
@@ -202,6 +209,10 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/json5@2.2.0':
+    resolution: {integrity: sha512-NrVug5woqbvNZ0WX+Gv4R+L4TGddtmFek2u8RtccAgFZWtS9QXF2xCXY22/M4nzkaKF0q9Fc6M/5rxLDhfwc/A==}
+    deprecated: This is a stub types definition. json5 provides its own type definitions, so you do not need this installed.
 
   '@types/node@20.19.19':
     resolution: {integrity: sha512-pb1Uqj5WJP7wrcbLU7Ru4QtA0+3kAXrkutGiD26wUKzSMgNNaPARTUDQmElUXp64kh3cWdou3Q0C7qwwxqSFmg==}
@@ -502,6 +513,11 @@ packages:
 
   json-schema-traverse@0.4.1:
     resolution: {integrity: sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==}
+
+  json5@2.2.3:
+    resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
+    engines: {node: '>=6'}
+    hasBin: true
 
   langsmith@0.3.72:
     resolution: {integrity: sha512-XjTonMq2fIebzV0BRlPx8mi+Ih/NsQT6W484hrW/pJYuq0aT5kpLtzQthVVmsXH8ZYYkgkbQ5Gh5Mz1qoCrAwg==}
@@ -879,6 +895,10 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
+  '@types/json5@2.2.0':
+    dependencies:
+      json5: 2.2.3
+
   '@types/node@20.19.19':
     dependencies:
       undici-types: 6.21.0
@@ -1182,6 +1202,8 @@ snapshots:
       base64-js: 1.5.1
 
   json-schema-traverse@0.4.1: {}
+
+  json5@2.2.3: {}
 
   langsmith@0.3.72:
     dependencies:

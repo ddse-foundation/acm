@@ -10,6 +10,7 @@ export type PlannerOptions = {
   llm: LLM;
   stream?: StreamSink;
   capabilityMapVersion?: string;
+  planCount?: 1 | 2;
 };
 
 export type PlannerResult = {
@@ -21,12 +22,13 @@ export type PlannerResult = {
 export class LLMPlanner {
   async plan(options: PlannerOptions): Promise<PlannerResult> {
     const { goal, context, capabilities, llm, stream, capabilityMapVersion = 'v1' } = options;
+  const planCount: 1 | 2 = options.planCount ?? 1; // default to 1 plan
 
     // Compute context reference (hash)
     const contextRef = this.computeContextRef(context);
 
     // Build prompt
-    const prompt = this.buildPrompt(goal, context, capabilities);
+  const prompt = this.buildPrompt(goal, context, capabilities, planCount);
 
     // Stream to callback if provided
     if (stream && llm.generateStream) {
@@ -45,7 +47,7 @@ export class LLMPlanner {
       stream.emit('planner', { done: true });
 
       // Parse response
-  return this.parseResponse(fullResponse, contextRef, capabilityMapVersion, capabilities);
+      return this.parseResponse(fullResponse, contextRef, capabilityMapVersion, capabilities);
     } else {
       // Non-streaming
       const response = await llm.generate(
@@ -53,24 +55,18 @@ export class LLMPlanner {
         { temperature: 0.7 }
       );
 
-  return this.parseResponse(response.text, contextRef, capabilityMapVersion, capabilities);
+      return this.parseResponse(response.text, contextRef, capabilityMapVersion, capabilities);
     }
   }
 
-  private buildPrompt(goal: Goal, context: Context, capabilities: Capability[]): string {
+  private buildPrompt(goal: Goal, context: Context, capabilities: Capability[], planCount: 1 | 2): string {
     const capList = capabilities.map(c => c.name).join(', ');
-    
-    return `You are a task planner. Given a goal and context, generate two alternative execution plans (Plan-A and Plan-B).
 
-Goal: ${goal.intent}
-${goal.constraints ? `Constraints: ${JSON.stringify(goal.constraints)}` : ''}
+    const header = planCount === 2
+      ? 'You are a task planner. Given a goal and context, generate two alternative execution plans (Plan-A and Plan-B).'
+      : 'You are a task planner. Given a goal and context, generate one execution plan (Plan-A only).';
 
-Context facts: ${JSON.stringify(context.facts)}
-
-Available capabilities: ${capList}
-
-Generate two plans in the following JSON format:
-{
+    const jsonTemplateTwo = `{
   "planA": {
     "tasks": [
       { "id": "t1", "capability": "capability_name", "input": {} }
@@ -88,7 +84,31 @@ Generate two plans in the following JSON format:
     ]
   },
   "rationale": "Brief explanation of the plans"
-}
+}`;
+
+    const jsonTemplateOne = `{
+  "planA": {
+    "tasks": [
+      { "id": "t1", "capability": "capability_name", "input": {} }
+    ],
+    "edges": [
+      { "from": "t1", "to": "t2" }
+    ]
+  },
+  "rationale": "Brief explanation of the plan"
+}`;
+
+    return `${header}
+
+Goal: ${goal.intent}
+${goal.constraints ? `Constraints: ${JSON.stringify(goal.constraints)}` : ''}
+
+Context facts: ${JSON.stringify(context.facts)}
+
+Available capabilities: ${capList}
+
+${planCount === 2 ? 'Generate two plans' : 'Generate one plan'} in the following JSON format:
+${planCount === 2 ? jsonTemplateTwo : jsonTemplateOne}
 
 Respond with valid JSON only.`;
   }
@@ -120,7 +140,7 @@ Respond with valid JSON only.`;
         });
       }
 
-      // Plan B
+      // Plan B (optional if returned)
       if (parsed.planB) {
         plans.push({
           id: 'plan-b',

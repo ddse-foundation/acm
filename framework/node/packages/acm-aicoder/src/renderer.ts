@@ -15,6 +15,10 @@ export class CLIRenderer {
   renderTaskUpdate(update: any): void {
     const prefix = chalk.blue('→');
     
+    if (!update || typeof update !== 'object') {
+      return;
+    }
+
     if (update.step === 'start') {
       this.currentTask = update.taskId;
       console.log(`\n${prefix} Starting task: ${chalk.bold(update.taskId)}`);
@@ -27,7 +31,8 @@ export class CLIRenderer {
       this.currentTask = null;
     } else {
       // Custom step update
-      const stepName = update.step.replace(/_/g, ' ');
+      const rawStep = typeof update.step === 'string' ? update.step : (update.status || update.event || 'update');
+      const stepName = String(rawStep).replace(/_/g, ' ');
       console.log(`  ${chalk.gray('•')} ${stepName}`);
       
       // Show additional details if available

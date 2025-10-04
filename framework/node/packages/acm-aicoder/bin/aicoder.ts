@@ -36,6 +36,8 @@ function parseArgs(): {
   resume?: string;
   checkpointDir?: string;
   analysisOnly: boolean;
+  workspace?: string;
+  plans?: 1 | 2;
 } {
   const args = process.argv.slice(2);
   const parsed: any = {
@@ -72,11 +74,20 @@ function parseArgs(): {
       parsed.dryRun = true;
     } else if (arg === '--analysis-only') {
       parsed.analysisOnly = true;
+    } else if (arg === '--workspace' && next) {
+      parsed.workspace = next;
+      i++;
     } else if (arg === '--resume' && next) {
       parsed.resume = next;
       i++;
     } else if (arg === '--checkpoint-dir' && next) {
       parsed.checkpointDir = next;
+      i++;
+    } else if (arg === '--plans' && next) {
+      const n = Number(next);
+      if (n === 1 || n === 2) {
+        parsed.plans = n;
+      }
       i++;
     } else if (arg === '-h' || arg === '--help') {
       printHelp();
@@ -107,6 +118,8 @@ ${chalk.bold('Options:')}
   --auto-approve              Auto-approve all operations (use with caution!)
   --dry-run                   Preview changes without writing files
   --analysis-only             Only analyze, don't make changes
+  --workspace <path>          Workspace root to analyze/use
+  --plans <1|2>               Number of alternative plans to generate (default: 1)
   --resume <runId>            Resume from a previous execution
   --checkpoint-dir <path>     Directory for checkpoint storage (default: ./checkpoints)
   -h, --help                  Show this help
@@ -139,24 +152,42 @@ async function promptForApproval(message: string): Promise<boolean> {
   return response.approve;
 }
 
-async function selectPlan(plans: any[]): Promise<any> {
+async function selectPlan(plans: any[]): Promise<{ plan: any; index: number }> {
+  if (!Array.isArray(plans) || plans.length === 0) {
+    throw new Error('No plans available to select');
+  }
   if (plans.length === 1) {
-    return plans[0];
+    return { plan: plans[0], index: 0 };
   }
 
-  const choices = plans.map((plan, idx) => ({
-    name: `Plan ${String.fromCharCode(65 + idx)} - ${plan.tasks.length} tasks`,
-    value: idx,
-  }));
+  const labels = plans.map((p: any, idx: number) => `Plan ${String.fromCharCode(65 + idx)} - ${p.tasks?.length ?? 0} tasks`);
+  const choices = labels.map((label, idx) => ({ name: label, value: idx }));
 
-  const response = await enquirer.prompt<{ planIndex: number }>({
+  const response: any = await enquirer.prompt({
     type: 'select',
     name: 'planIndex',
     message: 'Select a plan to execute:',
     choices,
   });
 
-  return plans[response.planIndex];
+  // Enquirer may return either an object keyed by prompt name, or the raw value directly.
+  let planIndex: number | undefined;
+  if (typeof response === 'number') {
+    planIndex = response;
+  } else if (typeof response === 'string') {
+    // If a label was returned, map it back to index
+    const idx = labels.indexOf(response);
+    planIndex = idx >= 0 ? idx : undefined;
+  } else if (response && typeof response === 'object' && 'planIndex' in response) {
+    planIndex = (response as { planIndex: number }).planIndex;
+  }
+
+  if (planIndex === undefined || isNaN(Number(planIndex))) {
+    // Fallback to first plan to ensure progress
+    planIndex = 0;
+  }
+
+  return { plan: plans[planIndex], index: planIndex };
 }
 
 async function main() {
@@ -252,13 +283,27 @@ async function main() {
 
   try {
     // Generate plans
-    const plannerResult = await planner.plan({
+    // If a workspace path was provided, override context facts for analyze/runTests goals
+    if (config.workspace) {
+      if (config.goal === 'analyze') {
+        context = { ...context, facts: { ...context.facts, path: config.workspace } };
+      } else if (config.goal === 'runTests') {
+        context = { ...context, facts: { ...context.facts, cwd: config.workspace } };
+      }
+    }
+
+    const plannerOptions: any = {
       goal,
       context,
       capabilities: capabilityRegistry.list(),
       llm,
       stream: config.stream ? stream : undefined,
-    });
+    };
+    if (config.plans) {
+      plannerOptions.planCount = config.plans; // optional override
+    }
+
+    const plannerResult = await planner.plan(plannerOptions);
 
     console.log();
     renderer.renderSuccess(`Plans generated: ${plannerResult.plans.length}`);
@@ -268,10 +313,14 @@ async function main() {
     }
 
     // Select plan
-    const plan = await selectPlan(plannerResult.plans);
+  const selection = await selectPlan(plannerResult.plans);
+  const plan = selection.plan;
+  const planLabel = `Plan ${String.fromCharCode(65 + selection.index)}`;
+  // Ensure plan has an id for logging and downstream usage
+  if (!plan.id) plan.id = planLabel.toLowerCase().replace(/\s+/g, '-');
     
     console.log();
-    renderer.renderInfo(`Selected Plan: ${plan.id}`);
+  renderer.renderInfo(`Selected Plan: ${plan.id || planLabel}`);
     console.log(`${chalk.bold('Tasks:')} ${plan.tasks.length}`);
     
     // Show task list
@@ -298,6 +347,18 @@ async function main() {
       plan.tasks.forEach((task: any) => {
         if (task.input) {
           task.input.dryRun = true;
+        }
+      });
+    }
+
+    // If workspace provided, ensure tasks that consume paths use it
+    if (config.workspace) {
+      plan.tasks.forEach((task: any) => {
+        if (task.capability === 'analyze_codebase') {
+          task.input = { ...(task.input || {}), path: config.workspace };
+        } else if (task.capability === 'run_tests') {
+          // Prefer cwd for tests
+          task.input = { ...(task.input || {}), cwd: config.workspace };
         }
       });
     }

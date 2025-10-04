@@ -1,0 +1,477 @@
+{
+  "id": "checkpoint-1759537249470-mlf298v",
+  "runId": "run-1759537249466",
+  "ts": 1759537249470,
+  "version": "1.0.0",
+  "state": {
+    "goal": {
+      "id": "goal-analyze-1",
+      "intent": "Analyze the codebase and provide a comprehensive summary",
+      "constraints": {
+        "maxDepth": 3,
+        "includeIssues": true
+      }
+    },
+    "context": {
+      "id": "ctx-analyze-1",
+      "facts": {
+        "path": "./src",
+        "depth": 2,
+        "includeTests": true
+      },
+      "version": "1.0"
+    },
+    "plan": {
+      "id": "plan-a",
+      "contextRef": "76341aa13788b6e4",
+      "capabilityMapVersion": "v1",
+      "tasks": [
+        {
+          "id": "t1",
+          "capability": "analyze_codebase",
+          "input": {
+            "path": "./src",
+            "depth": 2,
+            "includeTests": true,
+            "includeIssues": true
+          }
+        }
+      ],
+      "edges": []
+    },
+    "outputs": {
+      "t1": {
+        "summary": "Analyzed 3 files, found 29 issues",
+        "files": 3,
+        "issues": [
+          {
+            "file": "renderer.ts",
+            "line": 24,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 26,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 29,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 30,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 36,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 40,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 43,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 47,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 54,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 58,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 59,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 60,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 64,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 68,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 72,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 76,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 80,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 81,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 82,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 86,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 90,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 94,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 97,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 100,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 106,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 107,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 108,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 110,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          },
+          {
+            "file": "renderer.ts",
+            "line": 114,
+            "message": "Console.log statement found",
+            "severity": "warning"
+          }
+        ]
+      }
+    },
+    "executed": [
+      "t1"
+    ],
+    "ledger": [
+      {
+        "id": "ledger-1",
+        "ts": 1759537249467,
+        "type": "PLAN_SELECTED",
+        "details": {
+          "planId": "plan-a",
+          "contextRef": "76341aa13788b6e4",
+          "capabilityMapVersion": "v1"
+        }
+      },
+      {
+        "id": "ledger-2",
+        "ts": 1759537249467,
+        "type": "POLICY_PRE",
+        "details": {
+          "taskId": "t1",
+          "decision": {
+            "allow": true,
+            "limits": {
+              "timeoutMs": 30000,
+              "retries": 3
+            }
+          }
+        }
+      },
+      {
+        "id": "ledger-3",
+        "ts": 1759537249467,
+        "type": "TASK_START",
+        "details": {
+          "taskId": "t1",
+          "capability": "analyze_codebase",
+          "input": {
+            "path": "./src",
+            "depth": 2,
+            "includeTests": true,
+            "includeIssues": true
+          }
+        }
+      },
+      {
+        "id": "ledger-4",
+        "ts": 1759537249470,
+        "type": "TASK_END",
+        "details": {
+          "taskId": "t1",
+          "output": {
+            "summary": "Analyzed 3 files, found 29 issues",
+            "files": 3,
+            "issues": [
+              {
+                "file": "renderer.ts",
+                "line": 24,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 26,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 29,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 30,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 36,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 40,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 43,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 47,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 54,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 58,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 59,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 60,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 64,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 68,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 72,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 76,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 80,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 81,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 82,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 86,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 90,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 94,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 97,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 100,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 106,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 107,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 108,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 110,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              },
+              {
+                "file": "renderer.ts",
+                "line": 114,
+                "message": "Console.log statement found",
+                "severity": "warning"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "ledger-5",
+        "ts": 1759537249470,
+        "type": "POLICY_POST",
+        "details": {
+          "taskId": "t1",
+          "decision": {
+            "allow": true,
+            "limits": {
+              "timeoutMs": 30000,
+              "retries": 3
+            }
+          }
+        }
+      }
+    ],
+    "metrics": {
+      "costUsd": 0,
+      "elapsedSec": 0
+    }
+  }
+}

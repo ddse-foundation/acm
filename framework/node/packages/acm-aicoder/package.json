@@ -20,7 +20,8 @@
     "clean": "rm -rf dist",
     "test": "tsc && node ./dist/tests/integration.test.js",
     "dev": "tsc --watch",
-    "demo": "tsc && node ./dist/bin/demo.js"
+    "demo": "tsc && node ./dist/bin/demo.js",
+    "acm-aicoder": "node ./dist/bin/aicoder.js"
   },
   "dependencies": {
     "@acm/sdk": "workspace:*",

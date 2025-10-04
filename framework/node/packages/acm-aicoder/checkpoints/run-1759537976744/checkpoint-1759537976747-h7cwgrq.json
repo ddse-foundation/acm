@@ -1,0 +1,125 @@
+{
+  "id": "checkpoint-1759537976747-h7cwgrq",
+  "runId": "run-1759537976744",
+  "ts": 1759537976747,
+  "version": "1.0.0",
+  "state": {
+    "goal": {
+      "id": "goal-analyze-1",
+      "intent": "Analyze the codebase and provide a comprehensive summary",
+      "constraints": {
+        "maxDepth": 3,
+        "includeIssues": true
+      }
+    },
+    "context": {
+      "id": "ctx-analyze-1",
+      "facts": {
+        "path": "/home/manna/workspace/ml/agent/ai-pdf-agent",
+        "depth": 2,
+        "includeTests": true
+      },
+      "version": "1.0"
+    },
+    "plan": {
+      "id": "plan-a",
+      "contextRef": "27d73d4e9cf9e3ae",
+      "capabilityMapVersion": "v1",
+      "tasks": [
+        {
+          "id": "t1",
+          "capability": "analyze_codebase",
+          "input": {
+            "path": "/home/manna/workspace/ml/agent/ai-pdf-agent",
+            "depth": 2,
+            "include_tests": true
+          }
+        }
+      ],
+      "edges": []
+    },
+    "outputs": {
+      "t1": {
+        "summary": "Analyzed 2 files, found 0 issues",
+        "files": 2,
+        "issues": []
+      }
+    },
+    "executed": [
+      "t1"
+    ],
+    "ledger": [
+      {
+        "id": "ledger-1",
+        "ts": 1759537976744,
+        "type": "PLAN_SELECTED",
+        "details": {
+          "planId": "plan-a",
+          "contextRef": "27d73d4e9cf9e3ae",
+          "capabilityMapVersion": "v1"
+        }
+      },
+      {
+        "id": "ledger-2",
+        "ts": 1759537976745,
+        "type": "POLICY_PRE",
+        "details": {
+          "taskId": "t1",
+          "decision": {
+            "allow": true,
+            "limits": {
+              "timeoutMs": 30000,
+              "retries": 3
+            }
+          }
+        }
+      },
+      {
+        "id": "ledger-3",
+        "ts": 1759537976745,
+        "type": "TASK_START",
+        "details": {
+          "taskId": "t1",
+          "capability": "analyze_codebase",
+          "input": {
+            "path": "/home/manna/workspace/ml/agent/ai-pdf-agent",
+            "depth": 2,
+            "include_tests": true
+          }
+        }
+      },
+      {
+        "id": "ledger-4",
+        "ts": 1759537976746,
+        "type": "TASK_END",
+        "details": {
+          "taskId": "t1",
+          "output": {
+            "summary": "Analyzed 2 files, found 0 issues",
+            "files": 2,
+            "issues": []
+          }
+        }
+      },
+      {
+        "id": "ledger-5",
+        "ts": 1759537976747,
+        "type": "POLICY_POST",
+        "details": {
+          "taskId": "t1",
+          "decision": {
+            "allow": true,
+            "limits": {
+              "timeoutMs": 30000,
+              "retries": 3
+            }
+          }
+        }
+      }
+    ],
+    "metrics": {
+      "costUsd": 0,
+      "elapsedSec": 0
+    }
+  }
+}
