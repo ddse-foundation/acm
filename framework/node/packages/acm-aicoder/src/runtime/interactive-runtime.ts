@@ -2,8 +2,18 @@
 // Connects ACM framework components with the TUI
 
 import type { LLM } from '@acm/llm';
-import type { Goal, Context, Plan, Capability, StreamSink } from '@acm/sdk';
-import { LLMPlanner } from '@acm/planner';
+import {
+  DeterministicNucleus,
+  type Goal,
+  type Context,
+  type Plan,
+  type StreamSink,
+  type NucleusFactory,
+  type NucleusConfig,
+  type LLMCallFn,
+  type CapabilityRegistry,
+} from '@acm/sdk';
+import { StructuredLLMPlanner } from '@acm/planner';
 import { MemoryLedger, executeResumablePlan } from '@acm/runtime';
 import type { SessionConfig } from '../config/session.js';
 import { BudgetManager } from './budget-manager.js';
@@ -13,7 +23,7 @@ import * as crypto from 'crypto';
 export interface InteractiveRuntimeOptions {
   config: SessionConfig;
   llm: LLM;
-  capabilities: Capability[];
+  capabilityRegistry: CapabilityRegistry;
   toolRegistry: any;
   policyEngine: any;
   store: AppStore;
@@ -22,28 +32,86 @@ export interface InteractiveRuntimeOptions {
 export class InteractiveRuntime {
   private config: SessionConfig;
   private llm: LLM;
-  private capabilities: Capability[];
+  private capabilityRegistry: CapabilityRegistry;
   private toolRegistry: any;
   private policyEngine: any;
   private store: AppStore;
   private budgetManager: BudgetManager;
   private ledger: MemoryLedger;
+  private nucleusFactory: NucleusFactory;
+  private nucleusConfig: {
+    llmCall: NucleusConfig['llmCall'];
+    hooks?: NucleusConfig['hooks'];
+  };
+  private nucleusLLMCall: LLMCallFn;
   
   constructor(options: InteractiveRuntimeOptions) {
     this.config = options.config;
     this.llm = options.llm;
-    this.capabilities = options.capabilities;
+  this.capabilityRegistry = options.capabilityRegistry;
     this.toolRegistry = options.toolRegistry;
     this.policyEngine = options.policyEngine;
     this.store = options.store;
     
-    this.budgetManager = new BudgetManager(
-      options.config.llmModel,
-      options.config.budgetUsd
-    );
+    this.budgetManager = new BudgetManager(options.config.model);
     
     this.ledger = new MemoryLedger();
     
+    if (!this.llm.generateWithTools) {
+      throw new Error('Configured LLM must support structured tool calls to drive Nucleus.');
+    }
+
+    this.nucleusLLMCall = async (prompt, tools, callConfig) => {
+      const toolDefs = tools.map(tool => ({
+        name: tool.name,
+        description: tool.description ?? 'Interactive runtime tool',
+        inputSchema: tool.inputSchema ?? { type: 'object', properties: {} },
+      }));
+
+      const response = await this.llm.generateWithTools!(
+        [
+          {
+            role: 'system',
+            content: prompt,
+          },
+        ],
+        toolDefs,
+        {
+          temperature: callConfig.temperature,
+          seed: callConfig.seed,
+          maxTokens: callConfig.maxTokens,
+        }
+      );
+
+      return {
+        reasoning: response.text,
+        toolCalls: (response.toolCalls ?? []).map(tc => ({
+          id: tc.id,
+          name: tc.name,
+          input: tc.arguments,
+        })),
+        raw: response.raw,
+      };
+    };
+
+    this.nucleusFactory = config =>
+      new DeterministicNucleus(config, this.nucleusLLMCall, entry => {
+        this.ledger.append(entry.type, entry.details);
+      });
+
+    this.nucleusConfig = {
+      llmCall: {
+        provider: this.llm.name(),
+        model: this.config.model,
+        temperature: this.config.temperature ?? 0.1,
+        maxTokens: 512,
+      },
+      hooks: {
+        preflight: true,
+        postcheck: true,
+      },
+    };
+
     // Subscribe to ledger events
     this.setupLedgerSubscription();
   }
@@ -75,6 +143,9 @@ export class InteractiveRuntime {
         this.store.updateTaskStatus(entry.details.taskId, 'running');
       } else if (entry.type === 'TASK_END' && entry.details.taskId) {
         this.store.updateTaskStatus(entry.details.taskId, 'succeeded');
+        if ('output' in entry.details) {
+          this.store.recordTaskOutput(entry.details.taskId, entry.details.output);
+        }
       } else if (entry.type === 'ERROR' && entry.details.taskId) {
         this.store.updateTaskStatus(
           entry.details.taskId,
@@ -116,22 +187,36 @@ export class InteractiveRuntime {
         },
         emit: (channel, event) => {
           if (channel === 'planner') {
+            const msgs = this.store.getState().messages;
+            const lastPlanner = msgs.filter(m => m.role === 'planner').pop();
+
             if ('delta' in event && event.delta) {
               // Stream planner reasoning
-              const msgId = this.store.getState().messages.find(m => m.role === 'planner' && m.streaming)?.id;
-              if (msgId) {
-                this.store.appendToMessage(msgId, event.delta);
+              if (lastPlanner && lastPlanner.streaming) {
+                this.store.appendToMessage(lastPlanner.id, event.delta);
               } else {
                 this.store.addMessage('planner', event.delta, true);
               }
             }
-            if ('done' in event && event.done) {
-              // Mark streaming complete
-              const msgs = this.store.getState().messages;
-              const lastPlanner = msgs.filter(m => m.role === 'planner').pop();
-              if (lastPlanner) {
-                this.store.updateMessage(lastPlanner.id, lastPlanner.content, false);
-              }
+
+            const summaryParts: string[] = [];
+            if (typeof event.plans === 'number') {
+              const planLabel = event.plans === 1 ? 'plan' : 'plans';
+              summaryParts.push(`Generated ${event.plans} ${planLabel}.`);
+            }
+            if (event.rationale) {
+              summaryParts.push(event.rationale);
+            }
+
+            if (summaryParts.length > 0 && lastPlanner) {
+              const summary = summaryParts.join('\n\n');
+              this.store.updateMessage(lastPlanner.id, summary, false);
+            } else if ('done' in event && event.done && lastPlanner) {
+              // Mark streaming complete with default message if no summary
+              const content = lastPlanner.content?.trim().length
+                ? lastPlanner.content
+                : 'Planner finished.';
+              this.store.updateMessage(lastPlanner.id, content, false);
             }
           }
         },
@@ -140,34 +225,39 @@ export class InteractiveRuntime {
         },
       };
       
-      // Budget check for planning
+      // Token allowance check for planning
+      let planningEstimate;
       try {
         const promptText = `Goal: ${goalText}\nContext: ${JSON.stringify(context.facts)}`;
-        const estimate = this.budgetManager.checkBudget(promptText, 2000);
-        this.store.addEvent('BUDGET_CHECK', {
-          estimated: `$${estimate.estimatedCostUsd.toFixed(4)}`,
-          tokens: estimate.inputTokens + estimate.outputTokens,
+        planningEstimate = this.budgetManager.checkBudget(promptText, 2000);
+        this.store.addEvent('TOKEN_BUDGET_CHECK', {
+          estimatedTokens: planningEstimate.totalTokens,
+          inputTokens: planningEstimate.inputTokens,
+          outputTokens: planningEstimate.outputTokens,
         }, 'blue');
       } catch (err: any) {
-        this.store.addMessage('system', `Budget exceeded: ${err.message}`);
+        this.store.addMessage('system', `Token allowance exceeded: ${err.message}`);
         this.store.setProcessing(false);
         return;
       }
       
       // Plan with LLM
-      this.store.addMessage('planner', '', true);
-      const planner = new LLMPlanner();
+      this.store.addMessage('planner', 'Planner is generating plan(s)...', true);
+      const planner = new StructuredLLMPlanner();
       const plannerResult = await planner.plan({
         goal,
         context,
-        capabilities: this.capabilities,
-        llm: this.llm,
+        capabilities: this.capabilityRegistry.list(),
+        nucleusFactory: this.nucleusFactory,
+        nucleusConfig: this.nucleusConfig,
         stream: streamSink,
         planCount: this.config.planCount || 1,
       });
       
-      // Record spend
-      this.budgetManager.recordSpend(1000, 2000); // Approximate
+    // Record estimated token usage for planning stage
+      if (planningEstimate) {
+        this.budgetManager.recordUsage(planningEstimate.inputTokens, planningEstimate.outputTokens);
+      }
       this.store.updateBudgetStatus(this.budgetManager.getStatus());
       
       if (plannerResult.plans.length === 0) {
@@ -184,7 +274,7 @@ export class InteractiveRuntime {
       }, 'green');
       
       // Execute plan
-      await this.executePlan(goal, context, selectedPlan);
+  await this.executePlan(goal, context, selectedPlan, streamSink);
       
     } catch (error: any) {
       this.store.addMessage('system', `Error: ${error.message}`);
@@ -194,32 +284,37 @@ export class InteractiveRuntime {
     }
   }
   
-  private async executePlan(goal: Goal, context: Context, plan: Plan): Promise<void> {
+  private async executePlan(goal: Goal, context: Context, plan: Plan, stream: StreamSink): Promise<void> {
     try {
       // Execute plan with resumable runtime
       const result = await executeResumablePlan({
         goal,
         context,
         plan,
-        capabilityRegistry: {
-          list: () => this.capabilities,
-          has: (name: string) => this.capabilities.some(c => c.name === name),
-          resolve: (name: string) => {
-            const cap = this.capabilities.find(c => c.name === name);
-            return cap ? { execute: async () => ({}) } as any : undefined;
-          },
-          inputSchema: () => undefined,
-          outputSchema: () => undefined,
-        },
+        capabilityRegistry: this.capabilityRegistry,
         toolRegistry: this.toolRegistry,
         policy: this.policyEngine,
         verify: async () => true,
         runId: `run-${Date.now()}`,
         ledger: this.ledger,
+        nucleusFactory: this.nucleusFactory,
+        nucleusConfig: this.nucleusConfig,
+        stream,
       });
       
       this.store.addMessage('system', 'Goal completed successfully!');
       this.store.addEvent('GOAL_COMPLETED', { goalId: goal.id }, 'green');
+
+      const completedTasks = this.store
+        .getState()
+        .tasks.filter(task => task.outputSummary && task.status === 'succeeded');
+
+      if (completedTasks.length > 0) {
+        const summaryLines = completedTasks.map(task => `• ${task.name}: ${task.outputSummary}`);
+        this.store.addMessage('system', `Summary of task outputs:\n${summaryLines.join('\n')}`);
+      } else if (Object.keys(result.outputsByTask || {}).length === 0) {
+        this.store.addMessage('system', 'Execution completed, but no tasks produced structured outputs.');
+      }
       
       // Cleanup after goal
       await this.cleanupGoal();

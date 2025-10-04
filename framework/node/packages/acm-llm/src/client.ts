@@ -177,7 +177,7 @@ export class OpenAICompatClient implements LLM {
         model: this.config.model,
         messages,
         tools: openaiTools,
-        tool_choice: 'auto',
+        tool_choice: openaiTools.length > 0 ? 'required' : 'auto',
         temperature: opts?.temperature ?? 0.7,
         seed: opts?.seed,
         max_tokens: opts?.maxTokens,

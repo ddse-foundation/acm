@@ -1,10 +1,68 @@
 // Integration test for ACM framework
-import { DefaultStreamSink } from '@acm/sdk';
+import {
+  DefaultStreamSink,
+  Nucleus,
+  type Goal,
+  type Context,
+  type Plan,
+  type NucleusFactory,
+  type NucleusConfig,
+  type PreflightResult,
+  type PostcheckResult,
+  type NucleusInvokeResult,
+  type InternalContextScope,
+  type LedgerEntry,
+} from '@acm/sdk';
 import { MemoryLedger, executePlan } from '@acm/runtime';
-import type { Goal, Context, Plan } from '@acm/sdk';
 import { SearchTool } from '../src/tools/index.js';
 import { SearchTask } from '../src/tasks/index.js';
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '../src/registries.js';
+
+class TestNucleus extends Nucleus {
+  private scope?: InternalContextScope;
+
+  constructor(config: NucleusConfig) {
+    super(config);
+  }
+
+  async preflight(): Promise<PreflightResult> {
+    return { status: 'OK' };
+  }
+
+  async invoke(): Promise<NucleusInvokeResult> {
+    return { toolCalls: [] };
+  }
+
+  async postcheck(): Promise<PostcheckResult> {
+    return { status: 'COMPLETE' };
+  }
+
+  recordInference(promptDigest: string): LedgerEntry {
+    return {
+      id: `test-nucleus-${Date.now()}`,
+      ts: Date.now(),
+      type: 'NUCLEUS_INFERENCE',
+      details: { promptDigest },
+    };
+  }
+
+  getInternalContext(): InternalContextScope | undefined {
+    return this.scope;
+  }
+
+  setInternalContext(scope: InternalContextScope): void {
+    this.scope = scope;
+  }
+}
+
+const testNucleusFactory: NucleusFactory = config => new TestNucleus(config);
+
+const nucleusConfig = {
+  llmCall: {
+    provider: 'test',
+    model: 'stub',
+  },
+};
 
 async function testBasicExecution() {
   console.log('Testing basic ACM execution...');
@@ -49,6 +107,8 @@ async function testBasicExecution() {
     capabilityRegistry,
     toolRegistry,
     ledger,
+    nucleusFactory: testNucleusFactory,
+    nucleusConfig,
   });
 
   // Verify

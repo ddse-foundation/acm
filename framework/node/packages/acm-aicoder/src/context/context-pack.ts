@@ -35,16 +35,20 @@ export class ContextPackGenerator {
   ): Promise<ContextPack> {
     const maxFiles = options.maxFiles ?? 8;
     const maxSymbols = options.maxSymbols ?? 20;
+    const normalizedGoal = (goal || '').toString();
+    const searchQuery = normalizedGoal.trim().length > 0
+      ? normalizedGoal
+      : 'workspace overview';
 
     // Search for relevant files
-    const searchResults = await this.search.search(goal, {
+    const searchResults = await this.search.search(searchQuery, {
       k: maxFiles,
       includeContext: true,
       contextLines: 2,
     });
 
     // Extract relevant symbols (top matching symbols)
-    const relevantSymbols = this.findRelevantSymbols(goal, symbols, maxSymbols);
+    const relevantSymbols = this.findRelevantSymbols(normalizedGoal, symbols, maxSymbols);
 
     // Filter dependencies if requested
     const relevantDeps = options.includeDependencies 
@@ -58,7 +62,7 @@ export class ContextPackGenerator {
 
     // Build context pack
     const pack: ContextPack = {
-      goal,
+      goal: normalizedGoal,
       files: searchResults.map(r => ({
         path: r.path,
         snippet: r.snippet,
@@ -78,8 +82,12 @@ export class ContextPackGenerator {
    * Find symbols relevant to the goal
    */
   private findRelevantSymbols(goal: string, symbols: SymbolInfo[], limit: number): SymbolInfo[] {
-    const goalLower = goal.toLowerCase();
-    const tokens = goalLower.split(/\s+/);
+    const goalLower = (goal || '').toLowerCase();
+    const tokens = goalLower.split(/\s+/).filter(Boolean);
+
+    if (tokens.length === 0) {
+      return [];
+    }
 
     // Score symbols by relevance
     const scored = symbols.map(symbol => {

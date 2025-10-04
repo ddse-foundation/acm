@@ -1,10 +1,16 @@
 #!/usr/bin/env node
 
 // ACM Demo CLI - End-to-end example
-import { DefaultStreamSink } from '@acm/sdk';
+import {
+  DefaultStreamSink,
+  DeterministicNucleus,
+  type NucleusFactory,
+  type NucleusConfig,
+  type LLMCallFn,
+} from '@acm/sdk';
 import { MemoryLedger, executePlan, executeResumablePlan, FileCheckpointStore } from '@acm/runtime';
 import { createOllamaClient, createVLLMClient } from '@acm/llm';
-import { LLMPlanner } from '@acm/planner';
+import { StructuredLLMPlanner } from '@acm/planner';
 import { asLangGraph, wrapAgentNodes } from '@acm/adapters';
 import { ReplayBundleExporter, type TaskIORecord } from '@acm/replay';
 import { goals, contexts } from '../src/goals/index.js';
@@ -140,6 +146,73 @@ async function main() {
       ? createOllamaClient(config.model, config.baseUrl)
       : createVLLMClient(config.model, config.baseUrl);
 
+  if (!llm.generateWithTools) {
+    throw new Error('Selected LLM provider does not support structured tool calls required by Nucleus.');
+  }
+
+  let activeLedger: MemoryLedger | undefined;
+
+  const nucleusLLMCall: LLMCallFn = async (prompt, tools, callConfig) => {
+    const toolDefs = tools.map(tool => ({
+      name: tool.name,
+      description: tool.description ?? 'Nucleus tool',
+      inputSchema: tool.inputSchema ?? { type: 'object', properties: {} },
+    }));
+
+    const response = await llm.generateWithTools!(
+      [
+        {
+          role: 'system',
+          content: prompt,
+        },
+      ],
+      toolDefs,
+      {
+        temperature: callConfig.temperature,
+        seed: callConfig.seed,
+        maxTokens: callConfig.maxTokens,
+      }
+    );
+
+    return {
+      reasoning: response.text,
+      toolCalls: (response.toolCalls ?? []).map(tc => ({
+        id: tc.id,
+        name: tc.name,
+        input: tc.arguments,
+      })),
+      raw: response.raw,
+    };
+  };
+
+  const nucleusFactory: NucleusFactory = config =>
+    new DeterministicNucleus(config, nucleusLLMCall, entry => {
+      activeLedger?.append(entry.type, entry.details);
+    });
+
+  const nucleusConfig: NucleusConfig = {
+    goalId: '',
+    contextRef: '',
+    llmCall: {
+      provider: llm.name(),
+      model: config.model,
+      temperature: 0.1,
+      maxTokens: 512,
+    },
+    hooks: {
+      preflight: true,
+      postcheck: true,
+    },
+  };
+
+  const sharedNucleusOptions = {
+    nucleusFactory,
+    nucleusConfig: {
+      llmCall: nucleusConfig.llmCall,
+      hooks: nucleusConfig.hooks,
+    },
+  } as const;
+
   // Setup registries
   const toolRegistry = new SimpleToolRegistry();
   toolRegistry.register(new SearchTool());
@@ -181,19 +254,25 @@ async function main() {
   }
 
   // Create planner
-  const planner = new LLMPlanner();
+  const planner = new StructuredLLMPlanner();
+
+  // Shared ledger across planning and execution
+  const ledger = new MemoryLedger();
 
   console.log('📋 Planning...\n');
 
   try {
     // Generate plans
+    activeLedger = ledger;
     const plannerResult = await planner.plan({
       goal,
       context,
       capabilities: capabilityRegistry.list(),
-      llm,
+      nucleusFactory,
+      nucleusConfig: sharedNucleusOptions.nucleusConfig,
       stream: config.stream ? stream : undefined,
     });
+    activeLedger = undefined;
 
     console.log(`\n✅ Plans generated: ${plannerResult.plans.length}`);
     if (plannerResult.rationale) {
@@ -214,9 +293,6 @@ async function main() {
     // Create policy engine
     const policy = new SimplePolicyEngine();
 
-    // Create ledger
-    const ledger = new MemoryLedger();
-    
     // Track task I/O for replay bundle
     const taskIO: TaskIORecord[] = [];
 
@@ -257,6 +333,7 @@ async function main() {
     if (config.engine === 'runtime') {
       if (config.resume) {
         console.log(`⚙️  Resuming execution from checkpoint...\n`);
+        activeLedger = ledger;
         result = await executeResumablePlan({
           goal,
           context,
@@ -271,9 +348,12 @@ async function main() {
           resumeFrom: config.resume,
           checkpointStore,
           checkpointInterval: 1,
+          ...sharedNucleusOptions,
         });
+        activeLedger = undefined;
       } else {
         console.log('⚙️  Executing with ACM runtime (with checkpointing)...\n');
+        activeLedger = ledger;
         result = await executeResumablePlan({
           goal,
           context,
@@ -287,7 +367,9 @@ async function main() {
           runId,
           checkpointStore,
           checkpointInterval: 1,
+          ...sharedNucleusOptions,
         });
+        activeLedger = undefined;
       }
     } else if (config.engine === 'langgraph') {
       console.log('⚙️  Executing with LangGraph adapter...\n');
@@ -303,8 +385,11 @@ async function main() {
         policy,
         stream: config.stream ? stream : undefined,
         ledger,
+        ...sharedNucleusOptions,
       });
+      activeLedger = ledger;
       result = await adapter.execute();
+      activeLedger = undefined;
     } else if (config.engine === 'msaf') {
       console.log('⚙️  Executing with MS Agent Framework adapter...\n');
       if (config.resume) {
@@ -319,8 +404,11 @@ async function main() {
         policy,
         stream: config.stream ? stream : undefined,
         ledger,
+        ...sharedNucleusOptions,
       });
+      activeLedger = ledger;
       result = await adapter.execute();
+      activeLedger = undefined;
     }
 
     if (!result) {

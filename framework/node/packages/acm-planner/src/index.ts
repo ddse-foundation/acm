@@ -1,3 +1,7 @@
-// Planner exports
-export { LLMPlanner, type PlannerOptions, type PlannerResult } from './planner.js';
-export { StructuredLLMPlanner } from './structured-planner.js';
+// Planner exports (structured-only)
+export {
+	StructuredLLMPlanner,
+	StructuredLLMPlanner as Planner,
+	type PlannerOptions,
+	type PlannerResult,
+} from './structured-planner.js';

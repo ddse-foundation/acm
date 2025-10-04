@@ -1,13 +1,18 @@
 // Microsoft Agent Framework Adapter for ACM
-import type {
-  Goal,
-  Context,
-  Plan,
-  CapabilityRegistry,
-  ToolRegistry,
-  PolicyEngine,
-  StreamSink,
+import {
+  InternalContextScopeImpl,
+  type Goal,
+  type Context,
+  type Plan,
+  type CapabilityRegistry,
+  type ToolRegistry,
+  type PolicyEngine,
+  type StreamSink,
+  type RunContext,
+  type NucleusFactory,
+  type NucleusConfig,
 } from '@acm/sdk';
+import { createInstrumentedToolGetter } from '@acm/runtime';
 import type { MemoryLedger } from '@acm/runtime';
 
 /**
@@ -24,6 +29,12 @@ export interface MSAgentFrameworkAdapterOptions {
   ledger?: MemoryLedger;
   resumeFrom?: string; // Checkpoint ID to resume from (optional, may not be supported)
   checkpointStore?: any; // Checkpoint store (optional, may not be supported)
+  nucleusFactory: NucleusFactory;
+  nucleusConfig: {
+    llmCall: NucleusConfig['llmCall'];
+    hooks?: NucleusConfig['hooks'];
+    allowedTools?: string[];
+  };
 }
 
 /**
@@ -83,15 +94,51 @@ export class MSAgentFrameworkAdapter {
           }
 
           // Build run context
-          const runContext = {
+          const allowedTools = new Set<string>(this.options.nucleusConfig.allowedTools ?? []);
+          for (const tool of taskSpec.tools ?? []) {
+            allowedTools.add(tool.name);
+          }
+
+          const nucleus = this.options.nucleusFactory({
+            goalId: this.options.goal.id,
+            planId: this.options.plan.id,
+            taskId: taskSpec.id,
+            contextRef: this.options.plan.contextRef,
+            llmCall: this.options.nucleusConfig.llmCall,
+            hooks: this.options.nucleusConfig.hooks,
+            allowedTools: Array.from(allowedTools),
+          });
+
+          const internalScope = new InternalContextScopeImpl(entry => {
+            this.options.ledger?.append(entry.type, entry.details);
+          });
+          nucleus.setInternalContext(internalScope);
+
+          const getTool = createInstrumentedToolGetter({
+            taskId: taskSpec.id,
+            capability: capabilityName,
+            toolRegistry,
+            ledger,
+          });
+
+          const runContext: RunContext = {
             goal: this.options.goal,
             context: state.context,
             outputs: Object.fromEntries(state.outputs),
             metrics: { costUsd: 0, elapsedSec: 0 },
-            getTool: (name: string) => toolRegistry.get(name),
+            getTool,
             getCapabilityRegistry: () => capabilityRegistry,
             stream,
+            nucleus,
+            internalContext: internalScope,
           };
+
+          const preflight = await nucleus.preflight();
+          if (preflight.status === 'NEEDS_CONTEXT') {
+            throw new Error(
+              `Task ${taskSpec.id} requires additional context retrieval: ${preflight.retrievalDirectives.join(', ')}`
+            );
+          }
 
           // Policy pre-check (PDP hook)
           if (policy) {
@@ -179,6 +226,11 @@ export class MSAgentFrameworkAdapter {
               taskId: taskSpec.id,
               capability: taskSpec.capability,
             });
+          }
+
+          const postcheck = await nucleus.postcheck(output);
+          if (postcheck.status === 'NEEDS_COMPENSATION' || postcheck.status === 'ESCALATE') {
+            throw new Error(`Task ${taskSpec.id} postcheck failed: ${postcheck.reason}`);
           }
 
           return output;

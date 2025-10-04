@@ -1,13 +1,14 @@
 // Resumable executor with checkpoint and resume support
-import type {
-  Goal,
-  Context,
-  Plan,
-  CapabilityRegistry,
-  ToolRegistry,
-  PolicyEngine,
-  StreamSink,
-  RunContext,
+import {
+  InternalContextScopeImpl,
+  type Goal,
+  type Context,
+  type Plan,
+  type CapabilityRegistry,
+  type ToolRegistry,
+  type PolicyEngine,
+  type StreamSink,
+  type RunContext,
 } from '@acm/sdk';
 import { evaluateGuard } from './guards.js';
 import { MemoryLedger } from './ledger.js';
@@ -21,6 +22,7 @@ import {
   type CheckpointState,
 } from './checkpoint.js';
 import type { ExecutePlanOptions, ExecutePlanResult } from './executor.js';
+import { createInstrumentedToolGetter } from './tool-envelope.js';
 
 /**
  * Extended options for resumable execution
@@ -47,6 +49,8 @@ export async function executeResumablePlan(
     policy,
     verify,
     stream,
+    nucleusFactory,
+    nucleusConfig,
     resumeFrom,
     checkpointInterval = 1,
     checkpointStore = new MemoryCheckpointStore(),
@@ -181,16 +185,56 @@ export async function executeResumablePlan(
         throw new Error(`Task not found for capability: ${capabilityName}`);
       }
 
+      const nucleusAllowedTools = new Set<string>(nucleusConfig.allowedTools ?? []);
+      for (const tool of taskSpec.tools ?? []) {
+        nucleusAllowedTools.add(tool.name);
+      }
+
+      const nucleus = nucleusFactory({
+        goalId: goal.id,
+        planId: plan.id,
+        taskId: taskSpec.id,
+        contextRef: plan.contextRef,
+        llmCall: nucleusConfig.llmCall,
+        hooks: nucleusConfig.hooks,
+        allowedTools: Array.from(nucleusAllowedTools),
+      });
+
+      const internalScope = new InternalContextScopeImpl(entry => {
+        ledger.append(entry.type, entry.details);
+      });
+      nucleus.setInternalContext(internalScope);
+
+      const getTool = createInstrumentedToolGetter({
+        taskId: taskSpec.id,
+        capability: capabilityName,
+        toolRegistry,
+        ledger,
+      });
+
       // Build run context
       const runContext: RunContext = {
         goal,
         context,
         outputs,
         metrics,
-        getTool: (name: string) => toolRegistry.get(name),
+        getTool,
         getCapabilityRegistry: () => capabilityRegistry,
         stream,
+        nucleus,
+        internalContext: internalScope,
       };
+
+      const preflight = await nucleus.preflight();
+      if (preflight.status === 'NEEDS_CONTEXT') {
+        ledger.append('CONTEXT_INTERNALIZED', {
+          taskId: taskSpec.id,
+          directives: preflight.retrievalDirectives,
+        });
+        throw new Error(
+          `Task ${taskSpec.id} requires additional context retrieval: ${preflight.retrievalDirectives.join(', ')}`
+        );
+      }
 
       // Policy pre-check
       if (policy) {
@@ -272,6 +316,24 @@ export async function executeResumablePlan(
           if (!verified) {
             throw new Error(`Verification failed for task ${taskSpec.id}`);
           }
+        }
+
+        const postcheck = await nucleus.postcheck(output);
+        if (postcheck.status === 'NEEDS_COMPENSATION') {
+          ledger.append('ERROR', {
+            taskId: taskSpec.id,
+            stage: 'NUCLEUS_POSTCHECK',
+            message: postcheck.reason,
+          });
+          throw new Error(`Task ${taskSpec.id} requires compensation: ${postcheck.reason}`);
+        }
+        if (postcheck.status === 'ESCALATE') {
+          ledger.append('ERROR', {
+            taskId: taskSpec.id,
+            stage: 'NUCLEUS_POSTCHECK',
+            message: postcheck.reason,
+          });
+          throw new Error(`Task ${taskSpec.id} escalated: ${postcheck.reason}`);
         }
 
         executed.add(taskSpec.id);

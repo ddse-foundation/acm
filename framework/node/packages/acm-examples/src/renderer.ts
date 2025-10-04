@@ -6,7 +6,21 @@ export class CLIRenderer {
     if (chunk.delta) {
       process.stdout.write(chunk.delta);
     }
-    if (chunk.done) {
+
+    const summary: string[] = [];
+    if (typeof chunk.plans === 'number') {
+      const label = chunk.plans === 1 ? 'plan' : 'plans';
+      summary.push(`Generated ${chunk.plans} ${label}.`);
+    }
+    if (chunk.rationale) {
+      summary.push(chunk.rationale);
+    }
+
+    if (summary.length > 0) {
+      process.stdout.write(`\n\n${summary.join('\n\n')}\n\n`);
+    }
+
+    if (chunk.done && summary.length === 0) {
       process.stdout.write('\n\n');
     }
   }

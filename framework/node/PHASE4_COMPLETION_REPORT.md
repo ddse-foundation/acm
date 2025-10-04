@@ -493,7 +493,7 @@ class MyTask extends Task {
 
 1. **Type Compatibility**: All new fields are optional; existing code compiles without changes
 2. **Runtime Compatibility**: Both `capability` and `capabilityRef` supported
-3. **Planner Compatibility**: Original `LLMPlanner` preserved alongside `StructuredLLMPlanner`
+3. **Planner Compatibility**: `StructuredLLMPlanner` is now the default planner; legacy `LLMPlanner` has been retired
 4. **Ledger Compatibility**: Old entry types still work; new types are additive
 5. **Replay Compatibility**: Old bundles can still be loaded and replayed
 

@@ -10,6 +10,13 @@
 
 Phase 4 extends the code-first Node framework to satisfy the next tranche of ACM v0.5 requirements. The work is organized around eight concrete change requests informed by the latest implementation review:
 
+### Recent Progress (2025-10-04)
+
+- Runtime and resumable executors now instantiate a Nucleus per task, share the internal context scope, and expose the instance through `RunContext` so tools/tasks operate on the same scoped state.
+- A shared tool-call instrumentation layer wraps every registry lookup, emitting structured `ToolCallEnvelope` entries into the ledger (`TOOL_CALL`) alongside digests and durations to reinforce tool-call discipline.
+- SDK type surfaces were refreshed to include the additional ledger entry type, `RunContext.nucleus`, and `Nucleus.setInternalContext`, preventing downstream code from falling back to untyped casts.
+- Documentation and build artifacts will continue to track these updates so downstream agents (including AI Coder) inherit the Nucleus-first tone without diverging fallbacks.
+
 1. **Structured planner output & selection rigor:** Replace the current JSON-parsing planner flow with deterministic structured tool calls (ReAct-style), support configurable multi-plan generation (defaulting to a single plan), and capture rationale plus prompt digests whenever alternatives are produced.
 2. **Tool-call discipline:** Ensure every tool invocation in the framework—including Nucleus internals—emits structured tool-call envelopes (no ad-hoc JSON parsing or string introspection).
 3. **Spec-compliant SDK contracts:** Restore `Goal`, `Context`, `Plan`, `TaskSpec`, and `LedgerEntry` types to the full ACM v0.5 surface, enabling downstream components to produce auditable artifacts.
@@ -51,7 +58,7 @@ Out of scope: productionizing additional engines, expanding policy DSLs, or rewo
 
 - Define `PlannerToolCall` schema (`packages/acm-sdk/src/tooling.ts`) capturing tool name, input payload, expected output types, prompt digests, and alternative ids.
 - Enhance `LLM` interface to support a "tool-call" generation mode returning typed call results instead of raw text, including streaming rationale tokens.
-- Rewrite `LLMPlanner` to operate in a ReAct loop:
+- Ship `StructuredLLMPlanner` operating in a ReAct loop:
   - Assemble prompts referencing allowed planner tool names: `emit_plan`, `ask_policy`, `fetch_context_internal`.
   - Allow developers to configure the number of plan candidates (default 1) while capturing rationales/tool traces whenever additional alternatives are requested.
   - Feed user/assistant messages to `llm.generateToolCalls(...)` (new helper) and handle streaming.

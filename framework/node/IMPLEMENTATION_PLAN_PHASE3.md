@@ -95,7 +95,7 @@ Release is gated on an acceptance demo showing bugfix + feature journeys end-to-
 
 - Implement `bin/aicoder.ts` (ESM) using `enquirer`:
   - Parse flags (provider/model, engine, goal templates, analysis-only, auto-approve, resume, config file).
-  - Kick off `LLMPlanner` with streaming; render Plan A/B with rationale and risk scoring; allow regenerate or manual selection.
+  - Kick off `StructuredLLMPlanner` with streaming structured tool-calls; render Plan A/B with rationale and risk scoring; allow regenerate or manual selection.
   - Manage approvals: require user ack for plan selection, branching, and any mutating tasks.
 - Integrate `@acm/runtime` (resumable executor) with `FileCheckpointStore`, optional `--resume` flag, and progress persistence.
 - Provide engine adapters (runtime, LangGraph, MSAF) with capability parity checks; warn when features degrade.

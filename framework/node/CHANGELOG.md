@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Zero external dependencies
 
 - **@acm/planner**: LLM-based plan generation
-  - LLMPlanner for Goal → Plan-A/B generation
+  - StructuredLLMPlanner for Goal → Plan-A/B generation
   - Context reference computation (SHA-256)
   - Safe fallback on parsing errors
   - Streaming support

@@ -200,6 +200,9 @@ export class CollectContextPackTask extends Task<
     input: { goal: string; path?: string; maxFiles?: number; maxSymbols?: number }
   ): Promise<{ contextPack: ContextPack }> {
     const rootPath = input.path || process.cwd();
+    const goalText = (input.goal && input.goal.trim().length > 0)
+      ? input.goal
+      : (ctx.goal?.intent || ctx.goal?.id || '');
 
     // Build index and search
     ctx.stream?.emit('task', { taskId: this.id, step: 'indexing' });
@@ -222,7 +225,7 @@ export class CollectContextPackTask extends Task<
     ctx.stream?.emit('task', { taskId: this.id, step: 'generating_context' });
     const packGenerator = new ContextPackGenerator(search);
     const contextPack = await packGenerator.generate(
-      input.goal,
+      goalText,
       index,
       symbols,
       dependencies,

@@ -1,10 +1,10 @@
 # @acm/planner
 
-LLM-based plan generation with Plan-A/B alternatives and safe fallback.
+Structured tool-call planner generating Plan-A/B alternatives with safe fallback.
 
 ## Overview
 
-The planner package uses LLMs to generate execution plans from goals and contexts. It produces Plan-A and Plan-B alternatives as specified in ACM v0.5, with automatic fallback to a safe linear plan if parsing fails.
+The planner package uses LLM tool calls to generate execution plans from goals and contexts. It produces Plan-A and Plan-B alternatives as specified in ACM v0.5, with automatic fallback to a safe linear plan if the model fails to emit valid tool calls.
 
 ## Installation
 
@@ -14,11 +14,10 @@ pnpm add @acm/planner @acm/llm @acm/sdk
 
 ## Features
 
-- ✅ LLM-based plan generation
+- ✅ Structured tool-call planning loops
 - ✅ Plan-A and Plan-B alternatives
 - ✅ Context reference computation (SHA-256)
-- ✅ Streaming support for live feedback
-- ✅ Safe fallback on parsing errors
+- ✅ Deterministic fallback when tool calls fail
 - ✅ ACM v0.5 compliant plan format
 
 ## Usage
@@ -26,11 +25,11 @@ pnpm add @acm/planner @acm/llm @acm/sdk
 ### Basic Planning
 
 ```typescript
-import { LLMPlanner } from '@acm/planner';
+import { StructuredLLMPlanner } from '@acm/planner';
 import { createOllamaClient } from '@acm/llm';
 
 const llm = createOllamaClient('llama3.1');
-const planner = new LLMPlanner();
+const planner = new StructuredLLMPlanner();
 
 const result = await planner.plan({
   goal: {
@@ -63,29 +62,15 @@ console.log('Rationale:', result.rationale);
 const plan = result.plans[0];
 ```
 
-### With Streaming
+### Tool-Call Telemetry
 
 ```typescript
 import { DefaultStreamSink } from '@acm/sdk';
 
-const stream = new DefaultStreamSink();
+const result = await planner.plan({ goal, context, capabilities, llm });
 
-stream.attach('planner', (chunk) => {
-  if (chunk.delta) {
-    process.stdout.write(chunk.delta);
-  }
-  if (chunk.done) {
-    console.log('\n\nPlanning complete!');
-  }
-});
-
-const result = await planner.plan({
-  goal,
-  context,
-  capabilities,
-  llm,
-  stream,
-});
+// Access emitted tool calls
+console.log(result.plans.map(plan => plan.id));
 ```
 
 ### Custom Capability Map Version
@@ -104,13 +89,14 @@ console.log('Plan uses capability map:', result.plans[0].capabilityMapVersion);
 
 ## API Reference
 
-### LLMPlanner
+### StructuredLLMPlanner
 
-#### plan(options): Promise<PlannerResult>
+#### plan(options): `Promise<PlannerResult>`
 
-Generate Plan-A and Plan-B from a goal and context.
+Generate Plan-A and Plan-B from a goal and context using structured tool calls.
 
 **Options:**
+
 ```typescript
 {
   goal: Goal;                    // The goal to plan for
@@ -123,6 +109,7 @@ Generate Plan-A and Plan-B from a goal and context.
 ```
 
 **Returns:**
+
 ```typescript
 {
   plans: Plan[];        // Plan-A and Plan-B (or fallback)
@@ -172,6 +159,7 @@ const contextRef = sha256(JSON.stringify(context)).substring(0, 16);
 ```
 
 This ensures:
+
 - Plans are bound to specific contexts
 - Replay audits can verify context integrity
 - Context changes trigger re-planning
@@ -197,13 +185,15 @@ This ensures the system remains operational even with unreliable LLM outputs.
 ## Prompt Engineering
 
 The planner uses a structured prompt that includes:
+
 - Goal intent and constraints
 - Context facts
 - Available capability names
 - Request for Plan-A and Plan-B in JSON format
 
 Example prompt:
-```
+
+```text
 You are a task planner. Given a goal and context, generate two
 alternative execution plans (Plan-A and Plan-B).
 
@@ -217,17 +207,9 @@ Available capabilities: search, assess_risk, create_refund
 Generate two plans in the following JSON format: ...
 ```
 
-## Streaming Output
+## Planner Events
 
-When streaming is enabled, the planner emits token-by-token updates:
-
-```typescript
-stream.emit('planner', { delta: 'Generating' });
-stream.emit('planner', { delta: ' plan...' });
-stream.emit('planner', { done: true });
-```
-
-This provides real-time feedback during planning, which can take several seconds.
+When a `StreamSink` is supplied, the planner emits high-level events (for example, number of plans produced) once planning completes. Use these signals to update UIs without parsing raw JSON.
 
 ## ACM v0.5 Compliance
 
@@ -239,6 +221,7 @@ This provides real-time feedback during planning, which can take several seconds
 ## Error Handling
 
 The planner never throws errors. Instead:
+
 - Invalid LLM responses trigger fallback plan
 - Network errors are logged and fallback is used
 - Malformed JSON is caught and fallback is used
@@ -248,10 +231,11 @@ This ensures robustness in production environments.
 ## Performance
 
 Typical planning times:
+
 - Ollama (llama3.1): 2-5 seconds
 - vLLM (qwen2.5:7b): 1-3 seconds
 
-Streaming provides immediate feedback, improving perceived performance.
+Tool-call responses are returned in a single completion, so UI updates occur as soon as the model responds.
 
 ## License
 

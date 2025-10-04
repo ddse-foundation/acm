@@ -40,11 +40,10 @@ The Phase 2 AI Coder is built entirely on ACM v0.5 framework primitives:
 
 ```bash
 acm-aicoder \
-  --llm-model gpt-4o \
-  --llm-base-url https://api.openai.com \
-  --llm-engine langgraph \
-  --workspace /path/to/your/project \
-  --budget-usd 10
+  --provider vllm \
+  --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 \
+  --base-url http://localhost:8001/v1 \
+  --workspace /path/to/your/project
 ```
 
 ### Available Commands
@@ -61,18 +60,22 @@ acm-aicoder \
 ## Components
 
 ### Budget Governance
+
 - Pre-inference cost checks using provider metadata
 - Live spend tracking with warnings
 - Hard limits with override prompts
 - Token estimation: ~4 chars per token
 
 ### Streaming Reasoning
+
 - Planner thoughts appear in Chat pane as they generate
 - Nucleus inferences show reasoning process
 - Real-time task status updates
 
 ### Memory Lifecycle
+
 After each goal:
+
 - Replay bundle saved to `.aicoder/replays/{timestamp}/`
 - Budget reset for next goal
 - Chat and events preserved
@@ -80,13 +83,14 @@ After each goal:
 ## Configuration
 
 ### Required Parameters
-- `--llm-model` - Model name (e.g., gpt-4o, llama3.1)
-- `--llm-base-url` - API endpoint
-- `--llm-engine` - Runtime engine (langgraph, msaf, runtime)
+
+- `--provider` - LLM provider (`ollama` or `vllm`, default: `ollama`)
+- `--model` - Model identifier published by the provider
 - `--workspace` - Project root directory
 
 ### Optional Parameters
-- `--budget-usd` - Spending limit (default: unlimited)
+
+- `--base-url` - Override provider endpoint
 - `--temperature` - LLM temperature 0-2 (default: 0.7)
 - `--seed` - Random seed for reproducibility
 - `--plans` - Number of plans to generate, 1 or 2 (default: 1)
@@ -109,6 +113,7 @@ export class MyTask extends Task<{ input: string }, { output: string }> {
 ```
 
 Register in `bin/interactive.tsx`:
+
 ```typescript
 capabilityRegistry.register(
   { name: 'my_capability', sideEffects: false },
@@ -130,6 +135,7 @@ export class MyTool extends Tool<{ input: string }, { result: string }> {
 ```
 
 Register in `bin/interactive.tsx`:
+
 ```typescript
 toolRegistry.register(new MyTool());
 ```
@@ -137,38 +143,41 @@ toolRegistry.register(new MyTool());
 ## Example Sessions
 
 ### Local Ollama
+
 ```bash
 ollama serve
 ollama pull llama3.1
 
 acm-aicoder \
-  --llm-model llama3.1 \
-  --llm-base-url http://localhost:11434 \
-  --llm-engine runtime \
+  --provider ollama \
+  --model llama3.1 \
+  --base-url http://localhost:11434 \
   --workspace ~/project
 ```
 
 ### OpenAI
+
 ```bash
 export OPENAI_API_KEY="sk-..."
 
 acm-aicoder \
-  --llm-model gpt-4o \
-  --llm-base-url https://api.openai.com \
-  --llm-engine langgraph \
-  --workspace ~/project \
-  --budget-usd 5
+  --provider vllm \
+  --model gpt-4o \
+  --base-url https://api.openai.com \
+  --workspace ~/project
 ```
 
 ## Capabilities
 
 ### Analysis (No Side Effects)
+
 - `analyze_workspace` - Deep codebase analysis
 - `collect_context_pack` - Generate context for planning
 - `search_code` - BM25-based code search
 - `find_symbol_definition` - Locate symbols
 
 ### Development (Side Effects)
+
 - `implement_function` - Create implementations
 - `refactor_rename_symbol` - Rename with tracking
 - `fix_type_error` - Fix TypeScript errors
@@ -177,13 +186,16 @@ acm-aicoder \
 ## Troubleshooting
 
 ### Missing Parameters
+
 Ensure all required flags are provided. Check error message for details.
 
 ### Budget Exceeded
-- Increase: `--budget-usd 20`
-- Use local: `--llm-model llama3.1 --llm-base-url http://localhost:11434`
+
+- Use a model with a higher token allowance or adjust provider configuration
+- Run locally: `--provider ollama --model llama3.1 --base-url http://localhost:11434`
 
 ### Layout Issues
+
 - Terminal must be ≥80 columns wide
 - Use standard terminal emulators
 

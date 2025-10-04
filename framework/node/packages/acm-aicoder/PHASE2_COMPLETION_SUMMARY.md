@@ -15,7 +15,7 @@ Successfully implemented Phase 2 of ACM AI Coder, transforming it from a demonst
 - **Lines of Code:** ~2,500
 - **Build Status:** ✅ All packages compile
 - **Test Status:** ✅ All tests pass
-- **Breaking Changes:** None (Phase 1 preserved as legacy mode)
+- **Breaking Changes:** ✅ Legacy Phase 1 CLI binaries removed; interactive TUI is now the only entry point
 
 ## Major Components Delivered
 
@@ -31,9 +31,9 @@ Successfully implemented Phase 2 of ACM AI Coder, transforming it from a demonst
 - React 18.3.1
 
 ### 2. Configuration Layer (src/config/)
-- **Mandatory validation:** Enforces 4 required parameters
+- **Mandatory validation:** Enforces provider/model/workspace requirements
 - **Provider metadata:** 15+ models from OpenAI, Anthropic, Ollama
-- **Cost estimation:** Token counting and per-model pricing
+- **Token accounting:** Estimates allowance before LLM calls
 
 **Key Features:**
 - Helpful error messages with examples
@@ -153,9 +153,9 @@ ollama serve
 ollama pull llama3.1
 
 acm-aicoder \
-  --llm-model llama3.1 \
-  --llm-base-url http://localhost:11434 \
-  --llm-engine runtime \
+  --provider ollama \
+  --model llama3.1 \
+  --base-url http://localhost:11434 \
   --workspace ~/myproject
 ```
 
@@ -164,11 +164,10 @@ acm-aicoder \
 export OPENAI_API_KEY="sk-..."
 
 acm-aicoder \
-  --llm-model gpt-4o \
-  --llm-base-url https://api.openai.com \
-  --llm-engine langgraph \
-  --workspace ~/myproject \
-  --budget-usd 5.00
+  --provider vllm \
+  --model gpt-4o \
+  --base-url https://api.openai.com \
+  --workspace ~/myproject
 ```
 
 ### Anthropic Claude
@@ -176,9 +175,9 @@ acm-aicoder \
 export ANTHROPIC_API_KEY="sk-ant-..."
 
 acm-aicoder \
-  --llm-model claude-3-opus-20240229 \
-  --llm-base-url https://api.anthropic.com \
-  --llm-engine langgraph \
+  --provider vllm \
+  --model claude-3-opus-20240229 \
+  --base-url https://api.anthropic.com \
   --workspace ~/myproject
 ```
 
@@ -196,13 +195,6 @@ acm-aicoder \
 - `fix_type_error` - TypeScript error resolution
 - `generate_unit_tests` - Test scaffolding
 
-## Backward Compatibility
-
-Phase 1 functionality preserved:
-- **Binary:** `acm-aicoder-legacy`
-- **Original CLI:** All flags and behaviors unchanged
-- **Demo mode:** `acm-aicoder-demo` still available
-
 ## Out of Scope (Future Work)
 
 - [ ] Expand capability map (security, deps, CI)
@@ -216,17 +208,13 @@ Phase 1 functionality preserved:
 
 ### From Phase 1 to Phase 2
 
-**Phase 1 (Legacy):**
-```bash
-acm-aicoder --goal analyze --workspace ~/project
-```
+The legacy CLI has been retired. Use the interactive TUI with provider/model flags:
 
-**Phase 2 (Interactive):**
 ```bash
 acm-aicoder \
-  --llm-model gpt-4o \
-  --llm-base-url https://api.openai.com \
-  --llm-engine langgraph \
+  --provider vllm \
+  --model gpt-4o \
+  --base-url https://api.openai.com \
   --workspace ~/project
 ```
 
@@ -236,8 +224,6 @@ Then type your goal in the chat interface.
 
 ### NPM Package
 - Main binary: `acm-aicoder` → `dist/bin/interactive.js`
-- Legacy binary: `acm-aicoder-legacy` → `dist/bin/aicoder.js`
-- Demo binary: `acm-aicoder-demo` → `dist/bin/demo.js`
 
 ### Dependencies Added
 - `ink@^5.0.1`
@@ -285,7 +271,7 @@ Then type your goal in the chat interface.
 ➜ Provide all 4 mandatory flags
 
 ### "Budget exceeded"
-➜ Increase `--budget-usd` or use local model
+➜ Switch to a provider/model with higher token limits or run locally via Ollama
 
 ### Terminal layout broken
 ➜ Ensure ≥80 columns, standard emulator

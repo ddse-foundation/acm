@@ -8,19 +8,40 @@ import type { ChatMessage } from '../store.js';
 interface ChatPaneProps {
   messages: ChatMessage[];
   height: number;
+  canScrollUp: boolean;
+  canScrollDown: boolean;
+  focused: boolean;
 }
 
-export const ChatPane: React.FC<ChatPaneProps> = ({ messages, height }) => {
-  // Show last N messages that fit in the height
-  const visibleMessages = messages.slice(-Math.max(1, height - 2));
+export const ChatPane: React.FC<ChatPaneProps> = ({
+  messages,
+  height,
+  canScrollUp,
+  canScrollDown,
+  focused,
+}) => {
   
   return (
-    <Box flexDirection="column" height={height} borderStyle="single" borderColor="cyan">
-      <Box paddingX={1} borderStyle="single" borderColor="cyan">
-        <Text bold color="cyan">Chat</Text>
+    <Box
+      flexDirection="column"
+      height={height}
+      borderStyle="single"
+      borderColor={focused ? 'white' : 'cyan'}
+    >
+      <Box paddingX={1} borderStyle="single" borderColor={focused ? 'white' : 'cyan'}>
+        <Text bold color={focused ? 'white' : 'cyan'}>Chat</Text>
+        <Box flexGrow={1} />
+        <ScrollIndicator
+          up={canScrollUp}
+          down={canScrollDown}
+          color={focused ? 'white' : 'cyan'}
+        />
       </Box>
       <Box flexDirection="column" paddingX={1} flexGrow={1}>
-        {visibleMessages.map(msg => (
+        {messages.length === 0 && (
+          <Text color="gray">Conversation will appear here.</Text>
+        )}
+        {messages.map(msg => (
           <ChatMessageItem key={msg.id} message={msg} />
         ))}
       </Box>
@@ -57,3 +78,7 @@ const ChatMessageItem: React.FC<{ message: ChatMessage }> = ({ message }) => {
     </Box>
   );
 };
+
+const ScrollIndicator: React.FC<{ up: boolean; down: boolean; color: string }> = ({ up, down, color }) => (
+  <Text color={color}>{up ? '˄' : ' '} {down ? '˅' : ' '}</Text>
+);

@@ -1,13 +1,18 @@
 // LangGraph Adapter for ACM
-import type {
-  Goal,
-  Context,
-  Plan,
-  CapabilityRegistry,
-  ToolRegistry,
-  PolicyEngine,
-  StreamSink,
+import {
+  InternalContextScopeImpl,
+  type Goal,
+  type Context,
+  type Plan,
+  type CapabilityRegistry,
+  type ToolRegistry,
+  type PolicyEngine,
+  type StreamSink,
+  type RunContext,
+  type NucleusFactory,
+  type NucleusConfig,
 } from '@acm/sdk';
+import { createInstrumentedToolGetter } from '@acm/runtime';
 import type { MemoryLedger } from '@acm/runtime';
 
 /**
@@ -24,6 +29,12 @@ export interface LangGraphAdapterOptions {
   ledger?: MemoryLedger;
   resumeFrom?: string; // Checkpoint ID to resume from (optional, may not be supported)
   checkpointStore?: any; // Checkpoint store (optional, may not be supported)
+  nucleusFactory: NucleusFactory;
+  nucleusConfig: {
+    llmCall: NucleusConfig['llmCall'];
+    hooks?: NucleusConfig['hooks'];
+    allowedTools?: string[];
+  };
 }
 
 /**
@@ -81,15 +92,51 @@ export class LangGraphAdapter {
         }
 
         // Build run context
-        const runContext = {
+        const allowedTools = new Set<string>(this.options.nucleusConfig.allowedTools ?? []);
+        for (const tool of taskSpec.tools ?? []) {
+          allowedTools.add(tool.name);
+        }
+
+        const nucleus = this.options.nucleusFactory({
+          goalId: this.options.goal.id,
+          planId: plan.id,
+          taskId,
+          contextRef: plan.contextRef,
+          llmCall: this.options.nucleusConfig.llmCall,
+          hooks: this.options.nucleusConfig.hooks,
+          allowedTools: Array.from(allowedTools),
+        });
+
+        const internalScope = new InternalContextScopeImpl(entry => {
+          this.options.ledger?.append(entry.type, entry.details);
+        });
+        nucleus.setInternalContext(internalScope);
+
+        const getTool = createInstrumentedToolGetter({
+          taskId,
+          capability: capabilityName,
+          toolRegistry,
+          ledger: this.options.ledger,
+        });
+
+        const runContext: RunContext = {
           goal: this.options.goal,
           context: state.context,
           outputs: Object.fromEntries(state.outputs),
           metrics: { costUsd: 0, elapsedSec: 0 },
-          getTool: (name: string) => toolRegistry.get(name),
+          getTool,
           getCapabilityRegistry: () => capabilityRegistry,
           stream,
+          nucleus,
+          internalContext: internalScope,
         };
+
+        const preflight = await nucleus.preflight();
+        if (preflight.status === 'NEEDS_CONTEXT') {
+          throw new Error(
+            `Task ${taskId} requires additional context retrieval: ${preflight.retrievalDirectives.join(', ')}`
+          );
+        }
 
         // Policy pre-check
         if (policy) {
@@ -109,7 +156,7 @@ export class LangGraphAdapter {
         // Execute task
         stream?.emit('task', { taskId, status: 'started' });
 
-        const output = await task.execute(runContext, taskSpec.input || state.input);
+  const output = await task.execute(runContext, taskSpec.input || state.input);
 
         // Update outputs map
         const newOutputs = new Map(state.outputs);
@@ -120,6 +167,11 @@ export class LangGraphAdapter {
         // Log to ledger
         if (ledger) {
           ledger.append('TASK_END', { taskId, capability: taskSpec.capability });
+        }
+
+        const postcheck = await nucleus.postcheck(output);
+        if (postcheck.status === 'NEEDS_COMPENSATION' || postcheck.status === 'ESCALATE') {
+          throw new Error(`Task ${taskId} postcheck failed: ${postcheck.reason}`);
         }
 
         return {

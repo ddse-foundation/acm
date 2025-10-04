@@ -1,17 +1,31 @@
 // Structured tool-call based planner (Phase 4)
-import type { Goal, Context, Plan, Capability, StreamSink, ToolCallEnvelope } from '@acm/sdk';
-import type { LLM, ToolDefinition } from '@acm/llm';
-import { ContextBuilder } from '@acm/sdk';
-import { createHash } from 'crypto';
+import {
+  ContextBuilder,
+  type Capability,
+  type Context,
+  type Goal,
+  type NucleusConfig,
+  type NucleusFactory,
+  type NucleusInvokeResult,
+  type NucleusToolDefinition,
+  type Plan,
+  type StreamSink,
+} from '@acm/sdk';
 
 export type PlannerOptions = {
   goal: Goal;
   context: Context;
   capabilities: Capability[];
-  llm: LLM;
+  nucleusFactory: NucleusFactory;
+  nucleusConfig: {
+    llmCall: NucleusConfig['llmCall'];
+    hooks?: NucleusConfig['hooks'];
+    allowedTools?: string[];
+  };
   stream?: StreamSink;
   capabilityMapVersion?: string;
   planCount?: 1 | 2;
+  planId?: string;
 };
 
 export type PlannerResult = {
@@ -20,8 +34,7 @@ export type PlannerResult = {
   rationale?: string;
 };
 
-// Define planner tools
-const PLANNER_TOOLS: ToolDefinition[] = [
+const PLANNER_TOOLS: NucleusToolDefinition[] = [
   {
     name: 'emit_plan',
     description: 'Emit a plan with tasks and edges',
@@ -62,88 +75,67 @@ const PLANNER_TOOLS: ToolDefinition[] = [
 
 export class StructuredLLMPlanner {
   async plan(options: PlannerOptions): Promise<PlannerResult> {
-    const { goal, context, capabilities, llm, stream, capabilityMapVersion = 'v1' } = options;
+    const {
+      goal,
+      context,
+      capabilities,
+      nucleusFactory,
+      nucleusConfig,
+      stream,
+      capabilityMapVersion = 'v1',
+    } = options;
     const planCount: 1 | 2 = options.planCount ?? 1;
 
-    // Compute context reference using proper hashing
     const contextRef = ContextBuilder.computeContextRef(context);
+    const nucleus = nucleusFactory({
+      goalId: goal.id,
+      planId: options.planId ?? `planner-${Date.now()}`,
+      contextRef,
+      llmCall: nucleusConfig.llmCall,
+      hooks: nucleusConfig.hooks,
+      allowedTools: Array.from(new Set([...(nucleusConfig.allowedTools ?? []), 'emit_plan'])),
+    });
 
-    // Build prompt for structured tool calls
-    const prompt = this.buildPrompt(goal, context, capabilities, planCount);
-
-    // Check if LLM supports tool calls
-    if (!llm.generateWithTools) {
-      console.warn('LLM does not support tool calls, falling back to legacy planner');
-      return this.fallbackPlan(contextRef, capabilityMapVersion, capabilities, planCount);
-    }
-
-    try {
-      // Generate with tools
-      const response = await llm.generateWithTools(
-        [{ role: 'user', content: prompt }],
-        PLANNER_TOOLS,
-        { temperature: 0.7, seed: Date.now() }
+    const preflight = await nucleus.preflight();
+    if (preflight.status === 'NEEDS_CONTEXT') {
+      throw new Error(
+        `Planner requires additional context retrieval before proceeding: ${preflight.retrievalDirectives.join(', ')}`
       );
-
-      // Convert tool calls to plans
-      const plans: Plan[] = [];
-      let rationale: string | undefined;
-
-      if (response.toolCalls && response.toolCalls.length > 0) {
-        for (const toolCall of response.toolCalls) {
-          if (toolCall.name === 'emit_plan') {
-            const args = toolCall.arguments;
-            plans.push({
-              id: args.planId || `plan-${plans.length + 1}`,
-              contextRef,
-              capabilityMapVersion,
-              tasks: (args.tasks || []).map((t: any) => ({
-                id: t.id,
-                capability: t.capability,
-                capabilityRef: t.capability, // Use same value for both
-                input: t.input || {},
-              })),
-              edges: args.edges || [],
-            });
-
-            if (args.rationale && !rationale) {
-              rationale = args.rationale;
-            }
-          }
-        }
-      }
-
-      // If we got plans from tool calls, return them
-      if (plans.length > 0) {
-        if (stream) {
-          stream.emit('planner', { 
-            done: true, 
-            plans: plans.length,
-            rationale 
-          });
-        }
-
-        return {
-          plans,
-          contextRef,
-          rationale: rationale || response.text,
-        };
-      }
-
-      // No tool calls, try to extract from text (legacy fallback)
-      console.warn('No tool calls received, attempting text parsing fallback');
-      return this.parseTextResponse(response.text || '', contextRef, capabilityMapVersion, capabilities);
-
-    } catch (err) {
-      console.error('Structured planner failed:', err);
-      return this.fallbackPlan(contextRef, capabilityMapVersion, capabilities, planCount);
     }
+
+    const prompt = this.buildPrompt(goal, context, capabilities, planCount);
+    const result = await nucleus.invoke({ prompt, tools: PLANNER_TOOLS });
+    const plans = this.convertToolCalls(result, contextRef, capabilityMapVersion);
+
+    if (plans.length === 0) {
+      throw new Error('Nucleus did not emit any structured plans.');
+    }
+
+    await nucleus.postcheck({ plans: plans.map(plan => ({ id: plan.id, tasks: plan.tasks.length })) });
+
+    const rationale = result.reasoning ?? plans.map(p => p.rationale).find(Boolean);
+
+    if (stream) {
+      stream.emit('planner', {
+        done: true,
+        plans: plans.length,
+        rationale,
+      });
+    }
+
+    return {
+      plans,
+      contextRef,
+      rationale,
+    };
   }
 
   private buildPrompt(goal: Goal, context: Context, capabilities: Capability[], planCount: 1 | 2): string {
     const capList = capabilities.map(c => `- ${c.name}`).join('\n');
 
-    return `You are an expert task planner. Given a goal and context, create ${planCount === 2 ? 'two alternative' : 'one'} execution plan${planCount === 2 ? 's' : ''}.
+    return `You are an expert task planner. Given a goal and context, create ${
+      planCount === 2 ? 'two alternative' : 'one'
+    } execution plan${planCount === 2 ? 's' : ''}.
 
 **Goal:**
 ${goal.intent}
@@ -156,9 +148,10 @@ ${JSON.stringify(context.facts, null, 2)}
 ${capList}
 
 **Instructions:**
-${planCount === 2 
-  ? '1. Create TWO different plans (plan-a and plan-b) by calling emit_plan twice\n2. Each plan should take a different approach to achieve the goal'
-  : '1. Create ONE plan (plan-a) by calling emit_plan'
+${
+  planCount === 2
+    ? '1. Create TWO different plans (plan-a and plan-b) by calling emit_plan twice\n2. Each plan should take a different approach to achieve the goal'
+    : '1. Create ONE plan (plan-a) by calling emit_plan'
 }
 ${planCount === 2 ? '3' : '2'}. Each task must reference a capability from the available list
 ${planCount === 2 ? '4' : '3'}. Define edges to show task dependencies
@@ -167,115 +160,42 @@ ${planCount === 2 ? '5' : '4'}. Include a rationale explaining your planning dec
 Call the emit_plan tool ${planCount === 2 ? 'twice (once for each plan)' : 'once'} with the plan structure.`;
   }
 
-  private parseTextResponse(
-    response: string,
+  private convertToolCalls(
+    result: NucleusInvokeResult,
     contextRef: string,
-    capabilityMapVersion: string,
-    capabilities: Capability[]
-  ): PlannerResult {
-    // Legacy JSON parsing fallback
-    try {
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
+    capabilityMapVersion: string
+  ): Plan[] {
+    const plans: Plan[] = [];
+
+    for (const call of result.toolCalls) {
+      if (call.name !== 'emit_plan') {
+        continue;
       }
 
-      const parsed = JSON.parse(jsonMatch[0]);
-      const plans: Plan[] = [];
+      const args = call.input ?? {};
+      const planId = (args.planId as string) || `plan-${plans.length + 1}`;
 
-      if (parsed.planA) {
-        plans.push({
-          id: 'plan-a',
-          contextRef,
-          capabilityMapVersion,
-          tasks: (parsed.planA.tasks || []).map((t: any) => ({
-            ...t,
-            capabilityRef: t.capability,
-          })),
-          edges: parsed.planA.edges || [],
-        });
-      }
+      const tasks = Array.isArray(args.tasks)
+        ? args.tasks.map((task: any, index: number) => ({
+            id: task.id ?? `task-${index + 1}`,
+            capability: task.capability,
+            capabilityRef: task.capability,
+            input: task.input ?? {},
+          }))
+        : [];
 
-      if (parsed.planB) {
-        plans.push({
-          id: 'plan-b',
-          contextRef,
-          capabilityMapVersion,
-          tasks: (parsed.planB.tasks || []).map((t: any) => ({
-            ...t,
-            capabilityRef: t.capability,
-          })),
-          edges: parsed.planB.edges || [],
-        });
-      }
-
-      if (plans.length > 0) {
-        return {
-          plans,
-          contextRef,
-          rationale: parsed.rationale,
-        };
-      }
-    } catch (err) {
-      console.error('Failed to parse text response:', err);
-    }
-
-    // If all else fails, use fallback
-    return this.fallbackPlan(contextRef, capabilityMapVersion, capabilities, 1);
-  }
-
-  private fallbackPlan(
-    contextRef: string,
-    capabilityMapVersion: string,
-    capabilities: Capability[],
-    planCount: 1 | 2
-  ): PlannerResult {
-    const selectedCapabilities = capabilities.slice(0, Math.min(capabilities.length, 3));
-
-    const tasks = selectedCapabilities.map((capability, index) => ({
-      id: `t${index + 1}`,
-      capability: capability.name,
-      capabilityRef: capability.name,
-      input: {},
-    }));
-
-    const edges = tasks
-      .slice(0, -1)
-      .map((task, index) => ({ from: task.id, to: tasks[index + 1].id }));
-
-    const planA: Plan = {
-      id: 'plan-fallback',
-      contextRef,
-      capabilityMapVersion,
-      tasks,
-      edges,
-    };
-
-    const plans = [planA];
-
-    // If 2 plans requested, create a variant
-    if (planCount === 2 && tasks.length > 1) {
-      const reversedTasks = [...tasks].reverse().map((t, i) => ({
-        ...t,
-        id: `t${i + 1}`,
-      }));
-      const reversedEdges = reversedTasks
-        .slice(0, -1)
-        .map((task, index) => ({ from: task.id, to: reversedTasks[index + 1].id }));
+      const edges = Array.isArray(args.edges) ? args.edges : [];
 
       plans.push({
-        id: 'plan-fallback-alt',
+        id: planId,
         contextRef,
         capabilityMapVersion,
-        tasks: reversedTasks,
-        edges: reversedEdges,
+        tasks,
+        edges,
+        rationale: typeof args.rationale === 'string' ? args.rationale : undefined,
       });
     }
 
-    return {
-      plans,
-      contextRef,
-      rationale: 'Fallback plan: Unable to generate structured plan',
-    };
+    return plans;
   }
 }

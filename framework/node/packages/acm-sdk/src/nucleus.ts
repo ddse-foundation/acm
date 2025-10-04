@@ -1,17 +1,46 @@
 // Nucleus contract for LLM-native task and planner execution
-
 import { createHash } from 'crypto';
-import type { ToolCallEnvelope, InternalContextScope, LedgerEntry } from './types.js';
+import type { InternalContextScope, LedgerEntry, ToolCallEnvelope } from './types.js';
+
+export type NucleusToolDefinition = {
+  name: string;
+  description?: string;
+  inputSchema?: {
+    type: 'object';
+    properties: Record<string, any>;
+    required?: string[];
+  };
+};
+
+export type StructuredToolCall = {
+  id?: string;
+  name: string;
+  input: Record<string, any>;
+  output?: Record<string, any>;
+  error?: {
+    code: string;
+    message: string;
+  };
+};
+
+export type NucleusInvokeRequest = {
+  prompt?: string;
+  input?: any;
+  tools?: NucleusToolDefinition[];
+};
+
+export type NucleusInvokeResult = {
+  reasoning?: string;
+  toolCalls: StructuredToolCall[];
+  raw?: any;
+};
 
 // Nucleus configuration
 export type NucleusConfig = {
-  // Binding information
   goalId: string;
   planId?: string;
   taskId?: string;
   contextRef: string;
-
-  // LLM call settings
   llmCall: {
     provider: string;
     model: string;
@@ -19,68 +48,55 @@ export type NucleusConfig = {
     seed?: number;
     maxTokens?: number;
   };
-
-  // Allowed tools for internal operations
   allowedTools?: string[];
-
-  // Hook definitions
   hooks?: {
     preflight?: boolean;
     postcheck?: boolean;
   };
-
-  // Prompt configuration
   promptTemplate?: string;
   promptDigest?: string;
 };
 
-// Nucleus hook results
-export type PreflightResult = 
+export type PreflightResult =
   | { status: 'OK' }
   | { status: 'NEEDS_CONTEXT'; retrievalDirectives: string[] };
 
-export type PostcheckResult = 
+export type PostcheckResult =
   | { status: 'COMPLETE' }
   | { status: 'NEEDS_COMPENSATION'; reason: string }
   | { status: 'ESCALATE'; reason: string };
 
-// LLM call interface using structured tool-call envelope
 export type LLMCallFn = (
   prompt: string,
-  tools: ToolCallEnvelope[],
+  tools: NucleusToolDefinition[],
   config: NucleusConfig['llmCall']
 ) => Promise<{
   reasoning?: string;
-  toolCalls: ToolCallEnvelope[];
+  toolCalls: StructuredToolCall[];
   raw?: any;
 }>;
 
-// Abstract Nucleus class
 export abstract class Nucleus {
   constructor(protected config: NucleusConfig) {}
 
-  // Lifecycle hooks
   abstract preflight(): Promise<PreflightResult>;
-  abstract invoke(input: any): Promise<any>;
+  abstract invoke(request: NucleusInvokeRequest): Promise<NucleusInvokeResult>;
   abstract postcheck(output: any): Promise<PostcheckResult>;
 
-  // Record inference to ledger
   abstract recordInference(
     promptDigest: string,
-    toolCalls: ToolCallEnvelope[],
+    toolCalls: StructuredToolCall[],
     reasoning?: string
   ): LedgerEntry;
 
-  // Access internal context
   abstract getInternalContext(): InternalContextScope | undefined;
+  abstract setInternalContext(scope: InternalContextScope): void;
 
-  // Get configuration
   getConfig(): NucleusConfig {
     return this.config;
   }
 }
 
-// Deterministic Nucleus base implementation
 export class DeterministicNucleus extends Nucleus {
   private internalContext?: InternalContextScope;
   private ledger: LedgerEntry[] = [];
@@ -98,18 +114,9 @@ export class DeterministicNucleus extends Nucleus {
       return { status: 'OK' };
     }
 
-    // Execute LLM call to assess context sufficiency
     const prompt = this.buildPreflightPrompt();
-    const result = await this.llmCall(prompt, [], this.config.llmCall);
+    const result = await this.callLLM(prompt);
 
-    // Record inference
-    const entry = this.recordInference(
-      this.computePromptDigest(prompt),
-      result.toolCalls,
-      result.reasoning
-    );
-
-    // Check if context retrieval is needed
     const needsContext = result.toolCalls.some(
       tc => tc.name === 'request_context_retrieval'
     );
@@ -117,25 +124,20 @@ export class DeterministicNucleus extends Nucleus {
     if (needsContext) {
       const directives = result.toolCalls
         .filter(tc => tc.name === 'request_context_retrieval')
-        .map(tc => tc.input.directive as string);
-      return { status: 'NEEDS_CONTEXT', retrievalDirectives: directives };
+        .map(tc => tc.input?.directive as string)
+        .filter(Boolean);
+      return {
+        status: 'NEEDS_CONTEXT',
+        retrievalDirectives: directives,
+      };
     }
 
     return { status: 'OK' };
   }
 
-  async invoke(input: any): Promise<any> {
-    const prompt = this.buildInvokePrompt(input);
-    const result = await this.llmCall(prompt, [], this.config.llmCall);
-
-    this.recordInference(
-      this.computePromptDigest(prompt),
-      result.toolCalls,
-      result.reasoning
-    );
-
-    // Extract output from tool calls or reasoning
-    return this.extractOutput(result);
+  async invoke(request: NucleusInvokeRequest): Promise<NucleusInvokeResult> {
+    const prompt = request.prompt ?? this.buildInvokePrompt(request.input);
+    return this.callLLM(prompt, request.tools);
   }
 
   async postcheck(output: any): Promise<PostcheckResult> {
@@ -144,34 +146,22 @@ export class DeterministicNucleus extends Nucleus {
     }
 
     const prompt = this.buildPostcheckPrompt(output);
-    const result = await this.llmCall(prompt, [], this.config.llmCall);
+    const result = await this.callLLM(prompt);
 
-    this.recordInference(
-      this.computePromptDigest(prompt),
-      result.toolCalls,
-      result.reasoning
-    );
-
-    // Check for compensation or escalation requests
-    const needsCompensation = result.toolCalls.some(
-      tc => tc.name === 'request_compensation'
-    );
-    const needsEscalation = result.toolCalls.some(
-      tc => tc.name === 'escalate_issue'
-    );
-
-    if (needsCompensation) {
-      const reason = result.toolCalls.find(
-        tc => tc.name === 'request_compensation'
-      )?.input.reason as string;
-      return { status: 'NEEDS_COMPENSATION', reason: reason || 'Unknown' };
+    const compensation = result.toolCalls.find(tc => tc.name === 'request_compensation');
+    if (compensation) {
+      return {
+        status: 'NEEDS_COMPENSATION',
+        reason: (compensation.input?.reason as string) || 'Unknown',
+      };
     }
 
-    if (needsEscalation) {
-      const reason = result.toolCalls.find(
-        tc => tc.name === 'escalate_issue'
-      )?.input.reason as string;
-      return { status: 'ESCALATE', reason: reason || 'Unknown' };
+    const escalation = result.toolCalls.find(tc => tc.name === 'escalate_issue');
+    if (escalation) {
+      return {
+        status: 'ESCALATE',
+        reason: (escalation.input?.reason as string) || 'Unknown',
+      };
     }
 
     return { status: 'COMPLETE' };
@@ -179,9 +169,21 @@ export class DeterministicNucleus extends Nucleus {
 
   recordInference(
     promptDigest: string,
-    toolCalls: ToolCallEnvelope[],
+    toolCalls: StructuredToolCall[],
     reasoning?: string
   ): LedgerEntry {
+    const envelopes: ToolCallEnvelope[] = toolCalls.map((tc, idx) => ({
+      id: tc.id ?? `tool-call-${Date.now()}-${idx}`,
+      name: tc.name,
+      input: tc.input ?? {},
+      output: tc.output,
+      error: tc.error,
+      metadata: {
+        timestamp: Date.now(),
+        digest: this.computeDigest(JSON.stringify(tc.input ?? {})),
+      },
+    }));
+
     const entry: LedgerEntry = {
       id: `nucleus-inference-${Date.now()}-${Math.random().toString(36).substring(7)}`,
       ts: Date.now(),
@@ -200,15 +202,16 @@ export class DeterministicNucleus extends Nucleus {
         },
         promptDigest,
         reasoning,
-        toolCalls: toolCalls.map(tc => ({
-          id: tc.id,
-          name: tc.name,
-          inputDigest: this.computeDigest(JSON.stringify(tc.input)),
-          outputDigest: tc.output ? this.computeDigest(JSON.stringify(tc.output)) : undefined,
+        toolCalls: envelopes.map(env => ({
+          id: env.id,
+          name: env.name,
+          inputDigest: env.metadata?.digest,
+          outputDigest: env.output ? this.computeDigest(JSON.stringify(env.output)) : undefined,
         })),
       },
     };
 
+    entry.digest = this.computeDigest(JSON.stringify(entry.details));
     this.ledger.push(entry);
     this.ledgerAppend(entry);
     return entry;
@@ -220,6 +223,28 @@ export class DeterministicNucleus extends Nucleus {
 
   setInternalContext(scope: InternalContextScope): void {
     this.internalContext = scope;
+  }
+
+  private async callLLM(
+    prompt: string,
+    tools: NucleusToolDefinition[] = []
+  ): Promise<NucleusInvokeResult> {
+    const result = await this.llmCall(prompt, tools, this.config.llmCall);
+    const normalizedCalls = (result.toolCalls ?? []).map((tc, idx) => ({
+      id: tc.id ?? `tool-call-${Date.now()}-${idx}`,
+      name: tc.name,
+      input: tc.input ?? {},
+      output: tc.output,
+      error: tc.error,
+    }));
+
+    this.recordInference(this.computePromptDigest(prompt), normalizedCalls, result.reasoning);
+
+    return {
+      reasoning: result.reasoning,
+      toolCalls: normalizedCalls,
+      raw: result.raw,
+    };
   }
 
   private buildPreflightPrompt(): string {
@@ -247,15 +272,6 @@ If compensation is needed, call request_compensation.
 If escalation is needed, call escalate_issue.`;
   }
 
-  private extractOutput(result: { reasoning?: string; toolCalls: ToolCallEnvelope[] }): any {
-    // If there are tool calls, extract outputs from them
-    if (result.toolCalls.length > 0) {
-      return result.toolCalls.map(tc => tc.output);
-    }
-    // Otherwise return reasoning as output
-    return { reasoning: result.reasoning };
-  }
-
   private computePromptDigest(prompt: string): string {
     const hash = createHash('sha256');
     hash.update(prompt);
@@ -269,5 +285,4 @@ If escalation is needed, call escalate_issue.`;
   }
 }
 
-// Factory type for creating Nucleus instances
 export type NucleusFactory = (config: NucleusConfig) => Nucleus;

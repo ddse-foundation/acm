@@ -1,18 +1,22 @@
 // Main execution engine
-import type {
-  Goal,
-  Context,
-  Plan,
-  CapabilityRegistry,
-  ToolRegistry,
-  PolicyEngine,
-  StreamSink,
-  RunContext,
-  LedgerEntry,
+import {
+  InternalContextScopeImpl,
+  type CapabilityRegistry,
+  type Context,
+  type Goal,
+  type LedgerEntry,
+  type NucleusConfig,
+  type NucleusFactory,
+  type Plan,
+  type PolicyEngine,
+  type RunContext,
+  type StreamSink,
+  type ToolRegistry,
 } from '@acm/sdk';
 import { evaluateGuard } from './guards.js';
 import { MemoryLedger } from './ledger.js';
 import { withRetry } from './retry.js';
+import { createInstrumentedToolGetter } from './tool-envelope.js';
 
 export type ExecutePlanOptions = {
   goal: Goal;
@@ -24,6 +28,12 @@ export type ExecutePlanOptions = {
   verify?: (taskId: string, output: any, expressions: string[]) => Promise<boolean>;
   stream?: StreamSink;
   ledger?: MemoryLedger;
+  nucleusFactory: NucleusFactory;
+  nucleusConfig: {
+    llmCall: NucleusConfig['llmCall'];
+    hooks?: NucleusConfig['hooks'];
+    allowedTools?: string[];
+  };
 };
 
 export type ExecutePlanResult = {
@@ -41,6 +51,8 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
     policy,
     verify,
     stream,
+    nucleusFactory,
+    nucleusConfig,
   } = options;
 
   const ledger = options.ledger ?? new MemoryLedger();
@@ -112,16 +124,56 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
         throw new Error(`Task not found for capability: ${capabilityName}`);
       }
 
+      const nucleusAllowedTools = new Set<string>(nucleusConfig.allowedTools ?? []);
+      for (const tool of taskSpec.tools ?? []) {
+        nucleusAllowedTools.add(tool.name);
+      }
+
+      const nucleus = nucleusFactory({
+        goalId: goal.id,
+        planId: plan.id,
+        taskId: taskSpec.id,
+        contextRef: plan.contextRef,
+        llmCall: nucleusConfig.llmCall,
+        hooks: nucleusConfig.hooks,
+        allowedTools: Array.from(nucleusAllowedTools),
+      });
+
+      const internalScope = new InternalContextScopeImpl(entry => {
+        ledger.append(entry.type, entry.details);
+      });
+      nucleus.setInternalContext(internalScope);
+
+      const getTool = createInstrumentedToolGetter({
+        taskId: taskSpec.id,
+        capability: capabilityName,
+        toolRegistry,
+        ledger,
+      });
+
       // Build run context
       const runContext: RunContext = {
         goal,
         context,
         outputs,
         metrics,
-        getTool: (name: string) => toolRegistry.get(name),
+        getTool,
         getCapabilityRegistry: () => capabilityRegistry,
         stream,
+        nucleus,
+        internalContext: internalScope,
       };
+
+      const preflight = await nucleus.preflight();
+      if (preflight.status === 'NEEDS_CONTEXT') {
+        ledger.append('CONTEXT_INTERNALIZED', {
+          taskId: taskSpec.id,
+          directives: preflight.retrievalDirectives,
+        });
+        throw new Error(
+          `Task ${taskSpec.id} requires additional context retrieval: ${preflight.retrievalDirectives.join(', ')}`
+        );
+      }
 
       // Policy pre-check
       if (policy) {
@@ -154,20 +206,15 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
       stream?.emit('task', { taskId: taskSpec.id, status: 'running' });
 
       try {
-        const executeTask = async () => {
-          const result = await task.execute(runContext, taskSpec.input);
-          return result;
-        };
+        const executeTask = async () => task.execute(runContext, taskSpec.input);
+        const retryConfig = taskSpec.retry || (taskSpec.retryPolicy
+          ? {
+              attempts: taskSpec.retryPolicy.maxAttempts || 3,
+              backoff: 'exp' as const,
+            }
+          : undefined);
 
-        const retryConfig = taskSpec.retry || (taskSpec.retryPolicy ? {
-          attempts: taskSpec.retryPolicy.maxAttempts || 3,
-          backoff: 'exp' as const,
-        } : undefined);
-
-        const output = retryConfig
-          ? await withRetry(executeTask, retryConfig)
-          : await executeTask();
-
+        const output = retryConfig ? await withRetry(executeTask, retryConfig) : await executeTask();
         outputs[taskSpec.id] = output;
 
         ledger.append('TASK_END', {
@@ -205,16 +252,37 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
           }
         }
 
+        const postcheck = await nucleus.postcheck(output);
+        if (postcheck.status === 'NEEDS_COMPENSATION') {
+          ledger.append('ERROR', {
+            taskId: taskSpec.id,
+            stage: 'NUCLEUS_POSTCHECK',
+            message: postcheck.reason,
+          });
+          throw new Error(`Task ${taskSpec.id} requires compensation: ${postcheck.reason}`);
+        }
+        if (postcheck.status === 'ESCALATE') {
+          ledger.append('ERROR', {
+            taskId: taskSpec.id,
+            stage: 'NUCLEUS_POSTCHECK',
+            message: postcheck.reason,
+          });
+          throw new Error(`Task ${taskSpec.id} escalated: ${postcheck.reason}`);
+        }
+
         executed.add(taskSpec.id);
-      } catch (err) {
-        const error = err as Error;
+      } catch (error: any) {
         ledger.append('ERROR', {
           taskId: taskSpec.id,
-          error: error.message,
-          stack: error.stack,
+          capability: capabilityName,
+          message: error.message || 'Unknown error',
         });
 
-        stream?.emit('task', { taskId: taskSpec.id, status: 'failed', error: error.message });
+        stream?.emit('task', {
+          taskId: taskSpec.id,
+          status: 'failed',
+          error: error.message || error.toString(),
+        });
 
         throw error;
       }

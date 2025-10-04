@@ -16,7 +16,7 @@ Goal: ship a tiny library junior developers can use in minutes. Everything is pl
 - acm-runtime: executePlan(), guards, retries/backoff, joins, policy/verification hooks, memory ledger
 - acm-llm: provider-agnostic LLM client (OpenAI-compatible client for Ollama/vLLM), streaming support
 - acm-nucleus: harness for deterministic `LLMCall` execution, pre/post hooks, internal context retrieval orchestration
-- acm-planner: LLMPlanner (JSON plan emission with streaming) + safe linear fallback
+- acm-planner: StructuredLLMPlanner (structured tool-call emission with streaming) + safe linear fallback
 - acm-mcp: MCP tool bridge and registry
 - acm-adapters: LangGraph and Microsoft Agent Framework adapters (tasks→nodes, PDP hooks, streaming)
 - acm-artifacts: emit/load/validate code-first artifacts; optional JSON export for replay

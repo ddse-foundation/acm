@@ -1,5 +1,7 @@
 # ACM AI Coder - Phase 2
 
+<!-- markdownlint-disable MD024 MD032 -->
+
 An advanced AI-powered developer workflow automation tool with an interactive full-screen TUI that showcases the complete ACM (Agentic Contract Model) framework v0.5.
 
 ## Overview
@@ -13,7 +15,7 @@ The ACM AI Coder Phase 2 introduces an **interactive-only experience** with a th
 ### Key Features
 
 - ✅ **Interactive-Only TUI**: Full-screen terminal interface with real-time updates
-- ✅ **Mandatory Configuration**: Requires `--llm-model`, `--llm-base-url`, `--llm-engine`, `--workspace`
+- ✅ **Mandatory Configuration**: Requires `--provider`, `--model`, and `--workspace` flags with optional `--base-url`
 - ✅ **Budget Governance**: Pre-inference cost checks with live spend tracking
 - ✅ **Streaming Reasoning**: Watch planner and nucleus think in real-time
 - ✅ **File Mentions**: Reference workspace files with `#path/to/file` syntax
@@ -37,21 +39,21 @@ pnpm --filter @acm/aicoder build
 ```bash
 # Start the interactive AI Coder
 acm-aicoder \
-  --llm-model gpt-4o \
-  --llm-base-url https://api.openai.com \
-  --llm-engine langgraph \
-  --workspace /path/to/your/project \
-  --budget-usd 10
+  --provider vllm \
+  --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 \
+  --base-url http://localhost:8001/v1 \
+  --workspace /path/to/your/project
 ```
 
 **Required Parameters:**
-- `--llm-model <model>` - LLM model name (e.g., gpt-4o, claude-3-opus, llama3.1)
-- `--llm-base-url <url>` - LLM API endpoint
-- `--llm-engine <engine>` - ACM runtime engine: `langgraph`, `msaf`, or `runtime`
+
+- `--provider <ollama|vllm>` - LLM provider (default: ollama)
+- `--model <name>` - Model identifier provided by the selected provider
 - `--workspace <path>` - Project workspace root directory
 
 **Optional Parameters:**
-- `--budget-usd <amount>` - Budget limit in USD (default: unlimited)
+
+- `--base-url <url>` - Override provider base URL when using a custom endpoint
 - `--temperature <0-2>` - LLM temperature (default: 0.7)
 - `--seed <number>` - Random seed for reproducibility
 - `--plans <1|2>` - Number of alternative plans to generate (default: 1)
@@ -69,7 +71,7 @@ Once running, you can use these commands:
 
 **Example Session:**
 
-```
+```text
 > Analyze the src/index.ts file and find potential bugs
 
 [Planner will reason about the task, select appropriate capabilities]
@@ -77,90 +79,45 @@ Once running, you can use these commands:
 [Events will stream in the right column]
 ```
 
-### Phase 1 Legacy Mode
-
-For backward compatibility, use:
-
-```bash
-acm-aicoder-legacy --goal analyze --workspace /path/to/project
-```
-
 ## ACM Framework Integration
 
 Phase 2 is built strictly on ACM v0.5 components:
 
 ### Planner & Nucleus
+
 - Chat pane visualizes ACM planner tool-call loops and nucleus inferences in real-time
 - Streaming tokens show reasoning as it happens
 - Budget checks run before each inference
 
+#### Nucleus configuration requirements
+
+- Every runtime invocation now passes a `nucleusFactory` and `nucleusConfig` to `executePlan`. The CLI wires these from the `--llm-provider`, `--llm-model`, `--llm-base-url`, and `--llm-engine` flags to build a shared `DeterministicNucleus` instance.
+- If you embed AI Coder components elsewhere, supply your own factory that returns a `Nucleus` subclass and include at minimum an `llmCall` block with `provider`, `model`, and token limits.
+- Tests and examples provide lightweight stub nuclei; use them as a reference when authoring new scripts or integrations.
+
 ### Tools & Tasks
+
 - All tools extend `Tool<I, O>` from `@acm/sdk`
 - Tasks extend `Task<I, O>` and leverage context builder
 - Tool call envelopes logged to ledger for determinism
 
 ### Context Packets
+
 - Context orchestration uses Phase 4 `ContextBuilder`
 - Immutable packets with provenance and sources
 - View current context with `/context` command
 
 ### Ledger & Replay
+
 - Event stream pane visualizes ledger entries
 - Replay bundles saved automatically to `.aicoder/replays/`
 - Includes session config, ledger, and budget summary
 
 ### Budget Enforcement
+
 - BudgetManager enforces spending limits before inference
 - Provider metadata for OpenAI, Anthropic, Ollama, and more
 - Real-time budget display in Tasks column
-
-## Legacy Features (Phase 1)
-
-The ACM AI Coder also includes all Phase 1 capabilities:
-
-# Fix a bug with AI assistance (dry-run first)
-pnpm --filter @acm/aicoder exec acm-aicoder --goal fixBug --dry-run
-
-# Generate tests for a file
-pnpm --filter @acm/aicoder exec acm-aicoder --goal custom
-# Then enter: "Generate unit tests for src/utils.ts"
-```
-
-### Command-Line Options
-
-```bash
-# LLM Configuration
---provider <ollama|vllm>    # LLM provider (default: ollama)
---model <name>              # Model name (default: llama3.1)
---base-url <url>            # Override API base URL
-
-# Goals
---goal <goal>               # Goal to execute:
-                            #   analyze - Deep workspace analysis
-                            #   fixBug - Fix bugs with AI
-                            #   implementFeature - Scaffold features
-                            #   runTests - Run test suite
-                            #   custom - Interactive custom goal
-
-# Execution Control
---no-stream                 # Disable streaming output
---auto-approve              # Auto-approve all operations (use with caution!)
---dry-run                   # Preview changes without writing files
---analysis-only             # Only analyze, don't make changes
-
-# Context & Search
---workspace <path>          # Workspace root (default: current directory)
---max-file-bytes <n>        # Max file size to index (default: 1MB)
---search-k <n>              # Number of search results (default: 10)
-
-# Resumability
---resume <runId>            # Resume from a previous execution
---checkpoint-dir <path>     # Directory for checkpoints (default: ./checkpoints)
---plans <1|2>               # Number of alternative plans (default: 1)
-
-# Help
--h, --help                  # Show help
-```
 
 ## Architecture
 
@@ -217,6 +174,8 @@ This tool demonstrates every aspect of the ACM framework:
 pnpm --filter @acm/aicoder test
 ```
 
+<!-- markdownlint-enable MD024 MD032 -->
+
 ### Building
 
 ```bash
@@ -236,6 +195,7 @@ pnpm --filter @acm/aicoder exec acm-aicoder --goal analyze --workspace .
 ```
 
 This will:
+
 1. Index all files in the workspace (respecting gitignore)
 2. Extract symbols (functions, classes, interfaces)
 3. Map dependencies from package.json
@@ -243,6 +203,7 @@ This will:
 5. Generate a comprehensive report with statistics
 
 Output includes:
+
 - Total files scanned
 - Code files by language
 - Symbols extracted (functions, classes, etc.)
@@ -257,6 +218,7 @@ pnpm --filter @acm/aicoder exec acm-aicoder --goal custom
 ```
 
 This will:
+
 1. Build BM25 index of code files
 2. Search for "error handling try catch" patterns
 3. Return top-k results with context
@@ -270,6 +232,7 @@ pnpm --filter @acm/aicoder exec acm-aicoder --goal custom
 ```
 
 This will:
+
 1. Read the target file
 2. Analyze existing code patterns
 3. Generate function implementation (with LLM)
@@ -285,6 +248,7 @@ pnpm --filter @acm/aicoder exec acm-aicoder --goal custom
 ```
 
 This will:
+
 1. Search for all occurrences of the symbol
 2. Generate list of affected files
 3. Show preview of changes
@@ -299,6 +263,7 @@ pnpm --filter @acm/aicoder exec acm-aicoder --goal custom
 ```
 
 This will:
+
 1. Run build to collect TypeScript errors
 2. Analyze each error with context
 3. Generate fixes (with LLM)
@@ -314,6 +279,7 @@ pnpm --filter @acm/aicoder exec acm-aicoder --goal custom
 ```
 
 This will:
+
 1. Read and analyze the target function
 2. Generate test cases (with LLM)
 3. Create test file (e.g., `src/utils.test.ts`)
@@ -332,6 +298,7 @@ pnpm --filter @acm/aicoder exec acm-aicoder --resume run-1696348800000
 ```
 
 The resume will:
+
 1. Load checkpoint from disk
 2. Restore plan and completed tasks
 3. Continue from the next task
@@ -410,7 +377,7 @@ import {
 } from '@acm/aicoder';
 
 import { executeResumablePlan } from '@acm/runtime';
-import { LLMPlanner } from '@acm/planner';
+import { StructuredLLMPlanner } from '@acm/planner';
 import { createOllamaClient } from '@acm/llm';
 
 // Setup
@@ -464,7 +431,7 @@ const contextPack = await packGenerator.generate(
 
 // 6. Plan with context
 const llm = createOllamaClient('llama3.1');
-const planner = new LLMPlanner();
+const planner = new StructuredLLMPlanner();
 
 const goal = {
   id: 'goal-1',
@@ -503,9 +470,9 @@ const result = await executeResumablePlan({
 console.log('Execution complete:', result);
 ```
 
-## Development
+## Reference Pipeline Walkthrough
 
-### Building
+### Build from Source
 
 ```bash
 # Build TypeScript
@@ -515,7 +482,7 @@ pnpm --filter @acm/aicoder build
 pnpm --filter @acm/aicoder dev
 ```
 
-### Testing
+### Test Suite (Preview)
 
 ```bash
 # Run integration tests (coming soon)

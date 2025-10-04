@@ -11,7 +11,7 @@ This consolidated report captures everything that shipped for the ACM v0.5 Node.
 - **@acm/sdk** – foundational abstractions (`Tool`, `Task`, `CapabilityRegistry`, `ToolRegistry`) plus strongly typed contracts for `Goal`, `Context`, `Plan`, `TaskSpec`, guards, policies, ledgers, and streaming. Includes `DefaultStreamSink` for multiplexed event delivery.
 - **@acm/runtime** – deterministic execution engine implementing full ACM v0.5 semantics: guard evaluation, retry/backoff strategies (fixed/exp with jitter), policy pre/post hooks, verification assertions, memory ledger append-only log, and streaming progress instrumentation.
 - **@acm/llm** – provider-agnostic OpenAI-compatible client with streaming support and simple presets for Ollama and vLLM so developers can swap between local or remote inference backends with minimal configuration.
-- **@acm/planner** – `LLMPlanner` that emits Plan-A/Plan-B along with rationale, computes content-addressable context references via SHA-256, streams partial responses when available, and falls back to a deterministic linear plan if model output cannot be parsed.
+- **@acm/planner** – `StructuredLLMPlanner` that emits structured Plan-A/Plan-B with rationale and risk scoring, computes content-addressable context references via SHA-256, streams partial tool-call updates, and falls back to a deterministic linear plan if model output cannot be parsed.
 
 ### Extended Capabilities
 
@@ -63,7 +63,7 @@ const capabilities = new SimpleCapabilityRegistry();
 capabilities.register({ name: 'refund_flow', sideEffects: true }, new RefundTask());
 
 // 3. Plan & execute
-const planner = new LLMPlanner();
+const planner = new StructuredLLMPlanner();
 const { plans } = await planner.plan({ goal, context, capabilities: capabilities.list(), llm });
 const result = await executePlan({ goal, context, plan: plans[0], capabilityRegistry: capabilities, toolRegistry: tools });
 ```

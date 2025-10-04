@@ -11,7 +11,7 @@
 Phase 2 evolves `@acm/aicoder` from the current Phase 1 showcase into an always-interactive, production-grade developer companion that runs entirely inside a full-screen terminal UI powered by the ACM v0.5 runtime. The primary objectives are:
 
 1. **Interactive-only experience:** Launch exclusively in a full-screen TUI with a three-column layout (Chat ▸ Goal/Tasks ▸ Event Stream). No alternate modes.
-2. **Environment provisioning at launch:** Require `--llm-model`, `--llm-base-url`, `--llm-engine` (ACM runtime engine such as `langgraph` or `msaf`), and `--workspace` (project root) CLI parameters and persist them in session metadata.
+2. **Environment provisioning at launch:** Require `--provider`, `--model`, and `--workspace` CLI parameters (with optional `--base-url`) and persist them in session metadata.
 3. **Copilot-style streaming reasoning:** Surface planner and nucleus LLM thoughts as streaming messages in the Chat column with role-aware formatting.
 4. **Adaptive ACM orchestration:** Enrich tools and tasks with nucleus-driven context building, retries, and structured tool-call telemetry.
 5. **Budget governance:** Enforce live budget checks based on LLM metadata (token limits, price tables) before each inference and surface spend telemetry in the UI.
@@ -94,7 +94,7 @@ Key integrations:
 
 1. **Entry point integration**
    - Replace `bin/aicoder.ts` command execution with a single `runInteractiveApp(args)` function.
-   - Validate presence of `--llm-model`, `--llm-base-url`, `--llm-engine`, and `--workspace` before bootstrapping; exit with helpful message otherwise.
+   - Validate presence of `--provider`, `--model`, and `--workspace` before bootstrapping; exit with helpful message otherwise.
    - Initialize planner, nucleus, and runtime via ACM framework factories—no custom forks of these services.
 2. **TUI foundation**
    - Adopt `ink@5` with `ink-box`, `ink-divider`, and `ink-scrollbar` (or evaluate `blessed`).
@@ -248,7 +248,7 @@ Phase 2 exists to showcase the ACM framework at production scale; every subsyste
 
 1. `pnpm install`
 2. `pnpm --filter @acm/aicoder run build`
-3. `pnpm --filter @acm/aicoder exec node ./dist/bin/aicoder.js --llm-model gpt-4o --llm-base-url https://api.openai.com --llm-engine langgraph --workspace /path/to/project --budget-usd 10`
+3. `pnpm --filter @acm/aicoder acm-aicoder --provider vllm --model gpt-4o --base-url https://api.openai.com --workspace /path/to/project`
 4. Interact via TUI:
    - Left column: chat with reasoning stream
    - Middle column: goal, tasks, budget metrics

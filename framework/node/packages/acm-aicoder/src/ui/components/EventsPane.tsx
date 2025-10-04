@@ -8,19 +8,37 @@ import type { EventEntry } from '../store.js';
 interface EventsPaneProps {
   events: EventEntry[];
   height: number;
+  canScrollUp: boolean;
+  canScrollDown: boolean;
+  focused: boolean;
 }
 
-export const EventsPane: React.FC<EventsPaneProps> = ({ events, height }) => {
-  // Show last N events that fit in the height
-  const visibleEvents = events.slice(-Math.max(1, height - 2));
+export const EventsPane: React.FC<EventsPaneProps> = ({
+  events,
+  height,
+  canScrollUp,
+  canScrollDown,
+  focused,
+}) => {
   
   return (
-    <Box flexDirection="column" height={height} borderStyle="single" borderColor="blue">
-      <Box paddingX={1} borderStyle="single" borderColor="blue">
-        <Text bold color="blue">Event Stream</Text>
+    <Box
+      flexDirection="column"
+      height={height}
+      borderStyle="single"
+      borderColor={focused ? 'white' : 'blue'}
+    >
+      <Box paddingX={1} borderStyle="single" borderColor={focused ? 'white' : 'blue'}>
+        <Text bold color={focused ? 'white' : 'blue'}>Event Stream</Text>
+        <Box flexGrow={1} />
+        <ScrollIndicator
+          up={canScrollUp}
+          down={canScrollDown}
+          color={focused ? 'white' : 'blue'}
+        />
       </Box>
       <Box flexDirection="column" paddingX={1} flexGrow={1}>
-        {visibleEvents.map(event => (
+        {events.map(event => (
           <EventItem key={event.id} event={event} />
         ))}
         {events.length === 0 && (
@@ -57,3 +75,7 @@ const EventItem: React.FC<{ event: EventEntry }> = ({ event }) => {
     </Box>
   );
 };
+
+const ScrollIndicator: React.FC<{ up: boolean; down: boolean; color: string }> = ({ up, down, color }) => (
+  <Text color={color}>{up ? '˄' : ' '} {down ? '˅' : ' '}</Text>
+);

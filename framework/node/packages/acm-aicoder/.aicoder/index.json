@@ -1,0 +1,312 @@
+{
+  "files": [
+    {
+      "path": "AICODER_IMPLEMENTATION_PLAN_PHASE2.md",
+      "size": 18716,
+      "mtime": 1759586566993.7588,
+      "hash": "6ef9cdcc31d53163",
+      "language": "markdown",
+      "isBinary": false
+    },
+    {
+      "path": "IMPLEMENTATION_SUMMARY.md",
+      "size": 8540,
+      "mtime": 1759541675453.076,
+      "hash": "7c779a06775651fd",
+      "language": "markdown",
+      "isBinary": false
+    },
+    {
+      "path": "PHASE2_COMPLETION_SUMMARY.md",
+      "size": 8680,
+      "mtime": 1759586566995.7588,
+      "hash": "7a78cd17810456a2",
+      "language": "markdown",
+      "isBinary": false
+    },
+    {
+      "path": "README.md",
+      "size": 14019,
+      "mtime": 1759594499291.2883,
+      "hash": "abbcbad60629cf58",
+      "language": "markdown",
+      "isBinary": false
+    },
+    {
+      "path": "bin/interactive.tsx",
+      "size": 4713,
+      "mtime": 1759598335082.4514,
+      "hash": "52de0efa14ea9560",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "docs/INTERACTIVE_CLI_GUIDE.md",
+      "size": 6135,
+      "mtime": 1759586566995.7588,
+      "hash": "7b6b88fcd08c5166",
+      "language": "markdown",
+      "isBinary": false
+    },
+    {
+      "path": "docs/TUI_MOCKUP.md",
+      "size": 7507,
+      "mtime": 1759586566995.7588,
+      "hash": "38ad6692e6084146",
+      "language": "markdown",
+      "isBinary": false
+    },
+    {
+      "path": "package.json",
+      "size": 1196,
+      "mtime": 1759586566993.7588,
+      "hash": "0a9309262c34b9a0",
+      "language": "json",
+      "isBinary": false
+    },
+    {
+      "path": "src/config/providers.ts",
+      "size": 4476,
+      "mtime": 1759579965165.2576,
+      "hash": "a130fd54254f6d77",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/config/session.ts",
+      "size": 3019,
+      "mtime": 1759595383002.7769,
+      "hash": "d1382de0cccf3262",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/context/bm25.ts",
+      "size": 4143,
+      "mtime": 1759541675454.076,
+      "hash": "27bef2bf51671fae",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/context/code-search.ts",
+      "size": 5198,
+      "mtime": 1759541675454.076,
+      "hash": "2768c2b277cb0138",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/context/context-pack.ts",
+      "size": 3302,
+      "mtime": 1759541675454.076,
+      "hash": "760bee1e916b4c81",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/context/dependency-mapper.ts",
+      "size": 2042,
+      "mtime": 1759541675454.076,
+      "hash": "5604493951e7b27d",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/context/index.ts",
+      "size": 307,
+      "mtime": 1759541675454.076,
+      "hash": "9fa26a214a14125b",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/context/symbol-extractor.ts",
+      "size": 4017,
+      "mtime": 1759541675454.076,
+      "hash": "b1638520706dfa58",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/context/test-mapper.ts",
+      "size": 2073,
+      "mtime": 1759541675454.076,
+      "hash": "b6387aebb5252a9a",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/context/types.ts",
+      "size": 1282,
+      "mtime": 1759541675454.076,
+      "hash": "5b9e8899a2cd1090",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/context/workspace-indexer.ts",
+      "size": 6486,
+      "mtime": 1759541675455.076,
+      "hash": "f740c067414f490e",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/index.ts",
+      "size": 177,
+      "mtime": 1759586566995.7588,
+      "hash": "c9383fbb5cdbee7c",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/registries.ts",
+      "size": 2867,
+      "mtime": 1759541675455.076,
+      "hash": "2e3e98191189bdd3",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/runtime/budget-manager.ts",
+      "size": 3093,
+      "mtime": 1759584519957.2388,
+      "hash": "145e458a3a61759b",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/runtime/interactive-runtime.ts",
+      "size": 11930,
+      "mtime": 1759598425292.9087,
+      "hash": "2cb33f06b6f3a2e5",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/tasks-v2/analysis-tasks.ts",
+      "size": 8750,
+      "mtime": 1759543952237.3652,
+      "hash": "afca1bdd5ca8c901",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/tasks-v2/developer-tasks.ts",
+      "size": 11721,
+      "mtime": 1759562379834.3896,
+      "hash": "99d87b24152cb50b",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/tasks-v2/index.ts",
+      "size": 103,
+      "mtime": 1759541675455.076,
+      "hash": "ef4ad8481b092620",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/tools-v2/edit-tools.ts",
+      "size": 3811,
+      "mtime": 1759541675455.076,
+      "hash": "9bfd917ad0c45575",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/tools-v2/index.ts",
+      "size": 171,
+      "mtime": 1759541675456.076,
+      "hash": "fd99c2478a4c648c",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/tools-v2/read-tools.ts",
+      "size": 6817,
+      "mtime": 1759562379834.3896,
+      "hash": "f441f8d2b0ae4cea",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/tools-v2/search-tools.ts",
+      "size": 5094,
+      "mtime": 1759541675456.076,
+      "hash": "336da0d80bbe3f61",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/tools-v2/test-tools.ts",
+      "size": 2969,
+      "mtime": 1759541675456.076,
+      "hash": "2a637e8b38c1857b",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/ui/App.tsx",
+      "size": 4442,
+      "mtime": 1759584520035.2393,
+      "hash": "40d46fe42589fedb",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/ui/components/ChatPane.tsx",
+      "size": 1580,
+      "mtime": 1759579965165.2576,
+      "hash": "1381bfc4289d7c1c",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/ui/components/EventsPane.tsx",
+      "size": 1834,
+      "mtime": 1759579965166.2576,
+      "hash": "83ab1163912d161b",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/ui/components/GoalsTasksPane.tsx",
+      "size": 3442,
+      "mtime": 1759584520035.2393,
+      "hash": "bb8f956a3a80c279",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "src/ui/store.ts",
+      "size": 5220,
+      "mtime": 1759598452274.0437,
+      "hash": "ebd0f544ee0a0610",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "tests/integration.test.ts",
+      "size": 8283,
+      "mtime": 1759593620900.333,
+      "hash": "80ea7ba258059515",
+      "language": "typescript",
+      "isBinary": false
+    },
+    {
+      "path": "tsconfig.json",
+      "size": 536,
+      "mtime": 1759580474768.2275,
+      "hash": "73bd44e1fd5450bc",
+      "language": "json",
+      "isBinary": false
+    }
+  ],
+  "totalFiles": 38,
+  "totalSize": 188691,
+  "indexedAt": "2025-10-04T17:30:14.199Z",
+  "rootPath": "/mnt/backup1/home/manna/workspace/ml/ddse/ddse-composer/framework/node/packages/acm-aicoder"
+}

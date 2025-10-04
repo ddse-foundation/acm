@@ -86,10 +86,10 @@ const client = new OpenAICompatClient({
 
 ```typescript
 import { createOllamaClient } from '@acm/llm';
-import { LLMPlanner } from '@acm/planner';
+import { StructuredLLMPlanner } from '@acm/planner';
 
 const llm = createOllamaClient('llama3.1');
-const planner = new LLMPlanner();
+const planner = new StructuredLLMPlanner();
 
 const { plans } = await planner.plan({
   goal: { id: 'g1', intent: 'Process order' },

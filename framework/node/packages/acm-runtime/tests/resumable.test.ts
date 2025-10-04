@@ -5,8 +5,22 @@ import {
   ResumableExecutor,
   MemoryLedger,
 } from '../src/index.js';
-import type { Goal, Context, Plan, CapabilityRegistry, ToolRegistry, RunContext } from '@acm/sdk';
-import { Task } from '@acm/sdk';
+import type {
+  Goal,
+  Context,
+  Plan,
+  CapabilityRegistry,
+  ToolRegistry,
+  RunContext,
+  NucleusFactory,
+  NucleusConfig,
+  PreflightResult,
+  PostcheckResult,
+  NucleusInvokeResult,
+  InternalContextScope,
+  LedgerEntry,
+} from '@acm/sdk';
+import { Task, Nucleus } from '@acm/sdk';
 
 // Simple test capability
 class TestTask extends Task {
@@ -57,6 +71,59 @@ class SimpleToolRegistry implements ToolRegistry {
     return [];
   }
 }
+
+class TestNucleus extends Nucleus {
+  private scope?: InternalContextScope;
+
+  constructor(config: NucleusConfig) {
+    super(config);
+  }
+
+  async preflight(): Promise<PreflightResult> {
+    return { status: 'OK' };
+  }
+
+  async invoke(): Promise<NucleusInvokeResult> {
+    return { toolCalls: [] };
+  }
+
+  async postcheck(): Promise<PostcheckResult> {
+    return { status: 'COMPLETE' };
+  }
+
+  recordInference(promptDigest: string): LedgerEntry {
+    return {
+      id: `test-nucleus-${Date.now()}`,
+      ts: Date.now(),
+      type: 'NUCLEUS_INFERENCE',
+      details: {
+        promptDigest,
+      },
+    };
+  }
+
+  getInternalContext(): InternalContextScope | undefined {
+    return this.scope;
+  }
+
+  setInternalContext(scope: InternalContextScope): void {
+    this.scope = scope;
+  }
+}
+
+const testNucleusFactory: NucleusFactory = config => new TestNucleus(config);
+
+const testNucleusConfig = {
+  llmCall: {
+    provider: 'noop',
+    model: 'noop',
+  },
+};
+
+const sharedNucleusOptions = {
+  nucleusFactory: testNucleusFactory,
+  nucleusConfig: testNucleusConfig,
+};
 
 async function testBasicCheckpoint() {
   console.log('Testing basic checkpoint creation...');
@@ -110,6 +177,7 @@ async function testBasicCheckpoint() {
     runId,
     checkpointStore,
     checkpointInterval: 1,
+    ...sharedNucleusOptions,
   });
 
   // Verify execution completed
@@ -191,6 +259,7 @@ async function testResume() {
     runId,
     checkpointStore,
     checkpointInterval: 1,
+    ...sharedNucleusOptions,
   });
 
   // Get the latest checkpoint
@@ -214,6 +283,7 @@ async function testResume() {
     checkpointStore,
     resumeFrom: checkpoint.id,
     checkpointInterval: 1,
+    ...sharedNucleusOptions,
   });
 
   // Verify all tasks completed
@@ -277,6 +347,7 @@ async function testResumableExecutor() {
     toolRegistry,
     runId,
     checkpointInterval: 1,
+    ...sharedNucleusOptions,
   });
 
   // Verify execution completed

@@ -163,7 +163,7 @@ All tools follow ACM Tool contract and include proper error handling.
 
 ✅ **SDK Compliance**: Proper use of Tool, Task, CapabilityRegistry, etc.
 ✅ **Runtime Integration**: executeResumablePlan with checkpointing
-✅ **Planner Integration**: LLMPlanner with streaming support
+✅ **Planner Integration**: StructuredLLMPlanner with structured tool-call streaming support
 ✅ **Policy Engine**: Full policy evaluation lifecycle
 ✅ **Verification**: Task output verification expressions
 

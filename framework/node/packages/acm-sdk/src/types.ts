@@ -1,3 +1,5 @@
+import type { Nucleus } from './nucleus.js';
+
 // Core types for ACM v0.5
 
 export type GoalCard = {
@@ -138,7 +140,8 @@ export type LedgerEntry = {
     | 'ERROR' 
     | 'COMPENSATION'
     | 'NUCLEUS_INFERENCE'
-    | 'CONTEXT_INTERNALIZED';
+    | 'CONTEXT_INTERNALIZED'
+    | 'TOOL_CALL';
   details: Record<string, any>;
   digest?: string; // Content hash for tamper detection
   signature?: string; // Optional cryptographic signature
@@ -168,6 +171,7 @@ export type RunContext = {
   getTool(name: string): any;
   getCapabilityRegistry(): any;
   stream?: StreamSink;
+  nucleus: Nucleus;
   internalContext?: InternalContextScope;
 };
 

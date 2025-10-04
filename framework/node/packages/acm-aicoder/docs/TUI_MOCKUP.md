@@ -85,8 +85,8 @@
 
 ### 1. Startup
 ```
-> acm-aicoder --llm-model gpt-4o --llm-base-url https://api.openai.com \
-              --llm-engine langgraph --workspace /myproject --budget-usd 10
+> acm-aicoder --provider vllm --model gpt-4o --base-url https://api.openai.com \
+              --workspace /myproject
 
 [TUI launches with welcome message]
 ```

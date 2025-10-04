@@ -2,7 +2,7 @@
 
 // ACM AI Coder - Phase 2 Interactive CLI
 // Full-screen TUI with three-column layout
-// Requires: --llm-model, --llm-base-url, --llm-engine, --workspace
+// Requires: --provider, --model, and --workspace (optional --base-url)
 
 import React from 'react';
 import { render } from 'ink';
@@ -40,12 +40,11 @@ async function main() {
     // Parse and validate CLI arguments
     const args = parseCliArgs(process.argv.slice(2));
     const config = validateAndNormalizeConfig(args);
-    
-    // Create LLM client based on base URL
-    const llm = config.llmBaseUrl.includes('api.openai.com') || 
-                 config.llmBaseUrl.includes('api.anthropic.com')
-      ? createVLLMClient(config.llmModel, config.llmBaseUrl)
-      : createOllamaClient(config.llmModel, config.llmBaseUrl);
+
+    // Create LLM client based on provider selection
+    const llm = config.provider === 'vllm'
+      ? createVLLMClient(config.model, config.baseUrl)
+      : createOllamaClient(config.model, config.baseUrl);
     
     // Setup registries
     const toolRegistry = new SimpleToolRegistry();
@@ -104,26 +103,29 @@ async function main() {
     const runtime = new InteractiveRuntime({
       config,
       llm,
-      capabilities: capabilityRegistry.list(),
+      capabilityRegistry,
       toolRegistry,
       policyEngine,
       store,
     });
+
+    const initialBudget = runtime.getBudgetManager().getStatus();
     
     // Welcome message
     store.addMessage('system', 
       `Welcome to ACM AI Coder (Phase 2)\n\n` +
-      `Configuration:\n` +
-      `  Model: ${config.llmModel}\n` +
-      `  Engine: ${config.llmEngine}\n` +
-      `  Workspace: ${config.workspace}\n` +
-      (config.budgetUsd ? `  Budget: $${config.budgetUsd}\n` : '') +
+  `Configuration:\n` +
+  `  Provider: ${config.provider}\n` +
+      `  Model: ${config.model}\n` +
+      (config.baseUrl ? `  Base URL: ${config.baseUrl}\n` : '') +
+  `  Workspace: ${config.workspace}${config.workspaceFallback ? ' (current directory)' : ''}\n` +
+      (initialBudget.maxTokens !== undefined ? `  Token allowance: ${initialBudget.maxTokens}\n` : '') +
       `\n` +
       `Type your goal to start planning, or /help for commands.`
     );
     
     // Update initial budget status
-    store.updateBudgetStatus(runtime.getBudgetManager().getStatus());
+    store.updateBudgetStatus(initialBudget);
     
     // Handle commands from UI
     const handleCommand = async (command: string) => {
