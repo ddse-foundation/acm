@@ -8,20 +8,33 @@ import { LLMPlanner } from '@acm/planner';
 import enquirer from 'enquirer';
 import chalk from 'chalk';
 import {
-  CodeReadTool,
-  CodeEditTool,
-  CodeAnalyzeTool,
-  TestRunnerTool,
-  AnalyzeCodebaseTask,
-  FixBugTask,
-  ImplementFeatureTask,
-  RunTestsTask,
+  // V2 Tools
+  FileStatTool,
+  FileReadToolV2,
+  FileReadLinesTool,
+  DiffTool,
+  GrepTool,
+  CodeSearchTool,
+  CodeEditToolV2,
+  RunTestsToolV2,
+  BuildTool,
+  // V2 Tasks
+  AnalyzeWorkspaceTask,
+  CollectContextPackTask,
+  SearchCodeTask,
+  FindSymbolDefinitionTask,
+  ImplementFunctionTask,
+  RefactorRenameSymbolTask,
+  FixTypeErrorTask,
+  GenerateUnitTestsTask,
+  ReadFileLinesTask,
+  DiffFilesTask,
+  GrepSearchTask,
+  // Registries/Renderer
   SimpleCapabilityRegistry,
   SimpleToolRegistry,
   SimplePolicyEngine,
   CLIRenderer,
-  goals,
-  contexts,
 } from '../src/index.js';
 
 // Parse command-line arguments
@@ -43,7 +56,7 @@ function parseArgs(): {
   const parsed: any = {
     provider: 'ollama',
     model: 'llama3.1',
-    goal: 'analyze',
+  goal: 'custom',
     stream: true,
     autoApprove: false,
     dryRun: false,
@@ -108,12 +121,10 @@ ${chalk.bold('Options:')}
   --provider <ollama|vllm>    LLM provider (default: ollama)
   --model <name>              Model name (default: llama3.1)
   --base-url <url>            Override API base URL
-  --goal <goal>               Goal to execute:
-                              - analyze: Analyze codebase
-                              - fixBug: Fix a bug with AI assistance
-                              - implementFeature: Scaffold new feature
-                              - runTests: Run test suite
-                              - custom: Interactive custom goal
+  --goal <goal>               Goal to execute (default: custom for chat-first)
+                              - custom: Interactive freeform goal (recommended)
+                              - analyze: Analyze codebase (uses coder capabilities)
+                              - fixBug | implementFeature | runTests: Legacy demos
   --no-stream                 Disable streaming output
   --auto-approve              Auto-approve all operations (use with caution!)
   --dry-run                   Preview changes without writing files
@@ -211,28 +222,33 @@ async function main() {
 
   // Setup registries
   const toolRegistry = new SimpleToolRegistry();
-  toolRegistry.register(new CodeReadTool());
-  toolRegistry.register(new CodeEditTool());
-  toolRegistry.register(new CodeAnalyzeTool());
-  toolRegistry.register(new TestRunnerTool());
+  // Determine root for tools
+  const toolRoot = config.workspace || process.cwd();
+  toolRegistry.register(new FileStatTool());
+  toolRegistry.register(new FileReadToolV2());
+  toolRegistry.register(new FileReadLinesTool());
+  toolRegistry.register(new DiffTool());
+  toolRegistry.register(new GrepTool(toolRoot));
+  toolRegistry.register(new CodeSearchTool(toolRoot));
+  toolRegistry.register(new CodeEditToolV2());
+  toolRegistry.register(new RunTestsToolV2());
+  toolRegistry.register(new BuildTool());
 
   const capabilityRegistry = new SimpleCapabilityRegistry();
-  capabilityRegistry.register(
-    { name: 'analyze_codebase', sideEffects: false },
-    new AnalyzeCodebaseTask()
-  );
-  capabilityRegistry.register(
-    { name: 'fix_bug', sideEffects: true },
-    new FixBugTask()
-  );
-  capabilityRegistry.register(
-    { name: 'implement_feature', sideEffects: true },
-    new ImplementFeatureTask()
-  );
-  capabilityRegistry.register(
-    { name: 'run_tests', sideEffects: false },
-    new RunTestsTask()
-  );
+  // Core analysis/context capabilities
+  capabilityRegistry.register({ name: 'analyze_workspace', sideEffects: false }, new AnalyzeWorkspaceTask());
+  capabilityRegistry.register({ name: 'collect_context_pack', sideEffects: false }, new CollectContextPackTask());
+  capabilityRegistry.register({ name: 'search_code', sideEffects: false }, new SearchCodeTask());
+  // Reading/searching/diffing
+  capabilityRegistry.register({ name: 'read_file_lines', sideEffects: false }, new ReadFileLinesTask());
+  capabilityRegistry.register({ name: 'grep_search', sideEffects: false }, new GrepSearchTask());
+  capabilityRegistry.register({ name: 'diff_files', sideEffects: false }, new DiffFilesTask());
+  capabilityRegistry.register({ name: 'find_symbol_definition', sideEffects: false }, new FindSymbolDefinitionTask());
+  // Dev/editing capabilities
+  capabilityRegistry.register({ name: 'implement_function', sideEffects: true }, new ImplementFunctionTask());
+  capabilityRegistry.register({ name: 'refactor_rename_symbol', sideEffects: true }, new RefactorRenameSymbolTask());
+  capabilityRegistry.register({ name: 'fix_type_error', sideEffects: true }, new FixTypeErrorTask());
+  capabilityRegistry.register({ name: 'generate_unit_tests', sideEffects: true }, new GenerateUnitTestsTask());
 
   // Get goal and context
   let goal, context;
@@ -256,9 +272,13 @@ async function main() {
       facts: { customGoal: true },
       version: '1.0',
     };
+  } else if (config.goal === 'analyze') {
+    goal = { id: 'goal-analyze-1', intent: 'Analyze the workspace and surface issues' } as any;
+    context = { id: 'ctx-analyze-1', facts: { path: config.workspace || process.cwd() }, version: '1.0' } as any;
   } else {
-    goal = goals[config.goal];
-    context = contexts[config.goal];
+    // Legacy demos: map to simple intents
+    goal = { id: 'goal-legacy-1', intent: `Legacy ${config.goal}` } as any;
+    context = { id: 'ctx-legacy-1', facts: {}, version: '1.0' } as any;
   }
 
   if (!goal || !context) {
@@ -285,11 +305,7 @@ async function main() {
     // Generate plans
     // If a workspace path was provided, override context facts for analyze/runTests goals
     if (config.workspace) {
-      if (config.goal === 'analyze') {
-        context = { ...context, facts: { ...context.facts, path: config.workspace } };
-      } else if (config.goal === 'runTests') {
-        context = { ...context, facts: { ...context.facts, cwd: config.workspace } };
-      }
+      context = { ...context, facts: { ...context.facts, path: config.workspace, cwd: config.workspace } };
     }
 
     const plannerOptions: any = {
@@ -303,7 +319,7 @@ async function main() {
       plannerOptions.planCount = config.plans; // optional override
     }
 
-    const plannerResult = await planner.plan(plannerOptions);
+  const plannerResult = await planner.plan(plannerOptions);
 
     console.log();
     renderer.renderSuccess(`Plans generated: ${plannerResult.plans.length}`);
@@ -314,10 +330,49 @@ async function main() {
 
     // Select plan
   const selection = await selectPlan(plannerResult.plans);
-  const plan = selection.plan;
+  let plan = selection.plan;
   const planLabel = `Plan ${String.fromCharCode(65 + selection.index)}`;
   // Ensure plan has an id for logging and downstream usage
   if (!plan.id) plan.id = planLabel.toLowerCase().replace(/\s+/g, '-');
+
+  // Sanitize plan tasks (LLM output may include leading spaces in keys like " capability")
+  const sanitizePlan = (p: any) => {
+    if (!p || !Array.isArray(p.tasks)) return p;
+    p.tasks = p.tasks.map((t: any) => {
+      if (!t || typeof t !== 'object') return t;
+      // Fix keys with accidental leading/trailing spaces
+      for (const key of Object.keys(t)) {
+        const trimmed = key.trim();
+        if (trimmed !== key && !(trimmed in t)) {
+          (t as any)[trimmed] = (t as any)[key];
+          delete (t as any)[key];
+        }
+      }
+      // Normalize capability
+      if (typeof t.capability === 'string') {
+        t.capability = t.capability.trim();
+      }
+      // Normalize common input aliases
+      if (t.input && typeof t.input === 'object') {
+        const inp: any = t.input;
+        // Fix keys with spaces
+        for (const k of Object.keys(inp)) {
+          const trimmed = k.trim();
+          if (trimmed !== k && !(trimmed in inp)) {
+            inp[trimmed] = inp[k];
+            delete inp[k];
+          }
+        }
+        // Map filepath/filePath -> path (tools also accept aliases, but normalize here too)
+        if (!inp.path && (inp.filepath || inp.filePath)) {
+          inp.path = inp.filepath || inp.filePath;
+        }
+      }
+      return t;
+    });
+    return p;
+  };
+  plan = sanitizePlan(plan);
     
     console.log();
   renderer.renderInfo(`Selected Plan: ${plan.id || planLabel}`);
@@ -354,11 +409,13 @@ async function main() {
     // If workspace provided, ensure tasks that consume paths use it
     if (config.workspace) {
       plan.tasks.forEach((task: any) => {
-        if (task.capability === 'analyze_codebase') {
+        if (task.input && typeof task.input === 'object') {
+          if ('path' in task.input) task.input.path = task.input.path || config.workspace;
+          if ('cwd' in task.input) task.input.cwd = task.input.cwd || config.workspace;
+        }
+        // For analysis specifically, ensure path
+        if (task.capability === 'analyze_workspace') {
           task.input = { ...(task.input || {}), path: config.workspace };
-        } else if (task.capability === 'run_tests') {
-          // Prefer cwd for tests
-          task.input = { ...(task.input || {}), cwd: config.workspace };
         }
       });
     }

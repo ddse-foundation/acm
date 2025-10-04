@@ -14,14 +14,24 @@ import {
  * AnalyzeWorkspaceTask - Deep workspace analysis with context
  */
 export class AnalyzeWorkspaceTask extends Task<
-  { path?: string; includeTests?: boolean; includeDeps?: boolean },
-  { 
+  {
+    path?: string;
+    includeTests?: boolean;
+    includeDeps?: boolean;
+    runBuild?: boolean;
+    runTests?: boolean;
+    buildCommand?: string;
+    testCommand?: string;
+  },
+  {
     summary: string;
     totalFiles: number;
     codeFiles: number;
     symbols: number;
     dependencies: number;
     testFiles: number;
+    build?: { success: boolean; errors: string[]; duration: number };
+    tests?: { success: boolean; exitCode: number; duration: number };
     contextPack?: ContextPack;
   }
 > {
@@ -31,14 +41,24 @@ export class AnalyzeWorkspaceTask extends Task<
 
   async execute(
     ctx: RunContext,
-    input: { path?: string; includeTests?: boolean; includeDeps?: boolean }
-  ): Promise<{ 
+    input: {
+      path?: string;
+      includeTests?: boolean;
+      includeDeps?: boolean;
+      runBuild?: boolean;
+      runTests?: boolean;
+      buildCommand?: string;
+      testCommand?: string;
+    }
+  ): Promise<{
     summary: string;
     totalFiles: number;
     codeFiles: number;
     symbols: number;
     dependencies: number;
     testFiles: number;
+    build?: { success: boolean; errors: string[]; duration: number };
+    tests?: { success: boolean; exitCode: number; duration: number };
     contextPack?: ContextPack;
   }> {
     const rootPath = input.path || process.cwd();
@@ -79,9 +99,73 @@ export class AnalyzeWorkspaceTask extends Task<
       tests: testMappings.length,
     });
 
-    const summary = `Analyzed ${index.totalFiles} files: ${codeFiles} code files, ` +
-                   `${symbols.length} symbols, ${dependencies.length} dependencies, ` +
-                   `${testMappings.length} test files`;
+    // Optionally run build and tests using registered tools
+    let buildSummary: { success: boolean; errors: string[]; duration: number } | undefined;
+    if (input.runBuild) {
+      ctx.stream?.emit('task', { taskId: this.id, step: 'running_build' });
+      const buildTool = ctx.getTool('build');
+      if (buildTool) {
+        const buildRes = await buildTool.call({
+          command: input.buildCommand || 'npm run build',
+          cwd: rootPath,
+        });
+        buildSummary = {
+          success: !!buildRes.success,
+          errors: Array.isArray(buildRes.errors) ? buildRes.errors : [],
+          duration: Number(buildRes.duration) || 0,
+        };
+        ctx.stream?.emit('task', {
+          taskId: this.id,
+          step: 'build_complete',
+          success: buildSummary.success,
+          errors: buildSummary.errors.length,
+          duration: buildSummary.duration,
+        });
+      } else {
+        ctx.stream?.emit('task', { taskId: this.id, step: 'build_tool_missing' });
+      }
+    }
+
+    let testSummary: { success: boolean; exitCode: number; duration: number } | undefined;
+    if (input.runTests) {
+      ctx.stream?.emit('task', { taskId: this.id, step: 'running_tests' });
+      const testTool = ctx.getTool('run_tests_v2');
+      if (testTool) {
+        const testRes = await testTool.call({
+          command: input.testCommand || 'npm test',
+          cwd: rootPath,
+        });
+        testSummary = {
+          success: !!testRes.success,
+          exitCode: Number(testRes.exitCode) || (testRes.success ? 0 : 1),
+          duration: Number(testRes.duration) || 0,
+        };
+        ctx.stream?.emit('task', {
+          taskId: this.id,
+          step: 'tests_complete',
+          success: testSummary.success,
+          exitCode: testSummary.exitCode,
+          duration: testSummary.duration,
+        });
+      } else {
+        ctx.stream?.emit('task', { taskId: this.id, step: 'test_tool_missing' });
+      }
+    }
+
+    const summaryParts = [
+      `Analyzed ${index.totalFiles} files`,
+      `${codeFiles} code files`,
+      `${symbols.length} symbols`,
+      `${dependencies.length} dependencies`,
+      `${testMappings.length} test files`,
+    ];
+    if (buildSummary) {
+      summaryParts.push(`build: ${buildSummary.success ? 'ok' : `${buildSummary.errors.length} errors`}`);
+    }
+    if (testSummary) {
+      summaryParts.push(`tests: ${testSummary.success ? 'ok' : `exit ${testSummary.exitCode}`}`);
+    }
+    const summary = summaryParts.join(', ');
 
     return {
       summary,
@@ -90,6 +174,8 @@ export class AnalyzeWorkspaceTask extends Task<
       symbols: symbols.length,
       dependencies: dependencies.length,
       testFiles: testMappings.length,
+      build: buildSummary,
+      tests: testSummary,
     };
   }
 

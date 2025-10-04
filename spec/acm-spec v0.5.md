@@ -324,6 +324,15 @@ provenance:
   prompt_digest: "sha256-0df4..."
 ```
 
+#### 5.3.4 Internal Context Scope
+
+The Context Packet remains immutable once referenced by a Plan. However, planners and Tasks MAY maintain a **Nucleus-internal context scope** for ephemeral enrichments discovered during execution. Internal scope artifacts:
+
+- MUST be content-addressed and recorded with digests under `internalContext`.
+- MUST remain private to the owning Task or planner step unless explicitly promoted, at which point a new Context Packet version SHALL be minted.
+- SHALL be captured in the Replay Bundle (`planner/internal-context/`) together with provenance and retrieval rationale.
+- SHALL include ledger entries of type `CONTEXT_INTERNALIZED` referencing the originating Task/Nucleus and the artifact digests.
+
 ### 5.4 Plan Graph
 
 #### 5.4.1 Purpose
@@ -412,6 +421,8 @@ Defines the logical execution contract a runtime MUST honor, including idempoten
 | `retryPolicy` | object | Limits, backoff strategies. |
 | `compensation` | object | Details of compensating actions. |
 | `tools` | list | Concrete tool invocations (with versions). |
+| `nucleusRef` | string | Optional reference to a Nucleus artifact governing LLM calls for this Task. |
+| `internalTools` | list | Optional internal-only tools (e.g., context retrievers) guarded by the Nucleus. |
 | `telemetry` | object | OTEL span metadata requirements. |
 
 #### 5.5.3 Example (YAML)
@@ -616,10 +627,13 @@ Immutable, append-only ledger capturing all non-I/O decisions.
 
 #### 5.9.3 Example (JSON Lines)
 
+Ledger `type` enumerations SHALL include `NUCLEUS_INFERENCE` (for deterministic LLM calls executed within a Nucleus) and `CONTEXT_INTERNALIZED` (for artifacts added to internal context scope). Each entry MUST capture prompt/template digests, model identifiers, retrieval directives, and resulting artifact hashes.
+
 ```jsonl
 {"id":"ledger-0001","timestamp":"2025-10-03T00:06:01Z","type":"PLAN_SELECTED","actor":"policy","details":{"goalId":"REFUND-001","selected":"plan-A","alternatives":["plan-B"],"rationale":"policy requires risk assessment"},"hash":"sha256-5d1b..."}
-{"id":"ledger-0002","timestamp":"2025-10-03T00:06:25Z","type":"BRANCH_TAKEN","actor":"engine","details":{"planId":"plan-A","fromTask":"t2","toTask":"t_approval","guard":"$t2.risk == 'HIGH'","observed":{"t2.risk":"HIGH"}},"hash":"sha256-aa03..."}
-{"id":"ledger-0003","timestamp":"2025-10-03T00:07:10Z","type":"POLICY_DECISION","actor":"policy","details":{"decision":"deny","policyId":"acm.policy.plan","reason":"riskTier == 'HIGH'"},"hash":"sha256-1d9c..."}
+{"id":"ledger-0002","timestamp":"2025-10-03T00:06:25Z","type":"NUCLEUS_INFERENCE","actor":"llm","details":{"taskId":"t2","nucleusId":"nucleus-planA","promptDigest":"sha256-c1f9...","model":"gpt-4o","seed":1234,"decision":"NEEDS_CONTEXT","requestedArtifacts":["ctx://summaries/order-O123.txt"]},"hash":"sha256-fb02..."}
+{"id":"ledger-0003","timestamp":"2025-10-03T00:06:32Z","type":"CONTEXT_INTERNALIZED","actor":"engine","details":{"taskId":"t2","artifacts":[{"digest":"sha256-abc1...","scope":"internal"}]},"hash":"sha256-a902..."}
+{"id":"ledger-0004","timestamp":"2025-10-03T00:07:10Z","type":"POLICY_DECISION","actor":"policy","details":{"decision":"deny","policyId":"acm.policy.plan","reason":"riskTier == 'HIGH'"},"hash":"sha256-1d9c..."}
 ```
 
 Ledger entries MUST be ordered, immutable, and included in the Replay Bundle.
@@ -646,6 +660,8 @@ Aggregate everything needed for third-party reproduction: planning artifacts, ex
 | `engine-trace/` | Engine-native traces (Temporal history, OTEL spans, etc.). |
 | `task-io/` | Per-task input/output payloads. |
 | `planner/` | Planner prompts, model IDs, seeds, diff logs. |
+| `planner/internal-context/` | Internal context artifacts captured by Nucleus, including retrieval manifests and digests. |
+| `planner/llm-calls.jsonl` | Ordered record of `LLMCall` executions with prompt hashes, seeds, and model metadata. |
 
 #### 5.10.3 Example Manifest (YAML)
 
@@ -702,10 +718,37 @@ Engines MUST guarantee that the Replay Bundle is complete before marking a run a
 ### 6.3 Task Execution Flow
 
 1. **Policy Pre-Hook:** Evaluate `policyInput` with PDP. Record decision.
-2. **Task Execution:** Invoke Tools under Task contract; enforce idempotency via `idemKey`.
-3. **Verification:** Run declared checks. Route failures per Plan edges or policy.
-4. **Policy Post-Hook:** Optional additional PDP evaluation (`action: task.post`).
-5. **Logging:** Persist Task IO, policy request/response, verification outcomes, telemetry spans.
+2. **Nucleus Preflight:** If a Task specifies `nucleusRef`, the engine MUST invoke the Nucleus `preflight` hook. When the hook returns `NEEDS_CONTEXT`, the engine SHALL execute the declared internal retrieval Task(s) before proceeding and append corresponding ledger entries.
+3. **Task Execution:** Invoke Tools under Task contract; enforce idempotency via `idemKey`.
+4. **Verification:** Run declared checks. Route failures per Plan edges or policy.
+5. **Policy Post-Hook:** Optional additional PDP evaluation (`action: task.post`).
+6. **Logging:** Persist Task IO, policy request/response, verification outcomes, telemetry spans, and all Nucleus inferences.
+
+### 5.11 Nucleus Contract
+
+#### 5.11.1 Purpose
+
+The **Nucleus** encapsulates deterministic cognitive behavior (LLM or equivalent reasoning) for planners and Tasks. It provides a single, auditable `LLMCall` member responsible for assessing context sufficiency, steering internal retrieval, and emitting reasoning outputs.
+
+#### 5.11.2 Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `metadata.id` | string | Unique identifier scoped to Goal/Plan or Task (`nucleus-planA`, `nucleus-task-t2`). |
+| `binding` | object | References to `goalId`, `planId`, `taskId` (when applicable), and `contextRef`. |
+| `llmCall` | object | Deterministic configuration: provider, model, temperature, seed, prompt template digest, stop tokens. |
+| `hooks.preflight` | object | Schema describing possible return codes (`OK`, `NEEDS_CONTEXT`, `ABORT`) and criteria. |
+| `hooks.postcheck` | object | Optional post-execution evaluation instructions. |
+| `internalContext` | list | Content-addressable artifacts managed by the Nucleus with provenance fields. |
+| `internalTools` | list | Referenced internal-only tools or Tasks (e.g., context retrievers) including policy requirements. |
+| `telemetry` | object | Required tracing/span metadata for each `LLMCall`. |
+
+#### 5.11.3 Behavioral Requirements
+
+- `llmCall` executions MUST record prompt hashes, model identifiers, seeds, and decisions in the Memory Ledger as `NUCLEUS_INFERENCE` entries.
+- When `hooks.preflight` returns `NEEDS_CONTEXT`, the engine SHALL execute the declared `internalTools` in-order and capture outputs under `internalContext`.
+- Internal context artifacts MAY be promoted to shared context only via issuance of a new Context Packet (`context.version += 1`).
+- `hooks.postcheck` MAY trigger compensations or policy escalations; such decisions MUST be logged with ledger entries referencing the originating `llmCall`.
 
 ### 6.4 Error Handling and Compensation
 

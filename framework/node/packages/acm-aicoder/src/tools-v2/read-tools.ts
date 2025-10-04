@@ -59,14 +59,20 @@ export class FileReadToolV2 extends Tool<
     limit?: number;
     ranges?: Array<{ start: number; end: number }>;
   }): Promise<{ content: string; bytesRead: number; eof: boolean; lang?: string }> {
-    const fullPath = path.resolve(input.path);
+    // Normalize common aliases for file path (planner may emit `filepath` or `filePath`)
+    const anyInput = input as any;
+    const normalizedPath: string | undefined = anyInput?.path ?? anyInput?.filepath ?? anyInput?.filePath;
+    if (!normalizedPath) {
+      throw new Error('FileReadToolV2: missing required path. Accepted keys: path | filepath | filePath');
+    }
+    const fullPath = path.resolve(normalizedPath);
     const stats = await fs.stat(fullPath);
     
     // Check if binary
-    const ext = path.extname(input.path);
+    const ext = path.extname(normalizedPath);
     const binaryExts = new Set(['.png', '.jpg', '.pdf', '.zip', '.exe', '.dll']);
     if (binaryExts.has(ext)) {
-      throw new Error(`File ${input.path} is binary, cannot read as text`);
+      throw new Error(`File ${normalizedPath} is binary, cannot read as text`);
     }
 
     // Handle ranged reads
@@ -87,7 +93,7 @@ export class FileReadToolV2 extends Tool<
     const offset = input.offset ?? 0;
     const limit = input.limit ?? stats.size;
 
-    const content = await fs.readFile(fullPath, 'utf-8');
+  const content = await fs.readFile(fullPath, 'utf-8');
     const slice = content.slice(offset, offset + limit);
     const eof = offset + slice.length >= content.length;
 
@@ -130,7 +136,13 @@ export class FileReadLinesTool extends Tool<
     endLine?: number;
     maxLines?: number;
   }): Promise<{ content: string; startLine: number; endLine: number; totalLines?: number }> {
-    const fullPath = path.resolve(input.path);
+    // Normalize common aliases for file path (planner may emit `filepath` or `filePath`)
+    const anyInput = input as any;
+    const normalizedPath: string | undefined = anyInput?.path ?? anyInput?.filepath ?? anyInput?.filePath;
+    if (!normalizedPath) {
+      throw new Error('FileReadLinesTool: missing required path. Accepted keys: path | filepath | filePath');
+    }
+    const fullPath = path.resolve(normalizedPath);
     const content = await fs.readFile(fullPath, 'utf-8');
     const lines = content.split('\n');
     

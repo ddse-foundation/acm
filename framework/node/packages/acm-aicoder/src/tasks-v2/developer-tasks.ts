@@ -308,3 +308,100 @@ describe('${input.symbolName || 'Module'} Tests', () => {
     return ['output.implemented === true', 'output.testCount > 0'];
   }
 }
+
+/**
+ * ReadFileLinesTask - Precise file slice reading
+ */
+export class ReadFileLinesTask extends Task<
+  { path: string; startLine?: number; endLine?: number; maxLines?: number },
+  { content: string; startLine: number; endLine: number; totalLines?: number }
+> {
+  constructor() {
+    super('read-file-lines', 'read_file_lines');
+  }
+
+  async execute(
+    ctx: RunContext,
+    input: { path: string; startLine?: number; endLine?: number; maxLines?: number }
+  ): Promise<{ content: string; startLine: number; endLine: number; totalLines?: number }> {
+    const readLines = ctx.getTool('file_read_lines');
+    if (!readLines) throw new Error('FileReadLinesTool not found');
+
+    // Normalize path aliases from planner (filepath/filePath)
+    const anyInput = input as any;
+    const normalizedPath: string | undefined = anyInput?.path ?? anyInput?.filepath ?? anyInput?.filePath;
+    if (!normalizedPath) {
+      throw new Error('ReadFileLinesTask: missing required path. Accepted keys: path | filepath | filePath');
+    }
+
+    const res = await readLines.call({
+      path: normalizedPath,
+      startLine: input.startLine,
+      endLine: input.endLine,
+      maxLines: input.maxLines,
+    });
+    return res;
+  }
+
+  verification(): string[] {
+    return ['output.content !== undefined'];
+  }
+}
+
+/**
+ * DiffFilesTask - Generate unified diff between two files
+ */
+export class DiffFilesTask extends Task<
+  { aPath: string; bPath: string; context?: number },
+  { diff: string; stats: { filesChanged: number; additions: number; deletions: number } }
+> {
+  constructor() {
+    super('diff-files', 'diff_files');
+  }
+
+  async execute(
+    ctx: RunContext,
+    input: { aPath: string; bPath: string; context?: number }
+  ): Promise<{ diff: string; stats: { filesChanged: number; additions: number; deletions: number } }> {
+    const diffTool = ctx.getTool('diff');
+    if (!diffTool) throw new Error('DiffTool not found');
+
+    const res = await diffTool.call({ aPath: input.aPath, bPath: input.bPath, context: input.context });
+    return res;
+  }
+
+  verification(): string[] {
+    return ['output.diff !== undefined'];
+  }
+}
+
+/**
+ * GrepSearchTask - Fast pattern search across workspace
+ */
+export class GrepSearchTask extends Task<
+  { pattern: string; regex?: boolean; caseInsensitive?: boolean; maxResults?: number },
+  { matches: Array<{ path: string; line: number; column: number; preview: string }> }
+> {
+  constructor() {
+    super('grep-search', 'grep_search');
+  }
+
+  async execute(
+    ctx: RunContext,
+    input: { pattern: string; regex?: boolean; caseInsensitive?: boolean; maxResults?: number }
+  ): Promise<{ matches: Array<{ path: string; line: number; column: number; preview: string }> }> {
+    const grep = ctx.getTool('grep');
+    if (!grep) throw new Error('GrepTool not found');
+    const res = await grep.call({
+      pattern: input.pattern,
+      regex: input.regex,
+      caseInsensitive: input.caseInsensitive,
+      maxResults: input.maxResults,
+    });
+    return res;
+  }
+
+  verification(): string[] {
+    return ['output.matches !== undefined'];
+  }
+}
