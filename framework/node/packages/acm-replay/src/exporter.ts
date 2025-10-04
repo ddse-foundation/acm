@@ -81,6 +81,24 @@ export interface ReplayBundleExportOptions {
   verificationResults?: VerificationResult[];
   engineTrace?: EngineTrace;
   plannerPrompts?: Array<{ role: string; content: string }>;
+  // Phase 4 additions
+  llmCalls?: Array<{
+    id: string;
+    ts: number;
+    type: 'planner' | 'task' | 'nucleus';
+    promptDigest: string;
+    model: string;
+    provider: string;
+    seed?: number;
+    toolCalls?: any[];
+    reasoning?: string;
+  }>;
+  internalContext?: Array<{
+    id: string;
+    type: string;
+    digest: string;
+    provenance?: any;
+  }>;
 }
 
 /**
@@ -106,6 +124,8 @@ export class ReplayBundleExporter {
       verificationResults = [],
       engineTrace,
       plannerPrompts,
+      llmCalls = [],
+      internalContext = [],
     } = options;
 
     // Create bundle directory structure
@@ -119,8 +139,9 @@ export class ReplayBundleExporter {
     await fs.mkdir(path.join(outputDir, 'memory-ledger'), { recursive: true });
     await fs.mkdir(path.join(outputDir, 'engine-trace'), { recursive: true });
     await fs.mkdir(path.join(outputDir, 'task-io'), { recursive: true });
-    if (plannerPrompts) {
-      await fs.mkdir(path.join(outputDir, 'planner-prompts'), { recursive: true });
+    if (plannerPrompts || llmCalls.length > 0) {
+      await fs.mkdir(path.join(outputDir, 'planner'), { recursive: true });
+      await fs.mkdir(path.join(outputDir, 'planner', 'internal-context'), { recursive: true });
     }
 
     // Export metadata
@@ -219,8 +240,25 @@ export class ReplayBundleExporter {
     // Export planner prompts
     if (plannerPrompts) {
       await fs.writeFile(
-        path.join(outputDir, 'planner-prompts', 'messages.json'),
+        path.join(outputDir, 'planner', 'messages.json'),
         JSON.stringify(plannerPrompts, null, 2)
+      );
+    }
+
+    // Export LLM calls (JSONL) - Phase 4
+    if (llmCalls.length > 0) {
+      const llmCallLines = llmCalls.map((call) => JSON.stringify(call)).join('\n');
+      await fs.writeFile(
+        path.join(outputDir, 'planner', 'llm-calls.jsonl'),
+        llmCallLines
+      );
+    }
+
+    // Export internal context artifacts - Phase 4
+    if (internalContext.length > 0) {
+      await fs.writeFile(
+        path.join(outputDir, 'planner', 'internal-context', 'manifest.json'),
+        JSON.stringify(internalContext, null, 2)
       );
     }
 
