@@ -233,12 +233,44 @@ export class InteractiveRuntime {
   private async cleanupGoal(): Promise<void> {
     // Persist replay bundle
     try {
-      const replayDir = `${this.config.workspace}/.aicoder/replays`;
-      const timestamp = new Date().toISOString().replace(/:/g, '-');
-      // TODO: Save replay bundle using @acm/replay
-      this.store.addEvent('REPLAY_SAVED', { dir: replayDir }, 'blue');
-    } catch (err) {
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      
+      const replayDir = path.join(this.config.workspace, '.aicoder', 'replays');
+      const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '');
+      const bundleDir = path.join(replayDir, timestamp);
+      
+      // Create directory
+      await fs.mkdir(bundleDir, { recursive: true });
+      
+      // Save session config
+      await fs.writeFile(
+        path.join(bundleDir, 'session.json'),
+        JSON.stringify(this.config, null, 2),
+        'utf-8'
+      );
+      
+      // Save ledger entries
+      const ledgerEntries = this.ledger.getEntries();
+      await fs.writeFile(
+        path.join(bundleDir, 'ledger.jsonl'),
+        ledgerEntries.map(e => JSON.stringify(e)).join('\n'),
+        'utf-8'
+      );
+      
+      // Save budget summary
+      const budgetStatus = this.budgetManager.getStatus();
+      await fs.writeFile(
+        path.join(bundleDir, 'budget.json'),
+        JSON.stringify(budgetStatus, null, 2),
+        'utf-8'
+      );
+      
+      this.store.addEvent('REPLAY_SAVED', { path: bundleDir }, 'blue');
+      this.store.addMessage('system', `Replay bundle saved to: ${bundleDir}`);
+    } catch (err: any) {
       // Non-fatal
+      this.store.addEvent('REPLAY_SAVE_ERROR', { error: err.message }, 'red');
     }
     
     // Reset budget for next goal
