@@ -1,5 +1,6 @@
 // Nucleus contract for LLM-native task and planner execution
 
+import { createHash } from 'crypto';
 import type { ToolCallEnvelope, InternalContextScope, LedgerEntry } from './types.js';
 
 // Nucleus configuration
@@ -256,14 +257,13 @@ If escalation is needed, call escalate_issue.`;
   }
 
   private computePromptDigest(prompt: string): string {
-    // Simple hash for now (in production, use crypto)
-    const hash = require('crypto').createHash('sha256');
+    const hash = createHash('sha256');
     hash.update(prompt);
     return hash.digest('hex').substring(0, 16);
   }
 
   private computeDigest(content: string): string {
-    const hash = require('crypto').createHash('sha256');
+    const hash = createHash('sha256');
     hash.update(content);
     return hash.digest('hex').substring(0, 16);
   }

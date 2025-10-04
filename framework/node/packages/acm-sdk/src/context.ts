@@ -183,7 +183,7 @@ export class InternalContextScopeImpl implements InternalContextScope {
   }
 
   private computeDigest(content: string): string {
-    const hash = require('crypto').createHash('sha256');
+    const hash = createHash('sha256');
     hash.update(content);
     return hash.digest('hex').substring(0, 32);
   }
