@@ -108,24 +108,7 @@ Out of scope: productionizing additional engines, expanding policy DSLs, or rewo
   - Verification inputs/outputs and task IO aligned to spec contracts
 - Modify CLI `--save-bundle` path to incorporate new artifacts, compute bundle-level checksums, and surface Nucleus decisions in interactive mode.
 
----
-
-## 4. Timeline & Milestones
-
-| Week | Milestone | Description |
-|------|-----------|-------------|
-| Week 0 | Kickoff & Design | Review plan, lock data schemas, update ADR if needed, align cross-team owners |
-| Week 1 | Spec Contract & Validators | Restore SDK types, ship codemods, enforce context hashing, add failing tests for missing fields |
-| Week 2 | Planner Tool Calls & Multi-Plan Selection | Deliver ReAct loop, tool-call schema, rationale capture, ledger integration |
-| Week 3 | Nucleus + Context Orchestration | Land Nucleus contract, context builder, frozen-context enforcement, Task/Planner wiring |
-| Week 4 | Tool-Native Default Execution & Replay Parity | Replace demo stubs with MCP/LLM defaults, update CLI, expand replay bundle and ledger |
-| Week 5 | Hardening & Documentation | Regression tests, performance benchmarks, README/migration guides, finalize Phase 4 sign-off |
-
-Adjust schedule based on team capacity; parallelization possible between planner and runtime groups once shared schemas are fixed.
-
----
-
-## 5. Testing & Validation
+## 4. Testing & Validation
 
 - **Unit tests:**
   - New tests for `DeterministicNucleus`, planner tool-call loop, context builder hashing, and ledger entry validation.
@@ -141,7 +124,7 @@ Adjust schedule based on team capacity; parallelization possible between planner
 
 ---
 
-## 6. Documentation & Developer Experience
+## 5. Documentation & Developer Experience
 
 - Update Phase 3 docs plus `framework-implementation-plan-node.md` to reference Nucleus APIs, restored spec contracts, and structured tool-call requirements.
 - Provide migration guide for custom tasks/planners built on Phase 3 surfaces, including codemod instructions and before/after examples of Goal/Context/Plan/Task shapes.
@@ -151,7 +134,7 @@ Adjust schedule based on team capacity; parallelization possible between planner
 
 ---
 
-## 7. Risks & Mitigations
+## 6. Risks & Mitigations
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
@@ -164,7 +147,7 @@ Adjust schedule based on team capacity; parallelization possible between planner
 
 ---
 
-## 8. Dependencies & Coordination
+## 7. Dependencies & Coordination
 
 - Align with spec updates in `spec/acm-spec v0.5.md` (Nucleus contract, ledger requirements).
 - Coordinate with Phase 3 owners to deprecate JSON parsing paths gradually.
@@ -175,7 +158,7 @@ Adjust schedule based on team capacity; parallelization possible between planner
 
 ---
 
-## 9. Acceptance Criteria
+## 8. Acceptance Criteria
 
 - SDK exports full ACM v0.5 contracts for Goal, Context, Plan, Task, and Ledger artifacts, and validators reject partial payloads.
 - Planner emits plans exclusively through structured tool-call results, allowing a configurable number of alternatives (default 1) with recorded rationale and no string parsing when multiple plans are requested.
@@ -188,7 +171,7 @@ Adjust schedule based on team capacity; parallelization possible between planner
 
 ---
 
-## 10. References
+## 9. References
 
 - `framework/node/framework-implementation-plan-node.md` (Phase 3 baseline)
 - `spec/acm-spec v0.5.md` (Nucleus and replay requirements)
