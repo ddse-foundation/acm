@@ -16,6 +16,7 @@
     { "path": "../acm-runtime" },
     { "path": "../acm-llm" },
     { "path": "../acm-planner" },
-    { "path": "../acm-replay" }
+    { "path": "../acm-replay" },
+    { "path": "../acm-framework" }
   ]
 }

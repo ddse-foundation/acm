@@ -3,23 +3,21 @@
 
 import type { LLM } from '@acm/llm';
 import {
-  DeterministicNucleus,
   type Goal,
   type Context,
   type Plan,
   type StreamSink,
-  type NucleusFactory,
   type NucleusConfig,
   type LLMCallFn,
   type CapabilityRegistry,
   ExternalContextProviderAdapter,
 } from '@acm/sdk';
-import { StructuredLLMPlanner } from '@acm/planner';
-import { MemoryLedger, executeResumablePlan, ExecutionTranscript, type ExecutionTranscriptEvent } from '@acm/runtime';
+import { type PlannerResult } from '@acm/planner';
+import { ExecutionTranscript, MemoryLedger, type ExecutionTranscriptEvent } from '@acm/runtime';
+import { ACMFramework } from '@acm/framework';
 import type { SessionConfig } from '../config/session.js';
 import { BudgetManager } from './budget-manager.js';
 import { AppStore } from '../ui/store.js';
-import * as crypto from 'crypto';
 
 export interface InteractiveRuntimeOptions {
   config: SessionConfig;
@@ -40,7 +38,6 @@ export class InteractiveRuntime {
   private store: AppStore;
   private budgetManager: BudgetManager;
   private ledger: MemoryLedger;
-  private nucleusFactory: NucleusFactory;
   private nucleusConfig: {
     llmCall: NucleusConfig['llmCall'];
     hooks?: NucleusConfig['hooks'];
@@ -48,6 +45,7 @@ export class InteractiveRuntime {
   private nucleusLLMCall: LLMCallFn;
   private transcript: ExecutionTranscript;
   private contextProvider?: ExternalContextProviderAdapter;
+  private framework: ACMFramework;
   
   constructor(options: InteractiveRuntimeOptions) {
     this.config = options.config;
@@ -99,11 +97,6 @@ export class InteractiveRuntime {
       };
     };
 
-    this.nucleusFactory = config =>
-      new DeterministicNucleus(config, this.nucleusLLMCall, entry => {
-        this.ledger.append(entry.type, entry.details);
-      });
-
     this.nucleusConfig = {
       llmCall: {
         provider: this.llm.name(),
@@ -116,6 +109,19 @@ export class InteractiveRuntime {
         postcheck: true,
       },
     };
+
+    this.framework = ACMFramework.create({
+      capabilityRegistry: this.capabilityRegistry,
+      toolRegistry: this.toolRegistry,
+      policyEngine: this.policyEngine,
+      contextProvider: this.contextProvider,
+      verify: async () => true,
+      nucleus: {
+        call: this.nucleusLLMCall,
+        llmConfig: this.nucleusConfig.llmCall,
+        hooks: this.nucleusConfig.hooks,
+      },
+    });
 
     // Subscribe to ledger events
     this.setupLedgerSubscription();
@@ -270,18 +276,16 @@ export class InteractiveRuntime {
         return;
       }
       
-      // Plan with LLM
+      // Plan with ACM framework wrapper
       this.store.addMessage('planner', 'Planner is generating plan(s)...', true);
-      const planner = new StructuredLLMPlanner();
-      const plannerResult = await planner.plan({
+      const planResponse = await this.framework.plan({
         goal,
         context,
-        capabilities: this.capabilityRegistry.list(),
-        nucleusFactory: this.nucleusFactory,
-        nucleusConfig: this.nucleusConfig,
-        stream: streamSink,
         planCount: this.config.planCount || 1,
+        stream: streamSink,
+        ledger: this.ledger,
       });
+      const plannerResult = planResponse.result;
       
     // Record estimated token usage for planning stage
       if (planningEstimate) {
@@ -295,7 +299,7 @@ export class InteractiveRuntime {
         return;
       }
       
-      const selectedPlan = plannerResult.plans[0];
+      const selectedPlan = planResponse.selectedPlan;
       this.store.setGoal(goal, context, selectedPlan);
       this.store.addEvent('PLAN_SELECTED', {
         planId: selectedPlan.id,
@@ -303,7 +307,7 @@ export class InteractiveRuntime {
       }, 'green');
       
       // Execute plan
-  await this.executePlan(goal, context, selectedPlan, streamSink);
+      await this.executePlan(goal, context, selectedPlan, plannerResult, streamSink);
       
     } catch (error: any) {
       this.store.addMessage('system', `Error: ${error.message}`);
@@ -313,30 +317,32 @@ export class InteractiveRuntime {
     }
   }
   
-  private async executePlan(goal: Goal, context: Context, plan: Plan, stream: StreamSink): Promise<void> {
+  private async executePlan(
+    goal: Goal,
+    context: Context,
+    plan: Plan,
+    plannerResult: PlannerResult,
+    stream: StreamSink,
+  ): Promise<void> {
     try {
-      // Execute plan with resumable runtime
-      const result = await executeResumablePlan({
+      const result = await this.framework.execute({
         goal,
         context,
-        plan,
-        capabilityRegistry: this.capabilityRegistry,
-        toolRegistry: this.toolRegistry,
-        policy: this.policyEngine,
-        verify: async () => true,
-        runId: `run-${Date.now()}`,
-        ledger: this.ledger,
-        nucleusFactory: this.nucleusFactory,
-        nucleusConfig: this.nucleusConfig,
         stream,
-        contextProvider: this.contextProvider,
+        ledger: this.ledger,
+        runId: `run-${Date.now()}`,
+        existingPlan: {
+          plan,
+          plannerResult,
+        },
       });
+      const execution = result.execution;
       
       this.store.addMessage('system', 'Goal completed successfully!');
       this.store.addEvent('GOAL_COMPLETED', { goalId: goal.id }, 'green');
 
-      if (result.goalSummary) {
-        this.store.setGoalSummary(result.goalSummary);
+      if (execution.goalSummary) {
+        this.store.setGoalSummary(execution.goalSummary);
       }
 
       const completedTasks = this.store
@@ -346,7 +352,7 @@ export class InteractiveRuntime {
       if (completedTasks.length > 0) {
         const summaryLines = completedTasks.map(task => `• ${task.name}: ${task.outputSummary}`);
         this.store.addMessage('system', `Summary of task outputs:\n${summaryLines.join('\n')}`);
-      } else if (Object.keys(result.outputsByTask || {}).length === 0) {
+      } else if (Object.keys(execution.outputsByTask || {}).length === 0) {
         this.store.addMessage('system', 'Execution completed, but no tasks produced structured outputs.');
       }
       

@@ -27,6 +27,7 @@
     "@acm/llm": "workspace:*",
     "@acm/planner": "workspace:*",
     "@acm/replay": "workspace:*",
+    "@acm/framework": "workspace:*",
     "enquirer": "^2.4.1",
     "chalk": "^5.3.0",
     "ora": "^8.0.1",

@@ -71,6 +71,7 @@ The framework is organized as a monorepo with focused packages:
 packages/
 ├── acm-sdk/          # Core abstracts and types
 ├── acm-runtime/      # Deterministic execution engine and resumable runtime
+├── acm-framework/    # High-level wrapper combining planning and execution
 ├── acm-llm/          # OpenAI-compatible LLM client utilities
 ├── acm-planner/      # Structured planning via tool-call envelopes
 ├── acm-mcp/          # Model Context Protocol integrations and tooling
