@@ -16,6 +16,7 @@ The ACM Node.js Framework gives engineers a coherent set of SDKs, runtime servic
 - **Nucleus Abstraction** *(Phase 4 roadmap)*: Shared reasoning core that standardizes LLM calls, internal context retrieval, and ledger recording.
 - **Open LLM Support**: OpenAI-compatible client with presets for Ollama and vLLM; bring your own provider via configuration.
 - **MCP Integration**: Discover and invoke Model Context Protocol servers as first-class tools.
+- **High-Level Orchestration**: Ship the `@acm/framework` helper for wiring planning + execution behind a single call while preserving ACM v0.5 guarantees.
 
 > **Status Banner** — Phase 4 work is underway. Structured planner tool calls, the Nucleus contract, and enriched replay artifacts are actively being integrated (see `IMPLEMENTATION_PLAN_PHASE4.md`). Public docs call out any in-progress surfaces so you can opt into previews deliberately.
 
@@ -55,6 +56,67 @@ pnpm --filter @acm/examples test:bm25
 ```
 
 You can also target alternative engines via `--engine langgraph` or `--engine msaf`, relying on the adapters that ship with the monorepo.
+
+### Shortcut: Run Planning + Execution with `@acm/framework`
+
+When you're ready to leave the canned demos, the `@acm/framework` package gives you a typed wrapper around the planner, runtime, adapters, and nucleus wiring:
+
+```typescript
+import { ACMFramework, ExecutionEngine } from '@acm/framework';
+import { createOllamaClient } from '@acm/llm';
+import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
+import { MemoryLedger } from '@acm/runtime';
+
+const llm = createOllamaClient('llama3.1');
+const tools = new SimpleToolRegistry();
+const capabilities = new SimpleCapabilityRegistry();
+// Register your tools and capabilities here
+
+const framework = ACMFramework.create({
+  capabilityRegistry: capabilities,
+  toolRegistry: tools,
+  nucleus: {
+    call: llm.generateWithTools!,
+    llmConfig: {
+      provider: llm.name(),
+      model: 'llama3.1',
+      temperature: 0.1,
+      maxTokens: 512,
+    },
+    allowedTools: ['search', 'refund'],
+  },
+  planner: {
+    planCount: 2,
+    selector: ({ plans }) => plans.find((plan) => plan.id === 'plan-a') ?? plans[0],
+  },
+  execution: {
+    engine: ExecutionEngine.ACM,
+    checkpointInterval: 1,
+  },
+});
+
+const ledger = new MemoryLedger();
+
+const run = await framework.execute({
+  goal: 'Investigate login failures reported overnight.',
+  context: { facts: { severity: 'p1' } },
+  ledger,
+  engine: ExecutionEngine.LANGGRAPH, // override per-call
+});
+
+console.log(run.plan.id);
+console.log(run.execution.outputsByTask);
+console.log(ledger.getEntries());
+```
+
+Key behaviors surfaced by the helper:
+
+- Automatic goal/context normalization compliant with ACM v0.5 (IDs, empty scope handling).
+- Reusable `MemoryLedger` captures planner + runtime decisions for replay bundles.
+- Opt-in context hydration via `ExternalContextProviderAdapter` to satisfy nucleus `request_context_retrieval` directives.
+- Pluggable execution engines (`ACM`, `LANGGRAPH`, `MSAF`) with per-call overrides and resumable controls.
+- Ability to skip replanning by supplying `existingPlan` or tune plan fan-out/selection.
+- Hooks for verification (`verify`) and streaming sinks shared across runs.
 
 ### Local LLM Prerequisites
 
@@ -96,7 +158,53 @@ packages/
 
 ## Building Your First Agent
 
-### 1. Define Tools
+### Option 1: Let `@acm/framework` orchestrate everything for you
+
+```typescript
+import { ACMFramework } from '@acm/framework';
+import { StructuredLLMPlanner } from '@acm/planner';
+import { MemoryLedger } from '@acm/runtime';
+import { createOllamaClient } from '@acm/llm';
+import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
+
+const tools = new SimpleToolRegistry();
+const capabilities = new SimpleCapabilityRegistry();
+// Register your tools/capabilities as shown in Option 2
+
+const llm = createOllamaClient('llama3.1');
+
+const framework = ACMFramework.create({
+  capabilityRegistry: capabilities,
+  toolRegistry: tools,
+  planner: { instance: new StructuredLLMPlanner({ planCount: 3 }) },
+  nucleus: {
+    call: llm.generateWithTools!,
+    llmConfig: { provider: llm.name(), model: 'llama3.1' },
+  },
+});
+
+const ledger = new MemoryLedger();
+
+const { plan, execution } = await framework.execute({
+  goal: { intent: 'Greet the user in a friendly tone.' },
+  context: { facts: { userName: 'Alice' } },
+  ledger,
+});
+
+console.log(plan.rationale);
+console.log(execution.outputsByTask['task-1']);
+```
+
+This path keeps you compliant with the spec while avoiding boilerplate. You can still override:
+
+- `planSelector` to pick among multiple plans or reuse a cached plan.
+- `existingPlan` to skip replanning during resume flows.
+- `execution` options (engine, `resumeFrom`, `checkpointStore`, `runId`).
+- `contextProvider` to hydrate context packets when the nucleus issues retrieval directives.
+
+### Option 2: Work directly with SDK building blocks
+
+#### 1. Define Tools
 
 ```typescript
 import { Tool } from '@acm/sdk';
@@ -111,7 +219,7 @@ class SearchTool extends Tool<{ query: string }, { results: string[] }> {
 }
 ```
 
-### 2. Create Tasks
+#### 2. Create Tasks
 
 ```typescript
 import { Task, type RunContext } from '@acm/sdk';
@@ -129,7 +237,7 @@ class MyTask extends Task<{ query: string }, { data: any }> {
 }
 ```
 
-### 3. Setup Registries
+#### 3. Setup Registries
 
 ```typescript
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
@@ -144,7 +252,7 @@ capabilities.register(
 );
 ```
 
-### 4. Plan and Execute
+#### 4. Plan and Execute
 
 ```typescript
 import { StructuredLLMPlanner } from '@acm/planner';

@@ -28,22 +28,26 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 
 1. Fork the repository on GitHub
 2. Clone your fork locally:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/acm.git
    cd acm/framework/node
    ```
 
 3. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 4. Build all packages:
+
    ```bash
    pnpm build
    ```
 
 5. Create a branch for your work:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -175,7 +179,7 @@ describe('MyTask', () => {
 
 Follow the conventional commits format:
 
-```
+```text
 <type>(<scope>): <subject>
 
 <body>
@@ -183,7 +187,8 @@ Follow the conventional commits format:
 <footer>
 ```
 
-Types:
+#### Types
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -191,8 +196,9 @@ Types:
 - `test`: Test additions/changes
 - `chore`: Build/tooling changes
 
-Examples:
-```
+#### Examples
+
+```text
 feat(runtime): add support for task timeouts
 
 Implements configurable timeouts per task with automatic
@@ -201,7 +207,7 @@ cancellation after the specified duration.
 Closes #123
 ```
 
-```
+```text
 fix(planner): handle malformed LLM responses gracefully
 
 Falls back to safe linear plan when JSON parsing fails.
@@ -245,41 +251,44 @@ How did you test these changes?
 ### Creating a New Package
 
 1. Create package directory:
-   ```bash
-   mkdir -p packages/acm-newpackage/src
-   ```
 
-2. Add `package.json`:
-   ```json
-   {
-     "name": "@acm/newpackage",
-     "version": "0.1.0",
-     "type": "module",
-     "main": "./dist/index.js",
-     "types": "./dist/index.d.ts",
-     "scripts": {
-       "build": "tsc",
-       "clean": "rm -rf dist"
-     }
-   }
-   ```
+```bash
+mkdir -p packages/acm-newpackage/src
+```
 
-3. Add `tsconfig.json`:
-   ```json
-   {
-     "extends": "../../tsconfig.json",
-     "compilerOptions": {
-       "rootDir": "./src",
-       "outDir": "./dist"
-     },
-     "include": ["src/**/*"],
-     "references": [
-       { "path": "../acm-sdk" }
-     ]
-   }
-   ```
+1. Add `package.json`:
 
-4. Create `src/index.ts` with exports
+```json
+{
+  "name": "@acm/newpackage",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  }
+}
+```
+
+1. Add `tsconfig.json`:
+
+```json
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../acm-sdk" }
+  ]
+}
+```
+
+1. Create `src/index.ts` with exports
 
 ### Package Dependencies
 
@@ -290,17 +299,26 @@ How did you test these changes?
 ### Package README
 
 Each package should have its own README with:
+
 - Purpose and scope
 - Installation instructions
 - Basic usage examples
 - API reference
 - Examples
 
+### `@acm/framework` Notes
+
+- Run `pnpm --filter @acm/framework build` (and applicable tests) before opening a PR. The helper is a thin layer over planner/runtime contracts, so type regressions are caught at build time.
+- When changing helper signatures or defaults, update `README.md`, `GETTING_STARTED.md`, and `packages/acm-framework/README.md` in the same PR so users see a consistent story.
+- Preserve ACM v0.5 guarantees: context packets must stay immutable, ledger events must be appended through `MemoryLedger`, and execution engine selection (`ACM`, `LANGGRAPH`, `MSAF`) cannot silently drop policy/verification hooks.
+- Document new options clearly (e.g., `existingPlan`, `contextProvider`, `nucleus.allowedTools`) and add integration tests or examples under `packages/acm-framework` when behavior shifts.
+
 ## Architecture Decisions
 
 ### When to Create a New Package
 
 Create a new package when:
+
 - It represents a distinct concern (e.g., LLM client, runtime, adapters)
 - It could be used independently
 - It has different dependencies than other packages
@@ -316,6 +334,7 @@ Create a new package when:
 ### ACM Spec Compliance
 
 When implementing features:
+
 1. Reference the ACM v0.5 specification
 2. Document how your implementation maps to spec requirements
 3. Maintain backward compatibility when possible

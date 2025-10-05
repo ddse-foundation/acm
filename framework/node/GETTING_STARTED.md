@@ -192,7 +192,71 @@ npx tsx my-agent.ts
 - Implement policy and verification checks via `PolicyEngine`/`VerificationEngine`.
 - Experiment with structured planner overrides once the Phase 4 Nucleus contract lands.
 
-## 7. Wire an External Context Provider
+## 7. Level Up with the `@acm/framework` Helper
+
+Once you're comfortable with the primitives, migrate to the high-level orchestrator so you can reuse planning, execution, and streaming defaults without boilerplate.
+
+```typescript
+import { ACMFramework, ExecutionEngine } from '@acm/framework';
+import { createOllamaClient } from '@acm/llm';
+import { MemoryLedger } from '@acm/runtime';
+import { ExternalContextProviderAdapter } from '@acm/sdk';
+import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
+
+const tools = new SimpleToolRegistry();
+const capabilities = new SimpleCapabilityRegistry();
+// Register the same tools/tasks you used earlier
+
+const llm = createOllamaClient('llama3.1');
+const contextProvider = new ExternalContextProviderAdapter();
+
+const framework = ACMFramework.create({
+  capabilityRegistry: capabilities,
+  toolRegistry: tools,
+  contextProvider,
+  nucleus: {
+    call: llm.generateWithTools!,
+    llmConfig: {
+      provider: llm.name(),
+      model: 'llama3.1',
+      temperature: 0.1,
+      maxTokens: 512,
+    },
+    allowedTools: ['greet', 'filesystem'],
+  },
+  planner: {
+    planCount: 2,
+  },
+  execution: {
+    engine: ExecutionEngine.ACM,
+    checkpointInterval: 1,
+  },
+});
+
+const ledger = new MemoryLedger();
+
+const result = await framework.execute({
+  goal: 'Greet the user and capture a filesystem snapshot.',
+  context: { facts: { userName: 'Alice' } },
+  ledger,
+});
+
+console.log(result.plan.id);
+console.log(result.execution.outputsByTask);
+console.log(ledger.getEntries());
+```
+
+Highlights:
+
+- `goal` can be a string or full `Goal` artifact—IDs are synthesized for you.
+- Bring your own `MemoryLedger` to capture planner + runtime decisions for replay bundles.
+- Switch engines on the fly with `engine: ExecutionEngine.LANGGRAPH | MSAF` when needed.
+- Hydrate missing context automatically via the optional `ExternalContextProviderAdapter`.
+- Resume long-running flows by providing `resumeFrom`, `checkpointStore`, or an `existingPlan` when replaying a cached plan.
+
+The helper stays within ACM v0.5 compliance (context packets, ledger hygiene, tool discipline) while minimizing the ceremony of manual planner/runtime wiring.
+
+## 8. Wire an External Context Provider
 
 When the Nucleus emits a `request_context_retrieval` directive, you can satisfy it automatically instead of failing the run by plugging in the `ExternalContextProviderAdapter`.
 
@@ -234,7 +298,7 @@ await executePlan({
 
 The adapter adds artifacts to the internal scope, promotes them into the active Context Packet, and re-runs the Nucleus preflight. Provide custom `match`/`buildInput` functions to map directives onto any retrieval backend.
 
-## 8. Dive Deeper into the Monorepo
+## 9. Dive Deeper into the Monorepo
 
 ```bash
 # Inspect tool registry used in examples
@@ -250,7 +314,7 @@ cat packages/acm-examples/src/goals/index.ts
 pnpm --filter @acm/examples test
 ```
 
-## 9. Optional: Review the AI Coder Reference Experience
+## 10. Optional: Review the AI Coder Reference Experience
 
 `@acm/aicoder` showcases how the framework scales to a full developer assistant with streaming TUI, policy gates, and resumable execution. Treat it as an end-to-end example wired entirely through the same SDK/runtime surfaces.
 
