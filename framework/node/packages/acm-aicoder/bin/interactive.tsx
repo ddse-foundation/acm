@@ -39,7 +39,10 @@ async function main() {
   try {
     // Parse and validate CLI arguments
     const args = parseCliArgs(process.argv.slice(2));
-    const config = validateAndNormalizeConfig(args);
+  const config = validateAndNormalizeConfig(args);
+
+  // Ensure the process operates within the validated workspace
+  process.chdir(config.workspace);
 
     // Create LLM client based on provider selection
     const llm = config.provider === 'vllm'
@@ -52,14 +55,14 @@ async function main() {
     const policyEngine = new SimplePolicyEngine();
     
     // Register tools
-    toolRegistry.register(new FileStatTool());
-    toolRegistry.register(new FileReadToolV2());
-    toolRegistry.register(new CodeSearchTool());
-    toolRegistry.register(new GrepTool());
-    toolRegistry.register(new DiffTool());
-    toolRegistry.register(new CodeEditToolV2());
-    toolRegistry.register(new RunTestsToolV2());
-    toolRegistry.register(new BuildTool());
+  toolRegistry.register(new FileStatTool(config.workspace));
+  toolRegistry.register(new FileReadToolV2(config.workspace));
+  toolRegistry.register(new CodeSearchTool(config.workspace));
+  toolRegistry.register(new GrepTool(config.workspace));
+  toolRegistry.register(new DiffTool(config.workspace));
+  toolRegistry.register(new CodeEditToolV2(config.workspace));
+  toolRegistry.register(new RunTestsToolV2(config.workspace));
+  toolRegistry.register(new BuildTool(config.workspace));
     
     // Register capabilities (tasks)
     capabilityRegistry.register(
@@ -96,7 +99,7 @@ async function main() {
     );
     
     // Allow workspace operations
-    policyEngine.setAllowedPaths([`${config.workspace}/**`]);
+  policyEngine.setAllowedPaths([config.workspace]);
     
     // Create app store and runtime
     const store = new AppStore();
@@ -118,7 +121,7 @@ async function main() {
   `  Provider: ${config.provider}\n` +
       `  Model: ${config.model}\n` +
       (config.baseUrl ? `  Base URL: ${config.baseUrl}\n` : '') +
-  `  Workspace: ${config.workspace}${config.workspaceFallback ? ' (current directory)' : ''}\n` +
+  `  Workspace: ${config.workspace}\n` +
       (initialBudget.maxTokens !== undefined ? `  Token allowance: ${initialBudget.maxTokens}\n` : '') +
       `\n` +
       `Type your goal to start planning, or /help for commands.`

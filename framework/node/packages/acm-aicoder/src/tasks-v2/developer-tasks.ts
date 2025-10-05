@@ -1,5 +1,6 @@
 // Enhanced Developer Tasks using Context Engine and V2 Tools
 import { Task, type RunContext } from '@acm/sdk';
+import path from 'path';
 import type { ContextPack } from '../context/types.js';
 
 /**
@@ -76,16 +77,19 @@ export class ImplementFunctionTask extends Task<
       dryRun?: boolean;
     }
   ): Promise<{ implemented: boolean; changes: string; testResults?: any }> {
-    const readTool = ctx.getTool('file_read_lines');
-    const editTool = ctx.getTool('code_edit_v2');
+  const readTool = ctx.getTool('file_read_lines');
+  const editTool = ctx.getTool('code_edit_v2');
     
     if (!readTool || !editTool) {
       throw new Error('Required tools not found');
     }
 
-    // Read the file to understand context
+  const workspaceRoot = getWorkspaceRoot(ctx);
+  const targetPath = resolveWorkspacePath(workspaceRoot, input.path);
+
+  // Read the file to understand context
     ctx.stream?.emit('task', { taskId: this.id, step: 'reading_file' });
-    const fileContent = await readTool.call({ path: input.path });
+  const fileContent = await readTool.call({ path: targetPath });
 
     // Generate function implementation (simplified - in real use, call LLM)
     const implementation = `
@@ -100,7 +104,7 @@ export ${input.signature} {
     const newContent = fileContent.content + '\n' + implementation;
     
     const result = await editTool.call({
-      path: input.path,
+      path: targetPath,
       content: newContent,
       dryRun: input.dryRun,
       backup: !input.dryRun,
@@ -115,8 +119,9 @@ export ${input.signature} {
   }
 
   policyInput(ctx: RunContext, input: any): Record<string, unknown> {
+    const workspaceRoot = getWorkspaceRoot(ctx);
     return {
-      path: input.path,
+      path: resolveWorkspacePath(workspaceRoot, input.path),
       action: 'implement_function',
       dryRun: input.dryRun || false,
     };
@@ -263,12 +268,16 @@ export class GenerateUnitTestsTask extends Task<
       throw new Error('Required tools not found');
     }
 
-    // Read target file
+  const workspaceRoot = getWorkspaceRoot(ctx);
+  const absoluteTargetPath = resolveWorkspacePath(workspaceRoot, input.targetPath);
+
+  // Read target file
     ctx.stream?.emit('task', { taskId: this.id, step: 'reading_target' });
-    const content = await readTool.call({ path: input.targetPath });
+  await readTool.call({ path: absoluteTargetPath });
 
     // Generate test file path
-    const testPath = input.targetPath.replace(/\.ts$/, '.test.ts');
+  const testPathAbsolute = absoluteTargetPath.replace(/\.ts$/, '.test.ts');
+  const testPath = toWorkspaceRelative(workspaceRoot, testPathAbsolute);
 
     // Generate test template (simplified)
     const testContent = `import { describe, it, expect } from 'vitest';
@@ -284,7 +293,7 @@ describe('${input.symbolName || 'Module'} Tests', () => {
 
     ctx.stream?.emit('task', { taskId: this.id, step: 'generating_tests' });
     const result = await editTool.call({
-      path: testPath,
+      path: testPathAbsolute,
       content: testContent,
       dryRun: input.dryRun,
     });
@@ -297,9 +306,10 @@ describe('${input.symbolName || 'Module'} Tests', () => {
   }
 
   policyInput(ctx: RunContext, input: any): Record<string, unknown> {
+    const workspaceRoot = getWorkspaceRoot(ctx);
     return {
       action: 'generate_tests',
-      targetPath: input.targetPath,
+      targetPath: resolveWorkspacePath(workspaceRoot, input.targetPath),
       dryRun: input.dryRun || false,
     };
   }
@@ -307,6 +317,26 @@ describe('${input.symbolName || 'Module'} Tests', () => {
   verification(): string[] {
     return ['output.implemented === true', 'output.testCount > 0'];
   }
+}
+
+function getWorkspaceRoot(ctx: RunContext): string {
+  const workspace = (ctx.context?.facts?.workspace as string) ?? process.cwd();
+  return path.resolve(workspace);
+}
+
+function resolveWorkspacePath(workspaceRoot: string, filePath?: string): string {
+  if (!filePath || typeof filePath !== 'string') {
+    throw new Error('Task requires a valid file path');
+  }
+
+  return path.isAbsolute(filePath)
+    ? filePath
+    : path.resolve(workspaceRoot, filePath);
+}
+
+function toWorkspaceRelative(workspaceRoot: string, targetPath: string): string {
+  const relative = path.relative(workspaceRoot, targetPath);
+  return relative && !relative.startsWith('..') ? relative : targetPath;
 }
 
 /**

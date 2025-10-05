@@ -1,7 +1,7 @@
 // Session configuration for AI Coder Phase 2
 // Manages CLI arguments and session metadata using provider/model semantics
 
-import { existsSync } from 'fs';
+import { existsSync, statSync } from 'fs';
 import path from 'path';
 
 export type Provider = 'ollama' | 'vllm';
@@ -11,7 +11,6 @@ export interface SessionConfig {
   model: string;
   baseUrl?: string;
   workspace: string;
-  workspaceFallback?: boolean;
   temperature: number;
   seed?: number;
   planCount: 1 | 2;
@@ -90,30 +89,26 @@ export function validateAndNormalizeConfig(args: CLIArgs): SessionConfig {
   const planCount = args.plans === '2' ? 2 : 1;
 
   const requestedWorkspace = args.workspace ?? process.cwd();
-  const resolvedRequested = path.resolve(requestedWorkspace);
-  let workspace = resolvedRequested;
-  let workspaceFallback = false;
+  const resolvedWorkspace = path.resolve(requestedWorkspace);
 
-  if (!args.workspace) {
-    workspaceFallback = true;
+  if (!existsSync(resolvedWorkspace)) {
+    throw new Error(
+      `Workspace path "${resolvedWorkspace}" does not exist. Please provide a valid --workspace.`
+    );
   }
 
-  if (!existsSync(resolvedRequested)) {
-    workspaceFallback = true;
-    workspace = path.resolve(process.cwd());
-    if (args.workspace) {
-      console.warn(
-        `[acm-aicoder] Workspace path "${resolvedRequested}" not found. Using current directory instead.`
-      );
-    }
+  const stats = statSync(resolvedWorkspace);
+  if (!stats.isDirectory()) {
+    throw new Error(
+      `Workspace path "${resolvedWorkspace}" is not a directory. Please provide a valid --workspace.`
+    );
   }
 
   return {
     provider,
     model: model!,
     baseUrl: args['base-url'],
-    workspace,
-    workspaceFallback,
+    workspace: resolvedWorkspace,
     temperature,
     seed,
     planCount,

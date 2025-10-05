@@ -17,7 +17,7 @@ export class CodeSearchTool extends Tool<
 
   constructor(rootPath: string = process.cwd()) {
     super();
-    this.rootPath = rootPath;
+    this.rootPath = path.resolve(rootPath);
   }
 
   name(): string {
@@ -67,7 +67,7 @@ export class GrepTool extends Tool<
 
   constructor(rootPath: string = process.cwd()) {
     super();
-    this.rootPath = rootPath;
+    this.rootPath = path.resolve(rootPath);
   }
 
   name(): string {

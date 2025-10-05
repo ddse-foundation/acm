@@ -91,6 +91,13 @@ export class CodeEditToolV2 extends Tool<
   { path: string; content: string; dryRun?: boolean; backup?: boolean },
   { success: boolean; path: string; message: string; backupPath?: string }
 > {
+  private rootPath: string;
+
+  constructor(rootPath: string = process.cwd()) {
+    super();
+    this.rootPath = path.resolve(rootPath);
+  }
+
   name(): string {
     return 'code_edit_v2';
   }
@@ -101,7 +108,7 @@ export class CodeEditToolV2 extends Tool<
     dryRun?: boolean;
     backup?: boolean;
   }): Promise<{ success: boolean; path: string; message: string; backupPath?: string }> {
-    const targetPath = path.resolve(input.path);
+    const targetPath = this.resolvePath(input.path);
 
     if (input.dryRun) {
       return {
@@ -115,7 +122,7 @@ export class CodeEditToolV2 extends Tool<
     let backupPath: string | undefined;
     if (input.backup) {
       try {
-        const existing = await fs.readFile(targetPath, 'utf-8');
+  const existing = await fs.readFile(targetPath, 'utf-8');
         backupPath = `${targetPath}.backup`;
         await fs.writeFile(backupPath, existing, 'utf-8');
       } catch {
@@ -136,5 +143,11 @@ export class CodeEditToolV2 extends Tool<
       message: `Successfully wrote ${input.content.length} bytes to ${targetPath}`,
       backupPath,
     };
+  }
+
+  private resolvePath(filePath: string): string {
+    return path.isAbsolute(filePath)
+      ? filePath
+      : path.resolve(this.rootPath, filePath);
   }
 }

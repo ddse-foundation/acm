@@ -1,5 +1,6 @@
 // Test and Build Tools
 import { Tool } from '@acm/sdk';
+import * as path from 'path';
 
 /**
  * RunTestsToolV2 - Enhanced test runner with better output
@@ -8,6 +9,13 @@ export class RunTestsToolV2 extends Tool<
   { command?: string; cwd?: string; timeout?: number },
   { success: boolean; output: string; exitCode: number; duration: number }
 > {
+  private defaultCwd: string;
+
+  constructor(defaultCwd: string = process.cwd()) {
+    super();
+    this.defaultCwd = path.resolve(defaultCwd);
+  }
+
   name(): string {
     return 'run_tests_v2';
   }
@@ -23,10 +31,12 @@ export class RunTestsToolV2 extends Tool<
 
     const startTime = Date.now();
 
+    const resolvedCwd = this.resolveCwd(input.cwd);
+
     try {
       const result = await execa(command, {
         shell: true,
-        cwd: input.cwd || process.cwd(),
+        cwd: resolvedCwd,
         timeout,
       });
 
@@ -45,6 +55,14 @@ export class RunTestsToolV2 extends Tool<
       };
     }
   }
+
+  private resolveCwd(cwd?: string): string {
+    if (!cwd) {
+      return this.defaultCwd;
+    }
+
+    return path.isAbsolute(cwd) ? cwd : path.resolve(this.defaultCwd, cwd);
+  }
 }
 
 /**
@@ -54,6 +72,13 @@ export class BuildTool extends Tool<
   { command?: string; cwd?: string; timeout?: number },
   { success: boolean; output: string; errors: string[]; duration: number }
 > {
+  private defaultCwd: string;
+
+  constructor(defaultCwd: string = process.cwd()) {
+    super();
+    this.defaultCwd = path.resolve(defaultCwd);
+  }
+
   name(): string {
     return 'build';
   }
@@ -69,10 +94,12 @@ export class BuildTool extends Tool<
 
     const startTime = Date.now();
 
+    const resolvedCwd = this.resolveCwd(input.cwd);
+
     try {
       const result = await execa(command, {
         shell: true,
-        cwd: input.cwd || process.cwd(),
+        cwd: resolvedCwd,
         timeout,
       });
 
@@ -108,5 +135,13 @@ export class BuildTool extends Tool<
     }
 
     return errors.slice(0, 20); // Limit to first 20 errors
+  }
+
+  private resolveCwd(cwd?: string): string {
+    if (!cwd) {
+      return this.defaultCwd;
+    }
+
+    return path.isAbsolute(cwd) ? cwd : path.resolve(this.defaultCwd, cwd);
   }
 }

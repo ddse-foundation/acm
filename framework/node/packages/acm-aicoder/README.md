@@ -49,7 +49,7 @@ acm-aicoder \
 
 - `--provider <ollama|vllm>` - LLM provider (default: ollama)
 - `--model <name>` - Model identifier provided by the selected provider
-- `--workspace <path>` - Project workspace root directory
+- `--workspace <path>` - Project workspace root directory (must exist and be a readable directory)
 
 **Optional Parameters:**
 

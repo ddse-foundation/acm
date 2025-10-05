@@ -86,9 +86,7 @@ After each goal:
 
 - `--provider` - LLM provider (`ollama` or `vllm`, default: `ollama`)
 - `--model` - Model identifier published by the provider
-- `--workspace` - Project root directory
-
-### Optional Parameters
+- `--workspace` - Project root directory (must already exist)
 
 - `--base-url` - Override provider endpoint
 - `--temperature` - LLM temperature 0-2 (default: 0.7)

@@ -10,6 +10,13 @@ export class FileStatTool extends Tool<
   { path: string },
   { exists: boolean; size: number; mtime: number; isBinary: boolean }
 > {
+  private rootPath: string;
+
+  constructor(rootPath: string = process.cwd()) {
+    super();
+    this.rootPath = path.resolve(rootPath);
+  }
+
   name(): string {
     return 'file_stat';
   }
@@ -20,9 +27,11 @@ export class FileStatTool extends Tool<
     mtime: number;
     isBinary: boolean;
   }> {
+    const targetPath = this.resolvePath(input.path);
+
     try {
-      const stats = await fs.stat(input.path);
-      const ext = path.extname(input.path);
+      const stats = await fs.stat(targetPath);
+      const ext = path.extname(targetPath);
       const binaryExts = new Set(['.png', '.jpg', '.pdf', '.zip', '.exe', '.dll']);
       
       return {
@@ -40,6 +49,12 @@ export class FileStatTool extends Tool<
       };
     }
   }
+
+  private resolvePath(filePath: string): string {
+    return path.isAbsolute(filePath)
+      ? filePath
+      : path.resolve(this.rootPath, filePath);
+  }
 }
 
 /**
@@ -49,6 +64,13 @@ export class FileReadToolV2 extends Tool<
   { path: string; offset?: number; limit?: number; ranges?: Array<{ start: number; end: number }> },
   { content: string; bytesRead: number; eof: boolean; lang?: string }
 > {
+  private rootPath: string;
+
+  constructor(rootPath: string = process.cwd()) {
+    super();
+    this.rootPath = path.resolve(rootPath);
+  }
+
   name(): string {
     return 'file_read_v2';
   }
@@ -65,7 +87,7 @@ export class FileReadToolV2 extends Tool<
     if (!normalizedPath) {
       throw new Error('FileReadToolV2: missing required path. Accepted keys: path | filepath | filePath');
     }
-    const fullPath = path.resolve(normalizedPath);
+  const fullPath = this.resolvePath(normalizedPath);
     const stats = await fs.stat(fullPath);
     
     // Check if binary
@@ -77,7 +99,7 @@ export class FileReadToolV2 extends Tool<
 
     // Handle ranged reads
     if (input.ranges && input.ranges.length > 0) {
-      const content = await fs.readFile(fullPath, 'utf-8');
+  const content = await fs.readFile(fullPath, 'utf-8');
       const rangeContents = input.ranges.map(range => 
         content.slice(range.start, range.end)
       );
@@ -117,6 +139,12 @@ export class FileReadToolV2 extends Tool<
     };
     return langMap[ext] || 'text';
   }
+
+  private resolvePath(filePath: string): string {
+    return path.isAbsolute(filePath)
+      ? filePath
+      : path.resolve(this.rootPath, filePath);
+  }
 }
 
 /**
@@ -126,6 +154,13 @@ export class FileReadLinesTool extends Tool<
   { path: string; startLine?: number; endLine?: number; maxLines?: number },
   { content: string; startLine: number; endLine: number; totalLines?: number }
 > {
+  private rootPath: string;
+
+  constructor(rootPath: string = process.cwd()) {
+    super();
+    this.rootPath = path.resolve(rootPath);
+  }
+
   name(): string {
     return 'file_read_lines';
   }
@@ -142,7 +177,7 @@ export class FileReadLinesTool extends Tool<
     if (!normalizedPath) {
       throw new Error('FileReadLinesTool: missing required path. Accepted keys: path | filepath | filePath');
     }
-    const fullPath = path.resolve(normalizedPath);
+  const fullPath = this.resolvePath(normalizedPath);
     const content = await fs.readFile(fullPath, 'utf-8');
     const lines = content.split('\n');
     
@@ -162,6 +197,12 @@ export class FileReadLinesTool extends Tool<
       totalLines: lines.length,
     };
   }
+
+  private resolvePath(filePath: string): string {
+    return path.isAbsolute(filePath)
+      ? filePath
+      : path.resolve(this.rootPath, filePath);
+  }
 }
 
 /**
@@ -171,6 +212,13 @@ export class DiffTool extends Tool<
   { aPath?: string; aContent?: string; bPath?: string; bContent?: string; context?: number },
   { diff: string; stats: { filesChanged: number; additions: number; deletions: number } }
 > {
+  private rootPath: string;
+
+  constructor(rootPath: string = process.cwd()) {
+    super();
+    this.rootPath = path.resolve(rootPath);
+  }
+
   name(): string {
     return 'diff';
   }
@@ -183,16 +231,19 @@ export class DiffTool extends Tool<
     context?: number;
   }): Promise<{ diff: string; stats: { filesChanged: number; additions: number; deletions: number } }> {
     // Get content from paths or direct content
-    const aContent = input.aContent ?? (input.aPath ? await fs.readFile(input.aPath, 'utf-8') : '');
-    const bContent = input.bContent ?? (input.bPath ? await fs.readFile(input.bPath, 'utf-8') : '');
+    const resolvedAPath = input.aPath ? this.resolvePath(input.aPath) : undefined;
+    const resolvedBPath = input.bPath ? this.resolvePath(input.bPath) : undefined;
+
+    const aContent = input.aContent ?? (resolvedAPath ? await fs.readFile(resolvedAPath, 'utf-8') : '');
+    const bContent = input.bContent ?? (resolvedBPath ? await fs.readFile(resolvedBPath, 'utf-8') : '');
 
     // Simple line-by-line diff
     const aLines = aContent.split('\n');
     const bLines = bContent.split('\n');
 
     const diff: string[] = [];
-    diff.push(`--- ${input.aPath || 'a'}`);
-    diff.push(`+++ ${input.bPath || 'b'}`);
+    diff.push(`--- ${resolvedAPath || 'a'}`);
+    diff.push(`+++ ${resolvedBPath || 'b'}`);
 
     let additions = 0;
     let deletions = 0;
@@ -225,5 +276,11 @@ export class DiffTool extends Tool<
         deletions,
       },
     };
+  }
+
+  private resolvePath(filePath: string): string {
+    return path.isAbsolute(filePath)
+      ? filePath
+      : path.resolve(this.rootPath, filePath);
   }
 }

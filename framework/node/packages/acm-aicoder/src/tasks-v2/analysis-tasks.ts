@@ -1,5 +1,6 @@
 // Analysis and Utility Tasks
 import { Task, type RunContext } from '@acm/sdk';
+import path from 'path';
 import { 
   WorkspaceIndexer,
   SymbolExtractor,
@@ -61,11 +62,12 @@ export class AnalyzeWorkspaceTask extends Task<
     tests?: { success: boolean; exitCode: number; duration: number };
     contextPack?: ContextPack;
   }> {
-    const rootPath = input.path || process.cwd();
+  const workspaceRoot = getWorkspaceRoot(ctx);
+  const rootPath = resolveRootPath(input.path, workspaceRoot);
 
     // Build index
     ctx.stream?.emit('task', { taskId: this.id, step: 'indexing_workspace' });
-    const indexer = new WorkspaceIndexer(rootPath);
+  const indexer = new WorkspaceIndexer(rootPath);
     const index = await indexer.buildIndex({ useCache: true });
 
     ctx.stream?.emit('task', { 
@@ -76,11 +78,11 @@ export class AnalyzeWorkspaceTask extends Task<
 
     // Extract symbols
     ctx.stream?.emit('task', { taskId: this.id, step: 'extracting_symbols' });
-    const symbolExtractor = new SymbolExtractor(rootPath);
+  const symbolExtractor = new SymbolExtractor(rootPath);
     const symbols = await symbolExtractor.extractSymbols(index);
 
     // Extract dependencies
-    const depMapper = new DependencyMapper(rootPath);
+  const depMapper = new DependencyMapper(rootPath);
     const dependencies = await depMapper.extractDependencies(index);
 
     // Map tests
@@ -103,7 +105,7 @@ export class AnalyzeWorkspaceTask extends Task<
     let buildSummary: { success: boolean; errors: string[]; duration: number } | undefined;
     if (input.runBuild) {
       ctx.stream?.emit('task', { taskId: this.id, step: 'running_build' });
-      const buildTool = ctx.getTool('build');
+  const buildTool = ctx.getTool('build');
       if (buildTool) {
         const buildRes = await buildTool.call({
           command: input.buildCommand || 'npm run build',
@@ -129,7 +131,7 @@ export class AnalyzeWorkspaceTask extends Task<
     let testSummary: { success: boolean; exitCode: number; duration: number } | undefined;
     if (input.runTests) {
       ctx.stream?.emit('task', { taskId: this.id, step: 'running_tests' });
-      const testTool = ctx.getTool('run_tests_v2');
+  const testTool = ctx.getTool('run_tests_v2');
       if (testTool) {
         const testRes = await testTool.call({
           command: input.testCommand || 'npm test',
@@ -199,24 +201,25 @@ export class CollectContextPackTask extends Task<
     ctx: RunContext,
     input: { goal: string; path?: string; maxFiles?: number; maxSymbols?: number }
   ): Promise<{ contextPack: ContextPack }> {
-    const rootPath = input.path || process.cwd();
+  const workspaceRoot = getWorkspaceRoot(ctx);
+  const rootPath = resolveRootPath(input.path, workspaceRoot);
     const goalText = (input.goal && input.goal.trim().length > 0)
       ? input.goal
       : (ctx.goal?.intent || ctx.goal?.id || '');
 
     // Build index and search
     ctx.stream?.emit('task', { taskId: this.id, step: 'indexing' });
-    const indexer = new WorkspaceIndexer(rootPath);
+  const indexer = new WorkspaceIndexer(rootPath);
     const index = await indexer.buildIndex({ useCache: true });
 
-    const search = new CodeSearch(rootPath);
+  const search = new CodeSearch(rootPath);
     await search.indexFiles(index);
 
     // Extract symbols and dependencies
-    const symbolExtractor = new SymbolExtractor(rootPath);
+  const symbolExtractor = new SymbolExtractor(rootPath);
     const symbols = await symbolExtractor.extractSymbols(index);
 
-    const depMapper = new DependencyMapper(rootPath);
+  const depMapper = new DependencyMapper(rootPath);
     const dependencies = await depMapper.extractDependencies(index);
 
     const testMappings = TestMapper.mapTests(index);
@@ -251,6 +254,19 @@ export class CollectContextPackTask extends Task<
   verification(): string[] {
     return ['output.contextPack !== undefined', 'output.contextPack.files.length > 0'];
   }
+}
+
+function getWorkspaceRoot(ctx: RunContext): string {
+  const workspace = (ctx.context?.facts?.workspace as string) ?? process.cwd();
+  return path.resolve(workspace);
+}
+
+function resolveRootPath(inputPath: string | undefined, workspaceRoot: string): string {
+  if (!inputPath) {
+    return workspaceRoot;
+  }
+
+  return path.isAbsolute(inputPath) ? inputPath : path.resolve(workspaceRoot, inputPath);
 }
 
 /**
