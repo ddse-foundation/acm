@@ -57,6 +57,9 @@ export type GuardExpr = string; // boolean expression over {context, outputs, po
 
 export type TaskSpec = {
   id: string;
+  title?: string;
+  objective?: string;
+  successCriteria?: string[];
   capabilityRef?: string; // name@version format (preferred)
   capability?: string; // Backward compatibility, use capabilityRef
   input?: any;
@@ -141,7 +144,8 @@ export type LedgerEntry = {
     | 'COMPENSATION'
     | 'NUCLEUS_INFERENCE'
     | 'CONTEXT_INTERNALIZED'
-    | 'TOOL_CALL';
+    | 'TOOL_CALL'
+    | 'GOAL_SUMMARY';
   details: Record<string, any>;
   digest?: string; // Content hash for tamper detection
   signature?: string; // Optional cryptographic signature
@@ -215,6 +219,15 @@ export type InternalContextScope = {
       rationale?: string;
     };
   }>;
+  addArtifact(
+    type: string,
+    content: any,
+    provenance?: {
+      tool?: string;
+      rationale?: string;
+      [key: string]: any;
+    }
+  ): string;
   promote(artifactId: string): Promise<void>;
   getArtifact(id: string): any;
 };

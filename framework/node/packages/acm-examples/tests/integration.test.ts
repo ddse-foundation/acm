@@ -112,11 +112,15 @@ async function testBasicExecution() {
   });
 
   // Verify
-  if (!result.outputsByTask['t1']) {
+  const taskRecord = result.outputsByTask['t1'];
+
+  if (!taskRecord) {
     throw new Error('Task output not found');
   }
 
-  if (!result.outputsByTask['t1'].results) {
+  const taskOutput = taskRecord.output as { results?: unknown[] } | undefined;
+
+  if (!taskOutput?.results) {
     throw new Error('Search results not found');
   }
 

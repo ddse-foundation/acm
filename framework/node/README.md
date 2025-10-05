@@ -182,6 +182,7 @@ const result = await executePlan({
 - `CapabilityRegistry` / `ToolRegistry` — Registries that planners and runtimes consume.
 - `PolicyEngine`, `VerificationEngine` — Interfaces for plugging in governance logic.
 - `LedgerEntry`, `ToolCallEnvelope` — Typed artifacts for audit trails and replay.
+- `ExternalContextProviderAdapter` — Bridges Nucleus `request_context_retrieval` directives to developer-supplied tools and auto-promotes resulting artifacts.
 
 ### Runtime
 
@@ -206,6 +207,51 @@ const result = await executePlan({
 - `createOllamaClient(model, baseUrl?)`
 - `createVLLMClient(model, baseUrl?)`
 - `OpenAICompatClient` for custom providers.
+
+### Context Retrieval Adapter
+
+Use the `ExternalContextProviderAdapter` when you want the Nucleus preflight to hydrate missing context automatically instead of throwing an error:
+
+```typescript
+import { ExternalContextProviderAdapter, Tool } from '@acm/sdk';
+import { executePlan } from '@acm/runtime';
+
+const crmClient = createCrmClient();
+
+class CustomerProfileTool extends Tool<{ customerId: string }, { type: string; content: any; promote?: boolean }> {
+  name() {
+    return 'crm-profile';
+  }
+
+  async call(input: { customerId: string }) {
+    const record = await crmClient.lookupCustomer(input.customerId); // your backing service
+    return {
+      type: 'crm.profile',
+      content: record,
+      promote: true,
+    };
+  }
+}
+
+const contextProvider = new ExternalContextProviderAdapter();
+contextProvider.register(new CustomerProfileTool(), {
+  match: directive => directive.startsWith('crm:'),
+  buildInput: directive => ({ customerId: directive.slice(4) }),
+});
+
+const result = await executePlan({
+  goal,
+  context,
+  plan,
+  capabilityRegistry,
+  toolRegistry,
+  nucleusFactory,
+  nucleusConfig,
+  contextProvider,
+});
+```
+
+By default the adapter matches directives whose prefix equals the tool name (e.g. `filesystem:/tmp/report.json`). Override `match`/`buildInput` to implement richer routing schemes, and the adapter will add artifacts to the internal scope and promote them for you.
 
 ### MCP + Adapters
 

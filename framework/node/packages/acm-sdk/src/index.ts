@@ -8,3 +8,4 @@ export * from './policy.js';
 export * from './stream.js';
 export * from './nucleus.js';
 export * from './context.js';
+export * from './context-provider.js';

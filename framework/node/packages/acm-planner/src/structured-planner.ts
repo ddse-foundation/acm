@@ -48,6 +48,13 @@ const PLANNER_TOOLS: NucleusToolDefinition[] = [
             type: 'object',
             properties: {
               id: { type: 'string' },
+              title: { type: 'string', description: 'Human-friendly task label' },
+              objective: { type: 'string', description: 'Task objective, authored by the Nucleus' },
+              successCriteria: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Observable success criteria for the task',
+              },
               capability: { type: 'string' },
               input: { type: 'object' },
             },
@@ -89,8 +96,10 @@ export class StructuredLLMPlanner {
     const contextRef = ContextBuilder.computeContextRef(context);
     const nucleus = nucleusFactory({
       goalId: goal.id,
+      goalIntent: goal.intent,
       planId: options.planId ?? `planner-${Date.now()}`,
       contextRef,
+      context,
       llmCall: nucleusConfig.llmCall,
       hooks: nucleusConfig.hooks,
       allowedTools: Array.from(new Set([...(nucleusConfig.allowedTools ?? []), 'emit_plan'])),
@@ -178,6 +187,11 @@ Call the emit_plan tool ${planCount === 2 ? 'twice (once for each plan)' : 'once
       const tasks = Array.isArray(args.tasks)
         ? args.tasks.map((task: any, index: number) => ({
             id: task.id ?? `task-${index + 1}`,
+            title: typeof task.title === 'string' ? task.title : undefined,
+            objective: typeof task.objective === 'string' ? task.objective : undefined,
+            successCriteria: Array.isArray(task.successCriteria)
+              ? task.successCriteria.filter((item: any) => typeof item === 'string')
+              : undefined,
             capability: task.capability,
             capabilityRef: task.capability,
             input: task.input ?? {},

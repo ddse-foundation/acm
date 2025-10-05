@@ -80,8 +80,10 @@ const contextRef = ContextBuilder.computeContextRef(context);
 
 const nucleusConfig: NucleusConfig = {
   goalId: 'GOAL-001',
+  goalIntent: 'Help the operator assess order records',
   taskId: 't1',
   contextRef,
+  context,
   llmCall: {
     provider: 'openai',
     model: 'gpt-4',
@@ -95,6 +97,9 @@ const nucleusConfig: NucleusConfig = {
 };
 
 const mockLLMCall = async (prompt: string, tools: any[], config: any) => {
+  if (!prompt.includes('"orderId": "O123"')) {
+    throw new Error('Prompt missing context facts');
+  }
   return {
     reasoning: 'Context is sufficient',
     toolCalls: [],

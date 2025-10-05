@@ -101,9 +101,11 @@ export class MSAgentFrameworkAdapter {
 
           const nucleus = this.options.nucleusFactory({
             goalId: this.options.goal.id,
+            goalIntent: this.options.goal.intent,
             planId: this.options.plan.id,
             taskId: taskSpec.id,
             contextRef: this.options.plan.contextRef,
+            context: state.context,
             llmCall: this.options.nucleusConfig.llmCall,
             hooks: this.options.nucleusConfig.hooks,
             allowedTools: Array.from(allowedTools),

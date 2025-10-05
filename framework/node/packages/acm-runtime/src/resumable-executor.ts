@@ -9,6 +9,7 @@ import {
   type PolicyEngine,
   type StreamSink,
   type RunContext,
+  ExternalContextProviderAdapter,
 } from '@acm/sdk';
 import { evaluateGuard } from './guards.js';
 import { MemoryLedger } from './ledger.js';
@@ -21,7 +22,8 @@ import {
   type CheckpointStore,
   type CheckpointState,
 } from './checkpoint.js';
-import type { ExecutePlanOptions, ExecutePlanResult } from './executor.js';
+import type { ExecutePlanOptions, ExecutePlanResult, TaskExecutionRecord } from './executor.js';
+import { buildTaskNarrative, synthesizeGoalSummary } from './executor.js';
 import { createInstrumentedToolGetter } from './tool-envelope.js';
 
 /**
@@ -51,6 +53,7 @@ export async function executeResumablePlan(
     stream,
     nucleusFactory,
     nucleusConfig,
+    contextProvider,
     resumeFrom,
     checkpointInterval = 1,
     checkpointStore = new MemoryCheckpointStore(),
@@ -59,6 +62,7 @@ export async function executeResumablePlan(
 
   const ledger = options.ledger ?? new MemoryLedger();
   let outputs: Record<string, any> = {};
+  let executionRecords: Record<string, TaskExecutionRecord> = {};
   const policyContext: Record<string, any> = {};
   const metrics = { costUsd: 0, elapsedSec: 0 };
   let startTime = Date.now();
@@ -79,7 +83,8 @@ export async function executeResumablePlan(
     }
 
     // Restore state
-    outputs = checkpoint.state.outputs;
+  outputs = checkpoint.state.outputs;
+  executionRecords = checkpoint.state.executionRecords ?? {};
     executed = new Set(checkpoint.state.executed);
     metrics.costUsd = checkpoint.state.metrics.costUsd;
     metrics.elapsedSec = checkpoint.state.metrics.elapsedSec;
@@ -106,7 +111,8 @@ export async function executeResumablePlan(
       goal,
       context,
       plan,
-      outputs,
+  outputs,
+  executionRecords,
       executed: Array.from(executed),
       ledger: ledger.getEntries() as any[],
       metrics: { ...metrics },
@@ -192,9 +198,11 @@ export async function executeResumablePlan(
 
       const nucleus = nucleusFactory({
         goalId: goal.id,
+        goalIntent: goal.intent,
         planId: plan.id,
         taskId: taskSpec.id,
         contextRef: plan.contextRef,
+        context,
         llmCall: nucleusConfig.llmCall,
         hooks: nucleusConfig.hooks,
         allowedTools: Array.from(nucleusAllowedTools),
@@ -225,15 +233,41 @@ export async function executeResumablePlan(
         internalContext: internalScope,
       };
 
-      const preflight = await nucleus.preflight();
+      let preflight = await nucleus.preflight();
       if (preflight.status === 'NEEDS_CONTEXT') {
+        const requestedDirectives = preflight.retrievalDirectives;
+
         ledger.append('CONTEXT_INTERNALIZED', {
           taskId: taskSpec.id,
-          directives: preflight.retrievalDirectives,
+          directives: requestedDirectives,
+          status: contextProvider ? 'requested' : 'unhandled',
         });
-        throw new Error(
-          `Task ${taskSpec.id} requires additional context retrieval: ${preflight.retrievalDirectives.join(', ')}`
-        );
+
+        if (!contextProvider) {
+          throw new Error(
+            `Task ${taskSpec.id} requires additional context retrieval: ${requestedDirectives.join(', ')}`
+          );
+        }
+
+        await contextProvider.fulfill({
+          directives: requestedDirectives,
+          scope: internalScope,
+          runContext,
+          nucleus,
+        });
+
+        preflight = await nucleus.preflight();
+        if (preflight.status === 'NEEDS_CONTEXT') {
+          throw new Error(
+            `Task ${taskSpec.id} still requires additional context after adapter execution: ${preflight.retrievalDirectives.join(', ')}`
+          );
+        }
+
+        ledger.append('CONTEXT_INTERNALIZED', {
+          taskId: taskSpec.id,
+          directives: requestedDirectives,
+          status: 'resolved',
+        });
       }
 
       // Policy pre-check
@@ -258,6 +292,8 @@ export async function executeResumablePlan(
       }
 
       // Execute task with retry
+      const ledgerBaseline = ledger.getEntries().length;
+
       ledger.append('TASK_START', {
         taskId: taskSpec.id,
         capability: capabilityName,
@@ -267,28 +303,20 @@ export async function executeResumablePlan(
       stream?.emit('task', { taskId: taskSpec.id, status: 'running' });
 
       try {
-        const executeTask = async () => {
-          const result = await task.execute(runContext, taskSpec.input);
-          return result;
-        };
+        const executeTask = async () => task.execute(runContext, taskSpec.input);
 
-        const retryConfig = taskSpec.retry || (taskSpec.retryPolicy ? {
-          attempts: taskSpec.retryPolicy.maxAttempts || 3,
-          backoff: 'exp' as const,
-        } : undefined);
+        const retryConfig = taskSpec.retry || (taskSpec.retryPolicy
+          ? {
+              attempts: taskSpec.retryPolicy.maxAttempts || 3,
+              backoff: 'exp' as const,
+            }
+          : undefined);
 
         const output = retryConfig
           ? await withRetry(executeTask, retryConfig)
           : await executeTask();
 
         outputs[taskSpec.id] = output;
-
-        ledger.append('TASK_END', {
-          taskId: taskSpec.id,
-          output,
-        });
-
-        stream?.emit('task', { taskId: taskSpec.id, status: 'completed', output });
 
         // Policy post-check
         if (policy) {
@@ -336,6 +364,21 @@ export async function executeResumablePlan(
           throw new Error(`Task ${taskSpec.id} escalated: ${postcheck.reason}`);
         }
 
+        const narrative = buildTaskNarrative(ledger, ledgerBaseline, taskSpec.id, postcheck);
+
+        executionRecords[taskSpec.id] = {
+          output,
+          narrative,
+        };
+
+        ledger.append('TASK_END', {
+          taskId: taskSpec.id,
+          output,
+          narrative,
+        });
+
+        stream?.emit('task', { taskId: taskSpec.id, status: 'completed', output, narrative });
+
         executed.add(taskSpec.id);
         tasksExecutedSinceCheckpoint++;
 
@@ -367,11 +410,23 @@ export async function executeResumablePlan(
     await saveCheckpoint();
   }
 
+  const goalSummary = await synthesizeGoalSummary({
+    goal,
+    plan,
+    executionRecords,
+    context,
+    nucleusFactory,
+    nucleusConfig,
+    ledger,
+    stream,
+  });
+
   metrics.elapsedSec = (Date.now() - startTime) / 1000;
 
   return {
-    outputsByTask: outputs,
+    outputsByTask: executionRecords,
     ledger: ledger.getEntries(),
+    goalSummary,
   };
 }
 

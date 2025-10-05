@@ -40,7 +40,9 @@ const result = await executePlan({
   toolRegistry: myTools,
 });
 
-console.log('Outputs:', result.outputsByTask);
+const taskRecord = result.outputsByTask['task-1'];
+console.log('Task output:', taskRecord?.output);
+console.log('Narrative:', taskRecord?.narrative);
 console.log('Ledger entries:', result.ledger.length);
 ```
 
@@ -218,6 +220,7 @@ const resumed = await executor.execute({
 Execute a plan with full ACM v0.5 semantics.
 
 **Options:**
+
 - `goal: Goal` - The goal being pursued
 - `context: Context` - Immutable context packet
 - `plan: Plan` - The plan to execute
@@ -229,18 +232,30 @@ Execute a plan with full ACM v0.5 semantics.
 - `ledger?: MemoryLedger` - Optional ledger (created if not provided)
 
 **Returns:**
+
 ```typescript
 {
-  outputsByTask: Record<string, any>;
+  outputsByTask: Record<string, TaskExecutionRecord>;
   ledger: readonly LedgerEntry[];
 }
 ```
+
+Each `TaskExecutionRecord` captures:
+
+- `taskId: string` – Identifier for the executed task.
+- `title: string` – Task title from the structured plan.
+- `objective?: string` – Optional objective provided by the planner.
+- `successCriteria?: string[]` – Optional success criteria checklist.
+- `metadata?: TaskMetadata` – Arbitrary TaskSpec metadata.
+- `narrative?: TaskNarrative` – { start, checkpoints, completion } narrative emitted by the Nucleus.
+- `output?: unknown` – The task's output payload, when present.
 
 ### evaluateGuard(expr, context)
 
 Evaluate a guard expression.
 
 **Parameters:**
+
 - `expr: string` - JavaScript boolean expression
 - `context: { context, outputs, policy }` - Evaluation context
 
@@ -251,6 +266,7 @@ Evaluate a guard expression.
 Execute a function with retry logic.
 
 **Parameters:**
+
 - `fn: () => Promise<T>` - Function to retry
 - `config: { attempts, backoff, baseMs?, jitter? }` - Retry configuration
 
@@ -261,6 +277,7 @@ Execute a function with retry logic.
 Append-only decision log.
 
 **Methods:**
+
 - `append(type, details)` - Add entry
 - `getEntries()` - Get all entries
 - `clear()` - Clear ledger (for testing)
@@ -270,6 +287,7 @@ Append-only decision log.
 Execute a plan with checkpoint and resume support.
 
 **Additional Options (extends executePlan):**
+
 - `runId?: string` - Unique run identifier (generated if not provided)
 - `checkpointStore?: CheckpointStore` - Storage backend (default: MemoryCheckpointStore)
 - `checkpointInterval?: number` - Checkpoint after N tasks (default: 1)
@@ -282,10 +300,12 @@ Execute a plan with checkpoint and resume support.
 Interface for checkpoint storage backends.
 
 **Implementations:**
+
 - `MemoryCheckpointStore` - In-memory storage (for testing)
 - `FileCheckpointStore(basePath)` - File-based storage
 
 **Methods:**
+
 - `put(runId, checkpoint)` - Store a checkpoint
 - `get(runId, checkpointId?)` - Retrieve checkpoint (latest if no ID)
 - `list(runId)` - List all checkpoints for a run
@@ -296,9 +316,11 @@ Interface for checkpoint storage backends.
 High-level class for managing resumable executions.
 
 **Constructor:**
+
 - `new ResumableExecutor(checkpointStore?)` - Create executor with optional store
 
 **Methods:**
+
 - `execute(options)` - Execute with checkpointing
 - `listCheckpoints(runId)` - List available checkpoints
 - `getCheckpoint(runId, checkpointId?)` - Get specific checkpoint
@@ -307,11 +329,13 @@ High-level class for managing resumable executions.
 ## Guard Expressions
 
 Guards are JavaScript boolean expressions evaluated with:
+
 - `context`: The Context Packet facts
 - `outputs`: Task outputs so far
 - `policy`: Policy decisions
 
 Examples:
+
 ```javascript
 // Simple fact check
 'context.region === "EU"'
@@ -338,6 +362,7 @@ Examples:
 ```
 
 Backoff strategies:
+
 - **fixed**: Always wait `baseMs`
 - **exp**: Wait `baseMs * 2^attempt`
 - **jitter**: Add random variation (50-100% of delay)

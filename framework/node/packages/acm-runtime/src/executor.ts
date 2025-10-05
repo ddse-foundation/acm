@@ -5,8 +5,10 @@ import {
   type Context,
   type Goal,
   type LedgerEntry,
+  ExternalContextProviderAdapter,
   type NucleusConfig,
   type NucleusFactory,
+  type PostcheckResult,
   type Plan,
   type PolicyEngine,
   type RunContext,
@@ -17,6 +19,19 @@ import { evaluateGuard } from './guards.js';
 import { MemoryLedger } from './ledger.js';
 import { withRetry } from './retry.js';
 import { createInstrumentedToolGetter } from './tool-envelope.js';
+
+export type TaskNarrative = {
+  reasoning?: string[];
+  postcheck?: {
+    status: PostcheckResult['status'];
+    reason?: string;
+  };
+};
+
+export type TaskExecutionRecord = {
+  output: any;
+  narrative?: TaskNarrative;
+};
 
 export type ExecutePlanOptions = {
   goal: Goal;
@@ -34,11 +49,13 @@ export type ExecutePlanOptions = {
     hooks?: NucleusConfig['hooks'];
     allowedTools?: string[];
   };
+  contextProvider?: ExternalContextProviderAdapter;
 };
 
 export type ExecutePlanResult = {
-  outputsByTask: Record<string, any>;
+  outputsByTask: Record<string, TaskExecutionRecord>;
   ledger: readonly LedgerEntry[];
+  goalSummary?: string;
 };
 
 export async function executePlan(options: ExecutePlanOptions): Promise<ExecutePlanResult> {
@@ -53,10 +70,12 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
     stream,
     nucleusFactory,
     nucleusConfig,
+    contextProvider,
   } = options;
 
   const ledger = options.ledger ?? new MemoryLedger();
   const outputs: Record<string, any> = {};
+  const executionRecords: Record<string, TaskExecutionRecord> = {};
   const policyContext: Record<string, any> = {};
   const metrics = { costUsd: 0, elapsedSec: 0 };
   const startTime = Date.now();
@@ -131,9 +150,11 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
 
       const nucleus = nucleusFactory({
         goalId: goal.id,
+        goalIntent: goal.intent,
         planId: plan.id,
         taskId: taskSpec.id,
         contextRef: plan.contextRef,
+        context,
         llmCall: nucleusConfig.llmCall,
         hooks: nucleusConfig.hooks,
         allowedTools: Array.from(nucleusAllowedTools),
@@ -164,15 +185,41 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
         internalContext: internalScope,
       };
 
-      const preflight = await nucleus.preflight();
+      let preflight = await nucleus.preflight();
       if (preflight.status === 'NEEDS_CONTEXT') {
+        const requestedDirectives = preflight.retrievalDirectives;
+
         ledger.append('CONTEXT_INTERNALIZED', {
           taskId: taskSpec.id,
-          directives: preflight.retrievalDirectives,
+          directives: requestedDirectives,
+          status: contextProvider ? 'requested' : 'unhandled',
         });
-        throw new Error(
-          `Task ${taskSpec.id} requires additional context retrieval: ${preflight.retrievalDirectives.join(', ')}`
-        );
+
+        if (!contextProvider) {
+          throw new Error(
+            `Task ${taskSpec.id} requires additional context retrieval: ${preflight.retrievalDirectives.join(', ')}`
+          );
+        }
+
+        await contextProvider.fulfill({
+          directives: requestedDirectives,
+          scope: internalScope,
+          runContext,
+          nucleus,
+        });
+
+        preflight = await nucleus.preflight();
+        if (preflight.status === 'NEEDS_CONTEXT') {
+          throw new Error(
+            `Task ${taskSpec.id} still requires additional context after adapter execution: ${preflight.retrievalDirectives.join(', ')}`
+          );
+        }
+
+        ledger.append('CONTEXT_INTERNALIZED', {
+          taskId: taskSpec.id,
+          directives: requestedDirectives,
+          status: 'resolved',
+        });
       }
 
       // Policy pre-check
@@ -197,6 +244,8 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
       }
 
       // Execute task with retry
+      const ledgerBaseline = ledger.getEntries().length;
+
       ledger.append('TASK_START', {
         taskId: taskSpec.id,
         capability: capabilityName,
@@ -216,13 +265,6 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
 
         const output = retryConfig ? await withRetry(executeTask, retryConfig) : await executeTask();
         outputs[taskSpec.id] = output;
-
-        ledger.append('TASK_END', {
-          taskId: taskSpec.id,
-          output,
-        });
-
-        stream?.emit('task', { taskId: taskSpec.id, status: 'completed', output });
 
         // Policy post-check
         if (policy) {
@@ -252,7 +294,7 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
           }
         }
 
-        const postcheck = await nucleus.postcheck(output);
+  const postcheck = await nucleus.postcheck(output);
         if (postcheck.status === 'NEEDS_COMPENSATION') {
           ledger.append('ERROR', {
             taskId: taskSpec.id,
@@ -269,6 +311,20 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
           });
           throw new Error(`Task ${taskSpec.id} escalated: ${postcheck.reason}`);
         }
+
+        const narrative = buildTaskNarrative(ledger, ledgerBaseline, taskSpec.id, postcheck);
+        executionRecords[taskSpec.id] = {
+          output,
+          narrative,
+        };
+
+        ledger.append('TASK_END', {
+          taskId: taskSpec.id,
+          output,
+          narrative,
+        });
+
+        stream?.emit('task', { taskId: taskSpec.id, status: 'completed', output, narrative });
 
         executed.add(taskSpec.id);
       } catch (error: any) {
@@ -289,10 +345,196 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
     }
   }
 
+  const goalSummary = await synthesizeGoalSummary({
+    goal,
+    plan,
+    executionRecords,
+    context,
+    nucleusFactory,
+    nucleusConfig,
+    ledger,
+    stream,
+  });
+
   metrics.elapsedSec = (Date.now() - startTime) / 1000;
 
   return {
-    outputsByTask: outputs,
+    outputsByTask: executionRecords,
     ledger: ledger.getEntries(),
+    goalSummary,
   };
+}
+
+export function buildTaskNarrative(
+  ledger: MemoryLedger,
+  baselineIndex: number,
+  taskId: string,
+  postcheck: PostcheckResult
+): TaskNarrative | undefined {
+  const entries = ledger.getEntries().slice(baselineIndex);
+  const reasonings = entries
+    .filter(entry => entry.type === 'NUCLEUS_INFERENCE')
+    .filter(entry => entry.details?.nucleus?.taskId === taskId)
+    .map(entry => (typeof entry.details?.reasoning === 'string' ? entry.details.reasoning.trim() : undefined))
+    .filter((text): text is string => Boolean(text && text.length > 0));
+
+  const narrative: TaskNarrative = {};
+  if (reasonings.length > 0) {
+    narrative.reasoning = reasonings;
+  }
+
+  narrative.postcheck = {
+    status: postcheck.status,
+    ...(postcheck.status !== 'COMPLETE' && 'reason' in postcheck
+      ? { reason: (postcheck as Extract<PostcheckResult, { reason: string }>).reason }
+      : {}),
+  } as TaskNarrative['postcheck'];
+
+  if (!narrative.reasoning && !narrative.postcheck?.reason && narrative.postcheck?.status === 'COMPLETE') {
+    // Return undefined if narrative is completely empty beyond a routine COMPLETE status
+    return undefined;
+  }
+
+  return narrative;
+}
+
+export async function synthesizeGoalSummary(options: {
+  goal: Goal;
+  plan: Plan;
+  executionRecords: Record<string, TaskExecutionRecord>;
+  context: Context;
+  nucleusFactory: NucleusFactory;
+  nucleusConfig: ExecutePlanOptions['nucleusConfig'];
+  ledger: MemoryLedger;
+  stream?: StreamSink;
+}): Promise<string | undefined> {
+  const { goal, plan, executionRecords, context, nucleusFactory, nucleusConfig, ledger, stream } = options;
+
+  if (plan.tasks.length === 0 || Object.keys(executionRecords).length === 0) {
+    return undefined;
+  }
+
+  try {
+    const allowedTools = Array.from(new Set(nucleusConfig.allowedTools ?? []));
+    const nucleus = nucleusFactory({
+      goalId: goal.id,
+      goalIntent: goal.intent,
+      planId: plan.id,
+      taskId: 'goal-summary',
+      contextRef: plan.contextRef,
+      context,
+      llmCall: nucleusConfig.llmCall,
+      hooks: nucleusConfig.hooks,
+      allowedTools,
+    });
+
+    const prompt = buildGoalSummaryPrompt(goal, plan, executionRecords, context);
+    const result = await nucleus.invoke({ prompt, tools: [] });
+    const summary = result.reasoning?.trim() ?? '';
+    const normalizedSummary = summary.length > 0 ? summary : undefined;
+
+    ledger.append('GOAL_SUMMARY', {
+      goalId: goal.id,
+      planId: plan.id,
+      summary: normalizedSummary,
+      tasks: plan.tasks.map(task => {
+        const record = executionRecords[task.id];
+        return {
+          id: task.id,
+          title: task.title,
+          objective: task.objective,
+          successCriteria: task.successCriteria,
+          outputPreview: record ? previewForSummary(record.output) : undefined,
+          postcheck: record?.narrative?.postcheck,
+        };
+      }),
+    });
+
+    if (normalizedSummary) {
+      stream?.emit('summary', {
+        goalId: goal.id,
+        planId: plan.id,
+        summary: normalizedSummary,
+      });
+    }
+
+    return normalizedSummary;
+  } catch (error: any) {
+    ledger.append('ERROR', {
+      stage: 'GOAL_SUMMARY',
+      message: error?.message ?? 'Failed to synthesize goal summary',
+    });
+    return undefined;
+  }
+}
+
+function buildGoalSummaryPrompt(
+  goal: Goal,
+  plan: Plan,
+  executionRecords: Record<string, TaskExecutionRecord>,
+  context: Context
+): string {
+  const goalIntent = goal.intent ?? goal.id;
+  const contextFacts = context?.facts ? JSON.stringify(context.facts, null, 2) : '{}';
+  const contextAssumptions = context?.assumptions?.length
+    ? `Assumptions:\n- ${context.assumptions.join('\n- ')}`
+    : 'Assumptions: none provided';
+
+  const taskSections = plan.tasks.map(task => {
+    const record = executionRecords[task.id];
+    const label = task.title || task.capabilityRef || task.capability || task.id;
+    const pieces = [
+      `Task ${task.id}: ${label}`,
+      task.objective ? `Objective: ${task.objective}` : undefined,
+      task.successCriteria && task.successCriteria.length > 0
+        ? `Success Criteria: ${task.successCriteria.join('; ')}`
+        : undefined,
+      record ? `Outcome: ${previewForSummary(record.output)}` : 'Outcome: not captured.',
+      record?.narrative?.reasoning?.length
+        ? `Narrative: ${record.narrative.reasoning.join(' ')}`
+        : undefined,
+      record?.narrative?.postcheck
+        ? `Postcheck: ${record.narrative.postcheck.status}${record.narrative.postcheck.reason ? ` (${record.narrative.postcheck.reason})` : ''}`
+        : undefined,
+    ].filter(Boolean);
+
+    return pieces.join('\n');
+  });
+
+  return `You are composing the wrap-up for an ACM execution run.
+Goal intent: ${goalIntent}
+Context reference: ${plan.contextRef}
+
+Context facts:
+${contextFacts}
+${contextAssumptions}
+
+Summarize the outcome in 2-3 sentences for the operator. Highlight what happened, any remaining risks or follow-up, and reference task achievements when relevant.
+
+Task outcomes:
+${taskSections.join('\n\n')}`;
+}
+
+function previewForSummary(value: any, maxLength = 240): string {
+  if (value === null || value === undefined) {
+    return 'No output provided.';
+  }
+
+  let text: string;
+  if (typeof value === 'string') {
+    text = value.trim();
+  } else if (typeof value === 'number' || typeof value === 'boolean') {
+    text = String(value);
+  } else {
+    try {
+      text = JSON.stringify(value);
+    } catch {
+      text = String(value);
+    }
+  }
+
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return `${text.slice(0, maxLength - 1)}…`;
 }

@@ -185,6 +185,14 @@ async function testBasicCheckpoint() {
     throw new Error('Tasks not executed');
   }
 
+  if (result.outputsByTask.t1.output.result !== 'executed-task1') {
+    throw new Error('Task 1 output missing in execution record');
+  }
+
+  if (result.outputsByTask.t2.output.result !== 'executed-task2') {
+    throw new Error('Task 2 output missing in execution record');
+  }
+
   // Verify checkpoints were created
   const checkpoints = await checkpointStore.list(runId);
   if (checkpoints.length < 2) {
@@ -292,11 +300,11 @@ async function testResume() {
   }
 
   // Verify t1 and t2 outputs match (were restored from checkpoint)
-  if (result2.outputsByTask.t1.result !== 'executed-task1') {
+  if (result2.outputsByTask.t1.output.result !== 'executed-task1') {
     throw new Error('Task 1 output not restored correctly');
   }
 
-  if (result2.outputsByTask.t2.result !== 'executed-task2') {
+  if (result2.outputsByTask.t2.output.result !== 'executed-task2') {
     throw new Error('Task 2 output not restored correctly');
   }
 
@@ -353,6 +361,10 @@ async function testResumableExecutor() {
   // Verify execution completed
   if (!result.outputsByTask.t1) {
     throw new Error('Task not executed');
+  }
+
+  if (result.outputsByTask.t1.output.result !== 'executed-task1') {
+    throw new Error('Task output not captured in execution record');
   }
 
   // List checkpoints

@@ -12,9 +12,10 @@ import {
   type NucleusConfig,
   type LLMCallFn,
   type CapabilityRegistry,
+  ExternalContextProviderAdapter,
 } from '@acm/sdk';
 import { StructuredLLMPlanner } from '@acm/planner';
-import { MemoryLedger, executeResumablePlan } from '@acm/runtime';
+import { MemoryLedger, executeResumablePlan, ExecutionTranscript, type ExecutionTranscriptEvent } from '@acm/runtime';
 import type { SessionConfig } from '../config/session.js';
 import { BudgetManager } from './budget-manager.js';
 import { AppStore } from '../ui/store.js';
@@ -27,6 +28,7 @@ export interface InteractiveRuntimeOptions {
   toolRegistry: any;
   policyEngine: any;
   store: AppStore;
+  contextProvider?: ExternalContextProviderAdapter;
 }
 
 export class InteractiveRuntime {
@@ -44,6 +46,8 @@ export class InteractiveRuntime {
     hooks?: NucleusConfig['hooks'];
   };
   private nucleusLLMCall: LLMCallFn;
+  private transcript: ExecutionTranscript;
+  private contextProvider?: ExternalContextProviderAdapter;
   
   constructor(options: InteractiveRuntimeOptions) {
     this.config = options.config;
@@ -52,6 +56,7 @@ export class InteractiveRuntime {
     this.toolRegistry = options.toolRegistry;
     this.policyEngine = options.policyEngine;
     this.store = options.store;
+    this.contextProvider = options.contextProvider;
     
     this.budgetManager = new BudgetManager(options.config.model);
     
@@ -114,6 +119,11 @@ export class InteractiveRuntime {
 
     // Subscribe to ledger events
     this.setupLedgerSubscription();
+
+    this.transcript = new ExecutionTranscript({
+      onEvent: event => this.handleTranscriptEvent(event),
+    });
+    this.transcript.attach(this.ledger);
   }
   
   private setupLedgerSubscription(): void {
@@ -138,14 +148,21 @@ export class InteractiveRuntime {
         eventColors[entry.type] || 'gray'
       );
       
+      if (entry.type === 'NUCLEUS_INFERENCE') {
+        const reasoning = (entry.details && (entry.details.reasoning ?? entry.details.nucleus?.reasoning)) as
+          | string
+          | undefined;
+
+        if (typeof reasoning === 'string' && reasoning.trim().length > 0) {
+          this.store.addMessage('nucleus', reasoning.trim());
+        }
+      }
+
       // Update task status based on ledger entry
       if (entry.type === 'TASK_START' && entry.details.taskId) {
         this.store.updateTaskStatus(entry.details.taskId, 'running');
       } else if (entry.type === 'TASK_END' && entry.details.taskId) {
         this.store.updateTaskStatus(entry.details.taskId, 'succeeded');
-        if ('output' in entry.details) {
-          this.store.recordTaskOutput(entry.details.taskId, entry.details.output);
-        }
       } else if (entry.type === 'ERROR' && entry.details.taskId) {
         this.store.updateTaskStatus(
           entry.details.taskId,
@@ -157,6 +174,14 @@ export class InteractiveRuntime {
       
       return entry;
     };
+  }
+
+  private handleTranscriptEvent(event: ExecutionTranscriptEvent): void {
+    if (event.type === 'task-completed') {
+      this.store.recordTaskOutput(event.taskId, event.output, event.narrative);
+    } else if (event.type === 'goal-summary') {
+      this.store.setGoalSummary(event.summary);
+    }
   }
   
   async processGoal(goalText: string): Promise<void> {
@@ -218,6 +243,10 @@ export class InteractiveRuntime {
                 : 'Planner finished.';
               this.store.updateMessage(lastPlanner.id, content, false);
             }
+          }
+
+          if (channel === 'summary') {
+            this.store.setGoalSummary((event as any)?.summary);
           }
         },
         close: (source: string) => {
@@ -300,10 +329,15 @@ export class InteractiveRuntime {
         nucleusFactory: this.nucleusFactory,
         nucleusConfig: this.nucleusConfig,
         stream,
+        contextProvider: this.contextProvider,
       });
       
       this.store.addMessage('system', 'Goal completed successfully!');
       this.store.addEvent('GOAL_COMPLETED', { goalId: goal.id }, 'green');
+
+      if (result.goalSummary) {
+        this.store.setGoalSummary(result.goalSummary);
+      }
 
       const completedTasks = this.store
         .getState()

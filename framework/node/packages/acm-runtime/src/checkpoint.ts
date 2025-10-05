@@ -5,6 +5,7 @@ import type {
   Plan,
   LedgerEntry,
 } from '@acm/sdk';
+import type { TaskExecutionRecord } from './executor.js';
 
 /**
  * Schema version for checkpoint compatibility
@@ -30,6 +31,7 @@ export interface CheckpointState {
   context: Context;
   plan: Plan;
   outputs: Record<string, any>;
+  executionRecords?: Record<string, TaskExecutionRecord>;
   executed: string[];  // Task IDs that have completed
   ledger: LedgerEntry[];
   metrics: {
@@ -94,6 +96,9 @@ export function createCheckpoint(
       executed: Array.isArray(state.executed) ? state.executed : Array.from(state.executed),
       // Deep clone to prevent mutation
       outputs: JSON.parse(JSON.stringify(state.outputs)),
+      executionRecords: state.executionRecords
+        ? JSON.parse(JSON.stringify(state.executionRecords))
+        : undefined,
       ledger: JSON.parse(JSON.stringify(state.ledger)),
     },
   };

@@ -175,7 +175,9 @@ const result = await executePlan({
   ledger: new MemoryLedger(),
 });
 
-console.log('Result:', result.outputsByTask);
+const taskRecord = result.outputsByTask['task-1'];
+console.log('Task output:', taskRecord?.output);
+console.log('Narrative:', taskRecord?.narrative);
 ```
 
 Run it in place:
@@ -190,7 +192,49 @@ npx tsx my-agent.ts
 - Implement policy and verification checks via `PolicyEngine`/`VerificationEngine`.
 - Experiment with structured planner overrides once the Phase 4 Nucleus contract lands.
 
-## 7. Dive Deeper into the Monorepo
+## 7. Wire an External Context Provider
+
+When the Nucleus emits a `request_context_retrieval` directive, you can satisfy it automatically instead of failing the run by plugging in the `ExternalContextProviderAdapter`.
+
+```typescript
+import { ExternalContextProviderAdapter, Tool } from '@acm/sdk';
+
+class FilesystemSnapshotTool extends Tool<{ path: string }, { type: string; content: any }> {
+  name() {
+    return 'filesystem';
+  }
+
+  async call(input: { path: string }) {
+    const files = await readDirectoryAsJson(input.path); // your implementation
+    return {
+      type: 'fs.snapshot',
+      content: files,
+      promote: true,
+    };
+  }
+}
+
+const contextProvider = new ExternalContextProviderAdapter();
+contextProvider.register(new FilesystemSnapshotTool(), {
+  match: directive => directive.startsWith('filesystem:'),
+  buildInput: directive => ({ path: directive.slice('filesystem:'.length) || '/tmp' }),
+});
+
+await executePlan({
+  goal,
+  context,
+  plan,
+  capabilityRegistry,
+  toolRegistry,
+  nucleusFactory,
+  nucleusConfig,
+  contextProvider,
+});
+```
+
+The adapter adds artifacts to the internal scope, promotes them into the active Context Packet, and re-runs the Nucleus preflight. Provide custom `match`/`buildInput` functions to map directives onto any retrieval backend.
+
+## 8. Dive Deeper into the Monorepo
 
 ```bash
 # Inspect tool registry used in examples
@@ -206,7 +250,7 @@ cat packages/acm-examples/src/goals/index.ts
 pnpm --filter @acm/examples test
 ```
 
-## 8. Optional: Review the AI Coder Reference Experience
+## 9. Optional: Review the AI Coder Reference Experience
 
 `@acm/aicoder` showcases how the framework scales to a full developer assistant with streaming TUI, policy gates, and resumable execution. Treat it as an end-to-end example wired entirely through the same SDK/runtime surfaces.
 

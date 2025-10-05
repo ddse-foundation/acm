@@ -1,6 +1,6 @@
 // Nucleus contract for LLM-native task and planner execution
 import { createHash } from 'crypto';
-import type { InternalContextScope, LedgerEntry, ToolCallEnvelope } from './types.js';
+import type { Context, InternalContextScope, LedgerEntry, ToolCallEnvelope } from './types.js';
 
 export type NucleusToolDefinition = {
   name: string;
@@ -38,9 +38,11 @@ export type NucleusInvokeResult = {
 // Nucleus configuration
 export type NucleusConfig = {
   goalId: string;
+  goalIntent: string;
   planId?: string;
   taskId?: string;
   contextRef: string;
+  context?: Context;
   llmCall: {
     provider: string;
     model: string;
@@ -107,6 +109,9 @@ export class DeterministicNucleus extends Nucleus {
     private ledgerAppend: (entry: LedgerEntry) => void
   ) {
     super(config);
+    if (!config.goalIntent || config.goalIntent.trim().length === 0) {
+      throw new Error('NucleusConfig.goalIntent is required for nucleus execution.');
+    }
   }
 
   async preflight(): Promise<PreflightResult> {
@@ -250,8 +255,12 @@ export class DeterministicNucleus extends Nucleus {
   private buildPreflightPrompt(): string {
     return `Assess whether the current context is sufficient for the task.
 Goal: ${this.config.goalId}
+Goal Intent: ${this.config.goalIntent}
 Task: ${this.config.taskId || 'planner'}
 Context Ref: ${this.config.contextRef}
+
+Context Snapshot:
+${this.renderContextSnapshot()}
 
 If additional context is needed, call request_context_retrieval with a directive.`;
   }
@@ -261,12 +270,22 @@ If additional context is needed, call request_context_retrieval with a directive
 ${JSON.stringify(input, null, 2)}
 
 Goal: ${this.config.goalId}
-Task: ${this.config.taskId || 'planner'}`;
+Goal Intent: ${this.config.goalIntent}
+Task: ${this.config.taskId || 'planner'}
+
+Relevant Context:
+${this.renderContextSnapshot()}`;
   }
 
   private buildPostcheckPrompt(output: any): string {
     return `Validate the output and determine if any follow-up is needed:
 ${JSON.stringify(output, null, 2)}
+
+Goal: ${this.config.goalId}
+Goal Intent: ${this.config.goalIntent}
+Task: ${this.config.taskId || 'planner'}
+
+Context Reference: ${this.config.contextRef}
 
 If compensation is needed, call request_compensation.
 If escalation is needed, call escalate_issue.`;
@@ -282,6 +301,40 @@ If escalation is needed, call escalate_issue.`;
     const hash = createHash('sha256');
     hash.update(content);
     return hash.digest('hex').substring(0, 16);
+  }
+
+  private renderContextSnapshot(): string {
+    const context = this.config.context;
+    if (!context) {
+      return '(No context payload provided; consider supplying context.facts to the nucleus.)';
+    }
+
+    const pieces: string[] = [];
+
+    if (context.facts && Object.keys(context.facts).length > 0) {
+      pieces.push(`Facts:\n${JSON.stringify(context.facts, null, 2)}`);
+    } else {
+      pieces.push('Facts: {}');
+    }
+
+    if (context.assumptions && context.assumptions.length > 0) {
+      pieces.push(`Assumptions:\n- ${context.assumptions.join('\n- ')}`);
+    }
+
+    if (context.constraints_inherited && Object.keys(context.constraints_inherited).length > 0) {
+      pieces.push(
+        `Inherited Constraints:\n${JSON.stringify(context.constraints_inherited, null, 2)}`
+      );
+    }
+
+    if (context.augmentations && context.augmentations.length > 0) {
+      const augmentations = context.augmentations
+        .map(aug => `- ${aug.type}: ${aug.artifact}`)
+        .join('\n');
+      pieces.push(`Augmentations:\n${augmentations}`);
+    }
+
+    return pieces.join('\n\n');
   }
 }
 

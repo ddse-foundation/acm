@@ -190,9 +190,7 @@ async function main() {
       activeLedger?.append(entry.type, entry.details);
     });
 
-  const nucleusConfig: NucleusConfig = {
-    goalId: '',
-    contextRef: '',
+  const nucleusConfig = {
     llmCall: {
       provider: llm.name(),
       model: config.model,
@@ -203,7 +201,7 @@ async function main() {
       preflight: true,
       postcheck: true,
     },
-  };
+  } satisfies Pick<NucleusConfig, 'llmCall' | 'hooks'>;
 
   const sharedNucleusOptions = {
     nucleusFactory,

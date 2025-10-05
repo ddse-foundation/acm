@@ -3,6 +3,7 @@
 
 import { EventEmitter } from 'events';
 import type { Plan, Goal, Context } from '@acm/sdk';
+import type { TaskNarrative } from '@acm/runtime';
 import type { BudgetStatus } from '../runtime/budget-manager.js';
 
 export type MessageRole = 'user' | 'planner' | 'nucleus' | 'system';
@@ -20,6 +21,9 @@ export type TaskStatus = 'pending' | 'running' | 'succeeded' | 'failed' | 'retry
 export interface TaskState {
   id: string;
   name: string;
+  title?: string;
+  objective?: string;
+  successCriteria?: string[];
   status: TaskStatus;
   progress?: number;
   error?: string;
@@ -27,6 +31,7 @@ export interface TaskState {
   maxAttempts?: number;
   outputSummary?: string;
   rawOutput?: unknown;
+  narrative?: TaskNarrative;
 }
 
 export interface EventEntry {
@@ -40,12 +45,14 @@ export interface EventEntry {
 export interface AppState {
   // Chat state
   messages: ChatMessage[];
+  showReasoning: boolean;
   
   // Goal/Plan state
   currentGoal?: Goal;
   currentContext?: Context;
   currentPlan?: Plan;
   tasks: TaskState[];
+  goalSummary?: string;
   
   // Budget state
   budgetStatus?: BudgetStatus;
@@ -62,17 +69,20 @@ export interface AppState {
 export class AppStore extends EventEmitter {
   private state: AppState = {
     messages: [],
+    showReasoning: true,
     tasks: [],
     events: [],
     taskOutputs: {},
     inputText: '',
     isProcessing: false,
+    goalSummary: undefined,
   };
   
   getState(): AppState {
     return {
       ...this.state,
       messages: [...this.state.messages],
+      showReasoning: this.state.showReasoning,
       tasks: this.state.tasks.map(task => ({ ...task })),
       events: [...this.state.events],
       taskOutputs: { ...this.state.taskOutputs },
@@ -93,6 +103,23 @@ export class AppStore extends EventEmitter {
     this.state.messages.push(message);
     this.emit('update', this.state);
     return id;
+  }
+
+  isReasoningVisible(): boolean {
+    return this.state.showReasoning;
+  }
+
+  setReasoningVisible(visible: boolean): void {
+    if (this.state.showReasoning !== visible) {
+      this.state.showReasoning = visible;
+      this.emit('update', this.state);
+    }
+  }
+
+  toggleReasoningVisible(): boolean {
+    this.state.showReasoning = !this.state.showReasoning;
+    this.emit('update', this.state);
+    return this.state.showReasoning;
   }
   
   updateMessage(id: string, content: string, streaming = false): void {
@@ -127,11 +154,17 @@ export class AppStore extends EventEmitter {
       return {
         id: String(taskId),
         name: String(displayName),
+        title: (task as any).title ?? displayName,
+        objective: (task as any).objective,
+        successCriteria: Array.isArray((task as any).successCriteria)
+          ? (task as any).successCriteria
+          : undefined,
         status: 'pending' as TaskStatus,
       };
     });
 
     this.state.taskOutputs = {};
+    this.state.goalSummary = undefined;
     
     this.emit('update', this.state);
   }
@@ -200,6 +233,7 @@ export class AppStore extends EventEmitter {
     this.state.currentPlan = undefined;
     this.state.tasks = [];
     this.state.taskOutputs = {};
+    this.state.goalSummary = undefined;
     this.emit('update', this.state);
   }
   
@@ -213,30 +247,53 @@ export class AppStore extends EventEmitter {
           timestamp: Date.now(),
         }
       ],
+      showReasoning: true,
       tasks: [],
       events: [],
       taskOutputs: {},
       inputText: '',
       isProcessing: false,
+      goalSummary: undefined,
     };
     this.emit('update', this.state);
   }
 
-  recordTaskOutput(taskId: string, output: unknown): void {
+  recordTaskOutput(taskId: string, output: unknown, narrative?: TaskNarrative): void {
     this.state.taskOutputs[taskId] = output;
 
     const task = this.state.tasks.find(t => t.id === taskId);
     if (task) {
       task.rawOutput = output;
       task.outputSummary = this.formatOutputSummary(output);
+      task.narrative = narrative;
     }
 
     this.emit('update', this.state);
 
     const label = task?.name || taskId;
     const summary = task?.outputSummary ?? this.formatOutputSummary(output);
+    const reasoning = narrative?.reasoning?.length ? narrative.reasoning.join(' ') : undefined;
+
+    if (summary || reasoning) {
+      const lines: string[] = [];
+      if (summary) {
+        lines.push(summary);
+      }
+      if (reasoning) {
+        lines.push(`Narrative: ${reasoning}`);
+      }
+      if (narrative?.postcheck && narrative.postcheck.status !== 'COMPLETE') {
+        lines.push(`Postcheck: ${narrative.postcheck.status}${narrative.postcheck.reason ? ` (${narrative.postcheck.reason})` : ''}`);
+      }
+      this.addMessage('system', `Task "${label}" output:\n${lines.join('\n')}`);
+    }
+  }
+
+  setGoalSummary(summary?: string): void {
+    this.state.goalSummary = summary;
+    this.emit('update', this.state);
     if (summary) {
-      this.addMessage('system', `Task "${label}" output:\n${summary}`);
+      this.addMessage('system', `Goal summary:\n${summary}`);
     }
   }
 

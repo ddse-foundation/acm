@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { render } from 'ink';
+import { ExternalContextProviderAdapter } from '@acm/sdk';
 import { createOllamaClient, createVLLMClient } from '@acm/llm';
 import { App } from '../src/ui/App.js';
 import { AppStore } from '../src/ui/store.js';
@@ -23,6 +24,8 @@ import {
   DiffTool,
   CodeEditToolV2,
   RunTestsToolV2,
+  WorkspaceContextRetrievalTool,
+  type WorkspaceContextOperation,
   BuildTool,
   // V2 Tasks
   AnalyzeWorkspaceTask,
@@ -34,6 +37,53 @@ import {
   FixTypeErrorTask,
   GenerateUnitTestsTask,
 } from '../src/index.js';
+
+function buildWorkspaceContextInput(
+  directive: string,
+  goalIntent?: string
+): {
+  directive: string;
+  goal?: string;
+  operations: WorkspaceContextOperation[];
+} {
+  const separatorIndex = directive.indexOf(':');
+  const payload = separatorIndex >= 0 ? directive.slice(separatorIndex + 1).trim() : '';
+  const operations: WorkspaceContextOperation[] = [];
+
+  if (payload.length > 0) {
+    if (payload.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(payload);
+        if (Array.isArray(parsed.operations)) {
+          return {
+            directive,
+            goal: goalIntent,
+            operations: parsed.operations as WorkspaceContextOperation[],
+          };
+        }
+        if (typeof parsed.query === 'string' && parsed.query.length > 0) {
+          operations.push({ type: 'search', query: parsed.query, includeContext: true });
+        }
+        if (typeof parsed.pattern === 'string' && parsed.pattern.length > 0) {
+          operations.push({ type: 'grep', pattern: parsed.pattern, maxResults: 20 });
+        }
+      } catch {
+        // Fall through to textual parsing
+      }
+    }
+
+    if (operations.length === 0) {
+      operations.push({ type: 'search', query: payload, includeContext: true });
+      operations.push({ type: 'grep', pattern: payload, maxResults: 20 });
+    }
+  }
+
+  return {
+    directive,
+    goal: goalIntent,
+    operations,
+  };
+}
 
 async function main() {
   try {
@@ -53,16 +103,39 @@ async function main() {
     const toolRegistry = new SimpleToolRegistry();
     const capabilityRegistry = new SimpleCapabilityRegistry();
     const policyEngine = new SimplePolicyEngine();
-    
+    const contextProvider = new ExternalContextProviderAdapter();
+
     // Register tools
-  toolRegistry.register(new FileStatTool(config.workspace));
-  toolRegistry.register(new FileReadToolV2(config.workspace));
-  toolRegistry.register(new CodeSearchTool(config.workspace));
-  toolRegistry.register(new GrepTool(config.workspace));
-  toolRegistry.register(new DiffTool(config.workspace));
-  toolRegistry.register(new CodeEditToolV2(config.workspace));
-  toolRegistry.register(new RunTestsToolV2(config.workspace));
-  toolRegistry.register(new BuildTool(config.workspace));
+    const fileStatTool = new FileStatTool(config.workspace);
+    const fileReadTool = new FileReadToolV2(config.workspace);
+    const codeSearchTool = new CodeSearchTool(config.workspace);
+    const grepTool = new GrepTool(config.workspace);
+    const diffTool = new DiffTool(config.workspace);
+    const codeEditTool = new CodeEditToolV2(config.workspace);
+    const runTestsTool = new RunTestsToolV2(config.workspace);
+    const buildTool = new BuildTool(config.workspace);
+    const workspaceContextTool = new WorkspaceContextRetrievalTool(config.workspace);
+
+    toolRegistry.register(fileStatTool);
+    toolRegistry.register(fileReadTool);
+    toolRegistry.register(codeSearchTool);
+    toolRegistry.register(grepTool);
+    toolRegistry.register(diffTool);
+    toolRegistry.register(codeEditTool);
+    toolRegistry.register(runTestsTool);
+    toolRegistry.register(buildTool);
+    toolRegistry.register(workspaceContextTool);
+
+    contextProvider.register(workspaceContextTool, {
+      match: directive =>
+        directive.startsWith('workspace.context') || directive.startsWith('workspace_context'),
+      buildInput: (directive, ctx) =>
+        buildWorkspaceContextInput(directive, ctx.runContext?.goal.intent),
+      describe:
+        'Retrieve relevant workspace snippets, grep matches, and metadata to satisfy context requests.',
+      autoPromote: true,
+      maxArtifacts: 32,
+    });
     
     // Register capabilities (tasks)
     capabilityRegistry.register(
@@ -110,6 +183,7 @@ async function main() {
       toolRegistry,
       policyEngine,
       store,
+      contextProvider,
     });
 
     const initialBudget = runtime.getBudgetManager().getStatus();

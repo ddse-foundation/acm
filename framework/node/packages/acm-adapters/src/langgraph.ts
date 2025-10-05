@@ -99,9 +99,11 @@ export class LangGraphAdapter {
 
         const nucleus = this.options.nucleusFactory({
           goalId: this.options.goal.id,
+          goalIntent: this.options.goal.intent,
           planId: plan.id,
           taskId,
           contextRef: plan.contextRef,
+          context: state.context,
           llmCall: this.options.nucleusConfig.llmCall,
           hooks: this.options.nucleusConfig.hooks,
           allowedTools: Array.from(allowedTools),

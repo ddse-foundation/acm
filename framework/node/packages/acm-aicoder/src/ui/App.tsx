@@ -91,6 +91,7 @@ Available commands:
   /context         - Show current context info
   /budget          - Show token budget details
   /reset           - Reset session (clear goal and tasks)
+  /reasoning       - Toggle nucleus reasoning messages
   
 Pane controls:
   Tab              - Switch focused column
@@ -137,6 +138,16 @@ Type your goal or request to start planning.
       setInput('');
       return;
     }
+
+    if (value === '/reasoning') {
+      const enabled = store.toggleReasoningVisible();
+      store.addMessage(
+        'system',
+        `Nucleus reasoning messages ${enabled ? 'enabled' : 'hidden'} (Ctrl+R to toggle).`
+      );
+      setInput('');
+      return;
+    }
     
     // Pass command to handler
     onCommand(value);
@@ -152,23 +163,42 @@ Type your goal or request to start planning.
   const col2Width = Math.floor(termWidth * 0.30);
   const col3Width = termWidth - col1Width - col2Width - 4;
 
+  const visibleMessages = useMemo(
+    () =>
+      state.showReasoning
+        ? state.messages
+        : state.messages.filter(message => message.role !== 'nucleus'),
+    [state.messages, state.showReasoning]
+  );
+
   const chatCapacity = Math.max(1, mainHeight - 2);
   const chatWindow = useMemo(
-    () => computeWindow(state.messages.length, chatCapacity, scrollOffsets.chat),
-    [state.messages.length, chatCapacity, scrollOffsets.chat]
+    () => computeWindow(visibleMessages.length, chatCapacity, scrollOffsets.chat),
+    [visibleMessages.length, chatCapacity, scrollOffsets.chat]
   );
   const chatMessages = useMemo(
-    () => state.messages.slice(chatWindow.startIndex, chatWindow.endIndex),
-    [state.messages, chatWindow]
+    () => visibleMessages.slice(chatWindow.startIndex, chatWindow.endIndex),
+    [visibleMessages, chatWindow]
   );
 
   const tasksTotalEntries = useMemo(() => {
     const goalEntry = state.currentGoal ? 1 : 0;
+    const summaryEntry = state.goalSummary ? 1 : 0;
     const tasksHeader = state.tasks.length > 0 ? 1 : 0;
-    const budgetEntry = state.budgetStatus ? 1 : 0;
+    const taskEntries = state.tasks.length;
+    const contextHeader = state.currentContext ? 1 : 0;
+    const contextLines = state.currentContext ? 2 : 0;
     const placeholderEntry = state.currentGoal ? 0 : 1;
-    return goalEntry + tasksHeader + state.tasks.length + budgetEntry + placeholderEntry;
-  }, [state.currentGoal, state.tasks.length, state.budgetStatus]);
+    return (
+      goalEntry +
+      summaryEntry +
+      tasksHeader +
+      taskEntries +
+      contextHeader +
+      contextLines +
+      placeholderEntry
+    );
+  }, [state.currentGoal, state.goalSummary, state.tasks, state.currentContext]);
   const tasksCapacity = Math.max(1, mainHeight - 2);
   const tasksWindow = useMemo(
     () => computeWindow(tasksTotalEntries, tasksCapacity, scrollOffsets.tasks),
@@ -253,27 +283,36 @@ Type your goal or request to start planning.
       return;
     }
 
+    if (key.ctrl && inputKey && inputKey.toLowerCase() === 'r') {
+      const enabled = store.toggleReasoningVisible();
+      store.addMessage(
+        'system',
+        `Nucleus reasoning messages ${enabled ? 'enabled' : 'hidden'} (Ctrl+R to toggle).`
+      );
+      return;
+    }
+
     const meta = windowByPane[focusedPane];
     if (!meta) return;
 
-    const hasModifier = key.ctrl || key.meta;
+  const lineScrollModifier = key.ctrl || key.meta || (('alt' in key) && (key as any).alt);
 
-    if (hasModifier && key.upArrow) {
+    if ((lineScrollModifier || key.shift) && key.upArrow) {
       adjustScroll(focusedPane, 1);
       return;
     }
 
-    if (hasModifier && key.downArrow) {
+    if ((lineScrollModifier || key.shift) && key.downArrow) {
       adjustScroll(focusedPane, -1);
       return;
     }
 
-    if (key.pageUp) {
+    if (key.pageUp || (key.shift && key.upArrow)) {
       adjustScroll(focusedPane, meta.capacity);
       return;
     }
 
-    if (key.pageDown) {
+    if (key.pageDown || (key.shift && key.downArrow)) {
       adjustScroll(focusedPane, -meta.capacity);
       return;
     }
@@ -286,16 +325,24 @@ Type your goal or request to start planning.
         <Text bold color="cyan">ACM AI Coder - Interactive Mode</Text>
         <Box marginLeft={2}>
           <Text color="cyan">Focus: {paneLabels[focusedPane]}</Text>
+          <Text>
+            {' '}
+            <Text color="gray">Tab</Text> = Switch
+            {'  '}
+            <Text color="gray">Shift+Tab</Text> = Reverse
+            {'  '}
+            <Text color="gray">Ctrl+R</Text> = Reasoning Toggle
+            {'  '}
+            <Text color="gray">Ctrl+↑/↓</Text> = Scroll
+            {'  '}
+            <Text color="gray">PgUp/PgDn</Text> = Page
+            {'  '}
+            <Text color="gray">Ctrl+C</Text> = Exit
+          </Text>
         </Box>
-        <Box flexGrow={1} />
-        <Box marginRight={2}>
-          <Text color="gray">Tab=Switch | Ctrl+↑/↓=Scroll | PgUp/PgDn=Page</Text>
-        </Box>
-        {state.isProcessing && <Text color="yellow">⟳ Processing...</Text>}
       </Box>
-      
-      {/* Main content - 3 columns */}
-      <Box flexGrow={1}>
+
+  <Box flexGrow={1} flexDirection="row" gap={2} paddingX={1}>
         <Box width={col1Width}>
           <ChatPane
             messages={chatMessages}
@@ -309,8 +356,9 @@ Type your goal or request to start planning.
           <GoalsTasksPane
             goal={state.currentGoal}
             plan={state.currentPlan}
+            context={state.currentContext}
             tasks={state.tasks}
-            budgetStatus={state.budgetStatus}
+            goalSummary={state.goalSummary}
             height={mainHeight}
             scrollOffset={tasksWindow.clampedOffset}
             canScrollUp={tasksWindow.canScrollUp}

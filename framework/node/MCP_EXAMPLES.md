@@ -262,7 +262,9 @@ async function runFileWorkflow() {
     toolRegistry,
   });
 
-  console.log('Results:', result.outputsByTask);
+  const finalTask = result.outputsByTask['t2'];
+  console.log('Results:', finalTask?.output);
+  console.log('Narrative:', finalTask?.narrative);
 
   // Cleanup
   await mcpManager.disconnect();
@@ -297,6 +299,6 @@ runFileWorkflow().catch(console.error);
 
 ## More Information
 
-- MCP Specification: https://modelcontextprotocol.io/
-- Available MCP Servers: https://github.com/modelcontextprotocol/servers
+- MCP Specification: [https://modelcontextprotocol.io/](https://modelcontextprotocol.io/)
+- Available MCP Servers: [https://github.com/modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers)
 - ACM MCP Package: [packages/acm-mcp/README.md](../packages/acm-mcp/README.md)

@@ -3,15 +3,15 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
-import type { Goal, Plan } from '@acm/sdk';
+import type { Goal, Plan, Context } from '@acm/sdk';
 import type { TaskState } from '../store.js';
-import type { BudgetStatus } from '../../runtime/budget-manager.js';
 
 interface GoalsTasksPaneProps {
   goal?: Goal;
   plan?: Plan;
+  context?: Context;
   tasks: TaskState[];
-  budgetStatus?: BudgetStatus;
+  goalSummary?: string;
   height: number;
   scrollOffset: number;
   canScrollUp: boolean;
@@ -22,8 +22,9 @@ interface GoalsTasksPaneProps {
 export const GoalsTasksPane: React.FC<GoalsTasksPaneProps> = ({
   goal,
   plan,
+  context,
   tasks,
-  budgetStatus,
+  goalSummary,
   height,
   scrollOffset,
   canScrollUp,
@@ -37,6 +38,12 @@ export const GoalsTasksPane: React.FC<GoalsTasksPaneProps> = ({
       <Box flexDirection="column" marginBottom={1} key="goal">
         <Text bold color="green">Goal:</Text>
         <Text>{goal.intent || goal.id}</Text>
+        {goalSummary && (
+          <Box marginTop={1} flexDirection="column">
+            <Text bold color="cyan">Summary</Text>
+            <Text color="cyan">{goalSummary}</Text>
+          </Box>
+        )}
       </Box>
     );
   }
@@ -53,11 +60,16 @@ export const GoalsTasksPane: React.FC<GoalsTasksPaneProps> = ({
     });
   }
 
-  if (budgetStatus) {
+  if (context) {
+    const factsCount = Object.keys(context.facts ?? {}).length;
+    const augmentationCount = context.augmentations?.length ?? 0;
+    const augmentationLabel = augmentationCount === 1 ? 'time' : 'times';
+
     rows.push(
-      <Box flexDirection="column" key="budget">
-        <Text bold color="green">Token Budget:</Text>
-        <BudgetInfo status={budgetStatus} />
+      <Box flexDirection="column" marginBottom={1} key="context-info">
+        <Text bold color="green">Context Information:</Text>
+        <Text color="gray">  - current size: {factsCount}</Text>
+        <Text color="gray">  - augmented {augmentationCount} {augmentationLabel}</Text>
       </Box>
     );
   }
@@ -119,49 +131,17 @@ const TaskItem: React.FC<{ task: TaskState }> = ({ task }) => {
   const icon = statusIcons[task.status] || '○';
   const color = statusColors[task.status] || 'white';
   
+  const label = (task.objective && task.objective.trim().length > 0)
+    ? task.objective.trim()
+    : (task.title ?? task.name);
+
   return (
-    <Box flexDirection="column">
+    <Box>
       <Text color={color}>
-        {icon} {task.name}
-        {task.attempt && ` (attempt ${task.attempt}/${task.maxAttempts})`}
-        {task.progress !== undefined && ` ${Math.round(task.progress)}%`}
-        {task.error && ` - ${task.error}`}
-      </Text>
-      {task.outputSummary && (
-        <Text color="gray">  ↳ {task.outputSummary}</Text>
-      )}
-    </Box>
-  );
-};
-
-const BudgetInfo: React.FC<{ status: BudgetStatus }> = ({ status }) => {
-  return (
-    <Box flexDirection="column">
-      <Text>
-        Tokens used: {status.totalTokens}
-        {status.maxTokens !== undefined && ` / ${status.maxTokens}`}
-      </Text>
-      {status.remainingTokens !== undefined && (
-        <Text color={getRemainingColor(status)}>
-          Remaining: {status.remainingTokens}
-        </Text>
-      )}
-      <Text color="gray">
-        Calls: {status.callCount}
+        {icon} {label}
       </Text>
     </Box>
   );
-};
-
-const getRemainingColor = (status: BudgetStatus): string => {
-  if (status.maxTokens === undefined || status.remainingTokens === undefined) {
-    return 'green';
-  }
-
-  const fraction = status.remainingTokens / status.maxTokens;
-  if (fraction < 0.1) return 'red';
-  if (fraction < 0.25) return 'yellow';
-  return 'green';
 };
 
 const ScrollIndicator: React.FC<{ up: boolean; down: boolean; color: string }> = ({ up, down, color }) => (

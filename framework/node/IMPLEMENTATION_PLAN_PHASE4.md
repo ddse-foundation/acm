@@ -115,6 +115,20 @@ Out of scope: productionizing additional engines, expanding policy DSLs, or rewo
   - Verification inputs/outputs and task IO aligned to spec contracts
 - Modify CLI `--save-bundle` path to incorporate new artifacts, compute bundle-level checksums, and surface Nucleus decisions in interactive mode.
 
+### 3.9 Nucleus Authored Narratives & Streaming Presentation
+
+- Extend the planner’s `emit_plan` schema so the Nucleus can emit `title`, `objective`, and `successCriteria` metadata per task alongside rationale. Surface these optional fields on `TaskSpec` without falling back to static capability names unless the Nucleus declines to provide a label.
+- During execution, capture the task-level Nucleus `reasoning` plus postcheck observations and store them on the `TASK_END` ledger record and in `outputsByTask`. Promote a follow-up, Nucleus-driven “wrap-up” call that synthesizes an overall goal summary, persisted as a `GOAL_SUMMARY` ledger entry.
+- Introduce a shared `ExecutionTranscript` helper within the framework runtime that watches ledger append events (`NUCLEUS_INFERENCE`, `TASK_END`, `GOAL_SUMMARY`) and streams human-readable updates. UI shells and API consumers can subscribe once to obtain labels, task narratives, and goal summaries in real time.
+
+### 3.10 External Context Provider Adapter
+
+- Design an adapter that binds Nucleus `request_context_retrieval` directives to developer supplied tools built on the standard `Tool` base class. The adapter will route directives to registered handlers, normalize tool outputs into `InternalContextScope` artifacts, and enforce provenance metadata.
+- Provide default matching semantics (e.g., directive prefixes) plus overridable input mappers so teams can plug arbitrary retrieval backends without reimplementing orchestration glue.
+- Automatically promote successful artifacts into the active context packet when configured, logging `CONTEXT_INTERNALIZED` ledger entries and preventing duplicate promotions across retries.
+- Expose adapter hooks through runtime `executePlan` options so tasks automatically attempt retrieval before failing preflight. Re-run Nucleus preflight after each adapter pass and surface actionable errors when directives remain unresolved.
+- Document adapter usage patterns, including registering filesystem/knowledge-base tools, customizing directive schemas, and emitting deterministic fixtures for tests.
+
 ## 4. Testing & Validation
 
 - **Unit tests:**

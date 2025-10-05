@@ -104,7 +104,8 @@ async function testBasicExecution() {
   });
 
   // Verify
-  if (!result.outputsByTask['t1']) {
+  const task = result.outputsByTask['t1'];
+  if (!task || task.output === undefined) {
     throw new Error('Task output not found');
   }
 
@@ -246,7 +247,8 @@ async function testPlanExecution() {
   });
   
   // Verify outputs
-  if (!result.outputsByTask['t1']) {
+  const task = result.outputsByTask['t1'];
+  if (!task || task.output === undefined) {
     throw new Error('Task t1 did not execute');
   }
   
