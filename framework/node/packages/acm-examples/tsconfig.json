@@ -12,6 +12,7 @@
     { "path": "../acm-planner" },
     { "path": "../acm-mcp" },
     { "path": "../acm-adapters" },
-    { "path": "../acm-replay" }
+    { "path": "../acm-replay" },
+    { "path": "../acm-framework" }
   ]
 }

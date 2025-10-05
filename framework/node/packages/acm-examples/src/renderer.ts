@@ -55,10 +55,13 @@ export class CLIRenderer {
     console.log('\n' + '='.repeat(60));
     console.log('EXECUTION SUMMARY');
     console.log('='.repeat(60));
-    console.log(`Total tasks: ${Object.keys(result.outputsByTask).length}`);
-    console.log(`Ledger entries: ${result.ledger.length}`);
+    const taskEntries = Object.entries(result.outputsByTask ?? {});
+    const ledgerEntries = Array.isArray(result.ledger) ? result.ledger.length : 0;
+    console.log(`Total tasks: ${taskEntries.length}`);
+    console.log(`Ledger entries: ${ledgerEntries}`);
     console.log('\nOutputs:');
-    for (const [taskId, output] of Object.entries(result.outputsByTask)) {
+    for (const [taskId, record] of taskEntries) {
+      const output = record && typeof record === 'object' && 'output' in record ? record.output : record;
       console.log(`  ${taskId}:`, JSON.stringify(output, null, 2));
     }
   }

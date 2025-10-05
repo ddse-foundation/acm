@@ -15,6 +15,7 @@
     "test:bm25": "node ./dist/tests/bm25.test.js"
   },
   "dependencies": {
+    "@acm/framework": "workspace:*",
     "@acm/sdk": "workspace:*",
     "@acm/runtime": "workspace:*",
     "@acm/llm": "workspace:*",

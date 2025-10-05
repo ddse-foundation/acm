@@ -1,6 +1,5 @@
 // Integration test for ACM framework
 import {
-  DefaultStreamSink,
   Nucleus,
   type Goal,
   type Context,
@@ -12,8 +11,11 @@ import {
   type NucleusInvokeResult,
   type InternalContextScope,
   type LedgerEntry,
+  type LLMCallFn,
 } from '@acm/sdk';
-import { MemoryLedger, executePlan } from '@acm/runtime';
+import { MemoryLedger } from '@acm/runtime';
+import { ACMFramework } from '@acm/framework';
+import type { PlannerResult } from '@acm/planner';
 import { SearchTool } from '../src/tools/index.js';
 import { SearchTask } from '../src/tasks/index.js';
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '../src/registries.js';
@@ -61,8 +63,22 @@ const nucleusConfig = {
   llmCall: {
     provider: 'test',
     model: 'stub',
+    temperature: 0,
+    maxTokens: 256,
   },
-};
+  hooks: {
+    preflight: true,
+    postcheck: true,
+  },
+} as const;
+
+const stubLLMCall: LLMCallFn = async () => ({
+  reasoning: '',
+  toolCalls: [],
+  raw: {},
+});
+
+const stubFrameworkFactory = (_ledger: MemoryLedger): NucleusFactory => testNucleusFactory;
 
 async function testBasicExecution() {
   console.log('Testing basic ACM execution...');
@@ -98,21 +114,37 @@ async function testBasicExecution() {
     edges: [],
   };
 
-  // Execute
-  const ledger = new MemoryLedger();
-  const result = await executePlan({
-    goal,
-    context,
-    plan,
+  const framework = ACMFramework.create({
     capabilityRegistry,
     toolRegistry,
+    nucleus: {
+      call: stubLLMCall,
+      llmConfig: nucleusConfig.llmCall,
+      hooks: nucleusConfig.hooks,
+      factory: stubFrameworkFactory,
+    },
+  });
+
+  // Execute
+  const ledger = new MemoryLedger();
+  const plannerResult: PlannerResult = {
+    plans: [plan],
+    contextRef: plan.contextRef ?? 'test-context',
+    rationale: 'test-plan',
+  };
+
+  const result = await framework.execute({
+    goal,
+    context,
     ledger,
-    nucleusFactory: testNucleusFactory,
-    nucleusConfig,
+    existingPlan: {
+      plan,
+      plannerResult,
+    },
   });
 
   // Verify
-  const taskRecord = result.outputsByTask['t1'];
+  const taskRecord = result.execution.outputsByTask['t1'];
 
   if (!taskRecord) {
     throw new Error('Task output not found');
@@ -124,7 +156,7 @@ async function testBasicExecution() {
     throw new Error('Search results not found');
   }
 
-  if (result.ledger.length === 0) {
+  if (result.execution.ledger.length === 0) {
     throw new Error('Ledger is empty');
   }
 

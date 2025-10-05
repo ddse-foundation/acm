@@ -91,6 +91,9 @@ importers:
       '@acm/adapters':
         specifier: workspace:*
         version: link:../acm-adapters
+      '@acm/framework':
+        specifier: workspace:*
+        version: link:../acm-framework
       '@acm/llm':
         specifier: workspace:*
         version: link:../acm-llm

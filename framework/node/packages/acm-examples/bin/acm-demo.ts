@@ -1,17 +1,10 @@
 #!/usr/bin/env node
 
-// ACM Demo CLI - End-to-end example
-import {
-  DefaultStreamSink,
-  DeterministicNucleus,
-  type NucleusFactory,
-  type NucleusConfig,
-  type LLMCallFn,
-} from '@acm/sdk';
-import { MemoryLedger, executePlan, executeResumablePlan, FileCheckpointStore } from '@acm/runtime';
+// ACM Demo CLI - End-to-end example powered by the ACM Framework helper
+import { DefaultStreamSink, type LLMCallFn } from '@acm/sdk';
+import { MemoryLedger, FileCheckpointStore } from '@acm/runtime';
 import { createOllamaClient, createVLLMClient } from '@acm/llm';
-import { StructuredLLMPlanner } from '@acm/planner';
-import { asLangGraph, wrapAgentNodes } from '@acm/adapters';
+import { ACMFramework, ExecutionEngine } from '@acm/framework';
 import { ReplayBundleExporter, type TaskIORecord } from '@acm/replay';
 import { goals, contexts } from '../src/goals/index.js';
 import {
@@ -31,22 +24,28 @@ import { SimplePolicyEngine } from '../src/policy.js';
 import { CLIRenderer } from '../src/renderer.js';
 import * as crypto from 'crypto';
 
-// Parse command-line arguments
-function parseArgs(): {
-  provider: 'ollama' | 'vllm';
+type Provider = 'ollama' | 'vllm';
+type EngineOption = 'runtime' | 'langgraph' | 'msaf';
+type GoalOption = 'refund' | 'issues';
+
+type CliConfig = {
+  provider: Provider;
   model: string;
   baseUrl?: string;
-  engine: 'runtime' | 'langgraph' | 'msaf';
-  goal: 'refund' | 'issues';
+  engine: EngineOption;
+  goal: GoalOption;
   stream: boolean;
   saveBundle: boolean;
   useMcp: boolean;
   mcpServer?: string;
   resume?: string;
   checkpointDir?: string;
-} {
+};
+
+// Parse command-line arguments
+function parseArgs(): CliConfig {
   const args = process.argv.slice(2);
-  const parsed: any = {
+  const parsed: CliConfig = {
     provider: 'ollama',
     model: 'llama3.1',
     engine: 'runtime',
@@ -61,7 +60,7 @@ function parseArgs(): {
     const next = args[i + 1];
 
     if (arg === '--provider' && next) {
-      parsed.provider = next;
+      parsed.provider = next as Provider;
       i++;
     } else if (arg === '--model' && next) {
       parsed.model = next;
@@ -70,10 +69,10 @@ function parseArgs(): {
       parsed.baseUrl = next;
       i++;
     } else if (arg === '--engine' && next) {
-      parsed.engine = next;
+      parsed.engine = next as EngineOption;
       i++;
     } else if (arg === '--goal' && next) {
-      parsed.goal = next;
+      parsed.goal = next as GoalOption;
       i++;
     } else if (arg === '--no-stream') {
       parsed.stream = false;
@@ -128,7 +127,19 @@ Examples:
   `);
 }
 
-async function main() {
+function resolveExecutionEngine(engine: EngineOption): ExecutionEngine {
+  switch (engine) {
+    case 'langgraph':
+      return ExecutionEngine.LANGGRAPH;
+    case 'msaf':
+      return ExecutionEngine.MSAF;
+    case 'runtime':
+    default:
+      return ExecutionEngine.ACM;
+  }
+}
+
+async function main(): Promise<void> {
   const config = parseArgs();
 
   console.log('🚀 ACM v0.5 Demo CLI');
@@ -140,7 +151,6 @@ async function main() {
   console.log('='.repeat(60));
   console.log();
 
-  // Create LLM client
   const llm =
     config.provider === 'ollama'
       ? createOllamaClient(config.model, config.baseUrl)
@@ -150,7 +160,59 @@ async function main() {
     throw new Error('Selected LLM provider does not support structured tool calls required by Nucleus.');
   }
 
-  let activeLedger: MemoryLedger | undefined;
+  const toolRegistry = new SimpleToolRegistry();
+  toolRegistry.register(new SearchTool());
+  toolRegistry.register(new ExtractEntitiesTool());
+  toolRegistry.register(new AssessRiskTool());
+  toolRegistry.register(new CreateRefundTxnTool());
+  toolRegistry.register(new NotifySupervisorTool());
+
+  const capabilityRegistry = new SimpleCapabilityRegistry();
+  capabilityRegistry.register(
+    { name: 'search', sideEffects: false },
+    new SearchTask()
+  );
+  capabilityRegistry.register(
+    { name: 'enrich_and_act', sideEffects: false },
+    new EnrichAndActTask()
+  );
+  capabilityRegistry.register(
+    { name: 'refund_flow', sideEffects: true },
+    new RefundFlowTask()
+  );
+
+  const goal = goals[config.goal];
+  const context = contexts[config.goal];
+
+  if (!goal || !context) {
+    console.error(`Unknown goal: ${config.goal}`);
+    process.exit(1);
+  }
+
+  const stream = new DefaultStreamSink();
+  const renderer = new CLIRenderer();
+
+  if (config.stream) {
+    stream.attach('planner', chunk => renderer.renderPlannerToken(chunk));
+    stream.attach('task', update => renderer.renderTaskUpdate(update));
+  }
+
+  const verify = async (taskId: string, output: any, expressions: string[]): Promise<boolean> => {
+    for (const expr of expressions) {
+      try {
+        const func = new Function('output', `return ${expr};`);
+        const result = func(output);
+        if (!result) {
+          console.error(`Verification failed for ${taskId}: ${expr}`);
+          return false;
+        }
+      } catch (err) {
+        console.error(`Verification error for ${taskId}: ${expr}`, err);
+        return false;
+      }
+    }
+    return true;
+  };
 
   const nucleusLLMCall: LLMCallFn = async (prompt, tools, callConfig) => {
     const toolDefs = tools.map(tool => ({
@@ -185,11 +247,6 @@ async function main() {
     };
   };
 
-  const nucleusFactory: NucleusFactory = config =>
-    new DeterministicNucleus(config, nucleusLLMCall, entry => {
-      activeLedger?.append(entry.type, entry.details);
-    });
-
   const nucleusConfig = {
     llmCall: {
       provider: llm.name(),
@@ -201,272 +258,129 @@ async function main() {
       preflight: true,
       postcheck: true,
     },
-  } satisfies Pick<NucleusConfig, 'llmCall' | 'hooks'>;
-
-  const sharedNucleusOptions = {
-    nucleusFactory,
-    nucleusConfig: {
-      llmCall: nucleusConfig.llmCall,
-      hooks: nucleusConfig.hooks,
-    },
   } as const;
 
-  // Setup registries
-  const toolRegistry = new SimpleToolRegistry();
-  toolRegistry.register(new SearchTool());
-  toolRegistry.register(new ExtractEntitiesTool());
-  toolRegistry.register(new AssessRiskTool());
-  toolRegistry.register(new CreateRefundTxnTool());
-  toolRegistry.register(new NotifySupervisorTool());
+  const framework = ACMFramework.create({
+    capabilityRegistry,
+    toolRegistry,
+    policyEngine: new SimplePolicyEngine(),
+    nucleus: {
+      call: nucleusLLMCall,
+      llmConfig: nucleusConfig.llmCall,
+      hooks: nucleusConfig.hooks,
+    },
+    verify,
+    defaultStream: config.stream ? stream : undefined,
+  });
 
-  const capabilityRegistry = new SimpleCapabilityRegistry();
-  capabilityRegistry.register(
-    { name: 'search', sideEffects: false },
-    new SearchTask()
-  );
-  capabilityRegistry.register(
-    { name: 'enrich_and_act', sideEffects: false },
-    new EnrichAndActTask()
-  );
-  capabilityRegistry.register(
-    { name: 'refund_flow', sideEffects: true },
-    new RefundFlowTask()
-  );
-
-  // Get goal and context
-  const goal = goals[config.goal];
-  const context = contexts[config.goal];
-
-  if (!goal || !context) {
-    console.error(`Unknown goal: ${config.goal}`);
-    process.exit(1);
-  }
-
-  // Setup streaming
-  const stream = new DefaultStreamSink();
-  const renderer = new CLIRenderer();
-
-  if (config.stream) {
-    stream.attach('planner', chunk => renderer.renderPlannerToken(chunk));
-    stream.attach('task', update => renderer.renderTaskUpdate(update));
-  }
-
-  // Create planner
-  const planner = new StructuredLLMPlanner();
-
-  // Shared ledger across planning and execution
   const ledger = new MemoryLedger();
 
   console.log('📋 Planning...\n');
 
-  try {
-    // Generate plans
-    activeLedger = ledger;
-    const plannerResult = await planner.plan({
+  const planResponse = await framework.plan({
+    goal,
+    context,
+    stream: config.stream ? stream : undefined,
+    ledger,
+  });
+
+  const plannerResult = planResponse.result;
+  const plan = planResponse.selectedPlan;
+
+  console.log(`\n✅ Plans generated: ${plannerResult.plans.length}`);
+  if (plannerResult.rationale) {
+    console.log(`Rationale: ${plannerResult.rationale}`);
+  }
+
+  console.log(`\n📋 Executing Plan: ${plan.id}`);
+  const contextPacket = JSON.stringify(planResponse.context);
+  const contextRef = plan.contextRef ?? crypto.createHash('sha256').update(contextPacket).digest('hex');
+  console.log(`Context Ref: ${contextRef}`);
+  console.log(`Tasks: ${plan.tasks.length}`);
+  console.log();
+
+  const executionEngine = resolveExecutionEngine(config.engine);
+
+  if (executionEngine !== ExecutionEngine.ACM && config.resume) {
+    console.warn('⚠️  Resume not supported for selected engine, ignoring --resume flag');
+  }
+
+  const checkpointDir = config.checkpointDir || './checkpoints';
+  const checkpointStore = new FileCheckpointStore(checkpointDir);
+
+  if (config.stream) {
+    stream.attach('checkpoint', (update: any) => {
+      console.log(`💾 Checkpoint created: ${update.checkpointId} (${update.tasksCompleted} tasks completed)`);
+    });
+  }
+
+  const runId = config.resume || `run-${Date.now()}`;
+  const startedAt = new Date().toISOString();
+
+  const executeResult = await framework.execute({
+    goal,
+    context,
+    stream: config.stream ? stream : undefined,
+    engine: executionEngine,
+    ledger,
+    runId,
+    existingPlan: {
+      plan,
+      plannerResult,
+    },
+    resumeFrom: executionEngine === ExecutionEngine.ACM ? config.resume : undefined,
+    checkpointStore: executionEngine === ExecutionEngine.ACM ? checkpointStore : undefined,
+    checkpointInterval: executionEngine === ExecutionEngine.ACM ? 1 : undefined,
+  });
+
+  const completedAt = new Date().toISOString();
+
+  renderer.renderSummary(executeResult.execution);
+
+  if (config.saveBundle) {
+    console.log('\n💾 Saving replay bundle...');
+
+    const taskIO: TaskIORecord[] = [];
+    for (const taskSpec of plan.tasks) {
+      const record = executeResult.execution.outputsByTask?.[taskSpec.id];
+      if (record?.output !== undefined) {
+        taskIO.push({
+          taskId: taskSpec.id,
+          capability: taskSpec.capabilityRef || taskSpec.capability || 'unknown',
+          input: taskSpec.input || {},
+          output: record.output,
+          ts: new Date().toISOString(),
+        });
+      }
+    }
+
+    const bundlePath = await ReplayBundleExporter.export({
+      outputDir: `./replay/${runId}`,
       goal,
       context,
-      capabilities: capabilityRegistry.list(),
-      nucleusFactory,
-      nucleusConfig: sharedNucleusOptions.nucleusConfig,
-      stream: config.stream ? stream : undefined,
-    });
-    activeLedger = undefined;
-
-    console.log(`\n✅ Plans generated: ${plannerResult.plans.length}`);
-    if (plannerResult.rationale) {
-      console.log(`Rationale: ${plannerResult.rationale}`);
-    }
-
-    // Select first plan (Plan-A)
-    const plan = plannerResult.plans[0];
-    console.log(`\n📋 Executing Plan: ${plan.id}`);
-    
-    // Compute context ref (hash)
-    const contextPacket = JSON.stringify(context);
-    const contextRef = crypto.createHash('sha256').update(contextPacket).digest('hex');
-    console.log(`Context Ref: ${contextRef}`);
-    console.log(`Tasks: ${plan.tasks.length}`);
-    console.log();
-
-    // Create policy engine
-    const policy = new SimplePolicyEngine();
-
-    // Track task I/O for replay bundle
-    const taskIO: TaskIORecord[] = [];
-
-    // Verification function
-    const verify = async (taskId: string, output: any, expressions: string[]): Promise<boolean> => {
-      for (const expr of expressions) {
-        try {
-          const func = new Function('output', `return ${expr};`);
-          const result = func(output);
-          if (!result) {
-            console.error(`Verification failed for ${taskId}: ${expr}`);
-            return false;
-          }
-        } catch (err) {
-          console.error(`Verification error for ${taskId}: ${expr}`, err);
-          return false;
-        }
-      }
-      return true;
-    };
-
-    // Execute based on engine
-    let result;
-    const runId = config.resume || `run-${Date.now()}`;
-    const startedAt = new Date().toISOString();
-    
-    // Setup checkpoint store if resume is enabled or runtime engine
-    const checkpointDir = config.checkpointDir || './checkpoints';
-    const checkpointStore = new FileCheckpointStore(checkpointDir);
-
-    // Add checkpoint event listener
-    if (config.stream) {
-      stream.attach('checkpoint', (update: any) => {
-        console.log(`💾 Checkpoint created: ${update.checkpointId} (${update.tasksCompleted} tasks completed)`);
-      });
-    }
-
-    if (config.engine === 'runtime') {
-      if (config.resume) {
-        console.log(`⚙️  Resuming execution from checkpoint...\n`);
-        activeLedger = ledger;
-        result = await executeResumablePlan({
-          goal,
-          context,
-          plan,
-          capabilityRegistry,
-          toolRegistry,
-          policy,
-          verify,
-          stream: config.stream ? stream : undefined,
-          ledger,
-          runId,
-          resumeFrom: config.resume,
-          checkpointStore,
-          checkpointInterval: 1,
-          ...sharedNucleusOptions,
-        });
-        activeLedger = undefined;
-      } else {
-        console.log('⚙️  Executing with ACM runtime (with checkpointing)...\n');
-        activeLedger = ledger;
-        result = await executeResumablePlan({
-          goal,
-          context,
-          plan,
-          capabilityRegistry,
-          toolRegistry,
-          policy,
-          verify,
-          stream: config.stream ? stream : undefined,
-          ledger,
-          runId,
-          checkpointStore,
-          checkpointInterval: 1,
-          ...sharedNucleusOptions,
-        });
-        activeLedger = undefined;
-      }
-    } else if (config.engine === 'langgraph') {
-      console.log('⚙️  Executing with LangGraph adapter...\n');
-      if (config.resume) {
-        console.warn('⚠️  Resume not supported for LangGraph adapter, ignoring --resume flag');
-      }
-      const adapter = asLangGraph({
-        goal,
-        context,
-        plan,
-        capabilityRegistry,
-        toolRegistry,
-        policy,
-        stream: config.stream ? stream : undefined,
-        ledger,
-        ...sharedNucleusOptions,
-      });
-      activeLedger = ledger;
-      result = await adapter.execute();
-      activeLedger = undefined;
-    } else if (config.engine === 'msaf') {
-      console.log('⚙️  Executing with MS Agent Framework adapter...\n');
-      if (config.resume) {
-        console.warn('⚠️  Resume not supported for MSAF adapter, ignoring --resume flag');
-      }
-      const adapter = wrapAgentNodes({
-        goal,
-        context,
-        plan,
-        capabilityRegistry,
-        toolRegistry,
-        policy,
-        stream: config.stream ? stream : undefined,
-        ledger,
-        ...sharedNucleusOptions,
-      });
-      activeLedger = ledger;
-      result = await adapter.execute();
-      activeLedger = undefined;
-    }
-
-    if (!result) {
-      throw new Error('Execution failed');
-    }
-
-    const completedAt = new Date().toISOString();
-
-    // Render summary
-    renderer.renderSummary(result);
-
-    // Save bundle if requested
-    if (config.saveBundle) {
-      console.log('\n💾 Saving replay bundle...');
-      
-      // Prepare task I/O from outputs
-      for (const taskSpec of plan.tasks) {
-        const output = result.outputsByTask?.[taskSpec.id];
-        if (output) {
-          taskIO.push({
-            taskId: taskSpec.id,
-            capability: taskSpec.capabilityRef || taskSpec.capability || 'unknown',
-            input: taskSpec.input || {},
-            output,
-            ts: new Date().toISOString(),
-          });
-        }
-      }
-      
-      const bundlePath = await ReplayBundleExporter.export({
-        outputDir: `./replay/${runId}`,
-        goal,
-        context,
-        plans: plannerResult.plans,
-        selectedPlanId: plan.id,
-        ledger: ledger.getEntries() as any[],
-        taskIO,
-        engineTrace: {
-          runId,
-          engine: config.engine,
+      plans: plannerResult.plans,
+      selectedPlanId: plan.id,
+      ledger: Array.from(executeResult.execution.ledger) as any[],
+      taskIO,
+      engineTrace: {
+        runId,
+        engine: config.engine,
+        startedAt,
+        completedAt,
+        status: 'success',
+        tasks: plan.tasks.map((task: typeof plan.tasks[number]) => ({
+          taskId: task.id,
+          status: executeResult.execution.outputsByTask?.[task.id] ? 'completed' : 'skipped',
           startedAt,
           completedAt,
-          status: 'success',
-          tasks: plan.tasks.map(t => ({
-            taskId: t.id,
-            status: 'completed',
-            startedAt,
-            completedAt,
-          })),
-        },
-      });
-      
-      console.log(`   ✅ Bundle saved to: ${bundlePath}`);
-    }
+        })),
+      },
+    });
 
-    console.log('\n✅ Demo completed successfully!');
-  } catch (error) {
-    console.error('\n❌ Demo failed:', error);
-    process.exit(1);
+    console.log(`   ✅ Bundle saved to: ${bundlePath}`);
   }
+
+  console.log('\n✅ Demo completed successfully!');
 }
 
 main().catch(error => {

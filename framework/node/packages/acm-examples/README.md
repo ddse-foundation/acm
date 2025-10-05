@@ -246,9 +246,23 @@ stream.attach('task', update => {
   console.log(`[${update.taskId}] ${update.status}`);
 });
 
-// Pass to planner and executor
-await planner.plan({ ..., stream });
-await executePlan({ ..., stream });
+const framework = ACMFramework.create({
+  capabilityRegistry,
+  toolRegistry,
+  nucleus: { /* ... */ },
+  defaultStream: stream,
+});
+
+const planResult = await framework.plan({ goal, context, stream });
+await framework.execute({
+  goal,
+  context,
+  stream,
+  existingPlan: {
+    plan: planResult.selectedPlan,
+    plannerResult: planResult.result,
+  },
+});
 ```
 
 ## Customization
@@ -314,6 +328,7 @@ export const contexts = {
 To run the demo with LLM integration:
 
 ### Option 1: Ollama
+
 ```bash
 curl -fsSL https://ollama.ai/install.sh | sh
 ollama pull llama3.1
@@ -321,6 +336,7 @@ ollama serve
 ```
 
 ### Option 2: vLLM
+
 ```bash
 pip install vllm
 vllm serve mistralai/Mistral-7B-Instruct-v0.2 --port 8000
@@ -328,7 +344,7 @@ vllm serve mistralai/Mistral-7B-Instruct-v0.2 --port 8000
 
 ## File Structure
 
-```
+```text
 packages/acm-examples/
 ├── bin/
 │   └── acm-demo.ts        # CLI entry point
@@ -349,11 +365,13 @@ packages/acm-examples/
 ## Troubleshooting
 
 ### LLM Connection Failed
+
 - Ensure Ollama/vLLM is running
 - Check baseUrl matches your server
 - Verify model is downloaded/loaded
 
 ### Build Errors
+
 ```bash
 pnpm clean
 pnpm install
@@ -361,6 +379,7 @@ pnpm build
 ```
 
 ### Module Not Found
+
 ```bash
 # From monorepo root
 cd framework/node
