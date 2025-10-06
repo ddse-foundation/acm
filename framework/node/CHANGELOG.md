@@ -130,17 +130,17 @@ These features are planned for future releases:
 
 ## Future Versions
 
-### [0.2.0] - Planned
+### [0.6.0] - Planned
 - Performance optimizations and benchmarks
 - Additional example workflows
 - Advanced error handling and recovery
 
-### [0.3.0] - Planned
+### [0.7.0] - Planned
 - OPA/Rego policy integration
 - JSONLogic verification DSL
 - Advanced guard expression grammar
 
-### [0.4.0] - Planned
+### [0.8.0] - Planned
 - Distributed tracing
 - Cloud provider integrations
 - Visual workflow designer

@@ -1,6 +1,6 @@
 {
   "name": "@acm/aicoder",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "description": "ACM AI Coder Demo - Production-ready developer workflow automation",
   "type": "module",
   "main": "./dist/src/index.js",

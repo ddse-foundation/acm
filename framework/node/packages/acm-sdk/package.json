@@ -1,6 +1,6 @@
 {
   "name": "@acm/sdk",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "description": "ACM v0.5 SDK - Abstract classes and types",
   "type": "module",
   "main": "./dist/src/index.js",

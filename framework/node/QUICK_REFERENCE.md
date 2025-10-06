@@ -23,8 +23,8 @@ pnpm test
 # Basic demo
 pnpm --filter @acm/examples demo -- --goal refund
 
-# With specific LLM provider
-pnpm --filter @acm/examples demo -- --provider ollama --model llama3.1
+# With release-tested vLLM provider
+pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1
 
 # With LangGraph engine
 pnpm --filter @acm/examples demo -- --engine langgraph
@@ -258,7 +258,7 @@ pnpm --filter @acm/examples <command>
 ## Common CLI Flags
 
 ```
---provider <ollama|vllm>     LLM provider
+--provider <vllm|ollama>     LLM provider (vLLM is release-tested default)
 --model <name>               Model name
 --base-url <url>             API endpoint
 --engine <runtime|langgraph|msaf>  Execution engine

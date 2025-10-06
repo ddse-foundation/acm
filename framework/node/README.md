@@ -41,8 +41,8 @@ pnpm build
 The primary entry point for learning the framework is the `@acm/examples` package. It ships with refund and issue-resolution workflows that exercise the runtime, planner, ledger, and replay tooling.
 
 ```bash
-# Run the refund workflow with Ollama (ensure Ollama is serving locally)
-pnpm --filter @acm/examples demo -- --provider ollama --model llama3.1 --goal refund
+# Run the refund workflow with vLLM (tested with Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8)
+pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal refund
 
 # Switch to vLLM
 pnpm --filter @acm/examples demo -- --provider vllm --model mistralai/Mistral-7B-Instruct-v0.2 --goal issues
@@ -63,11 +63,11 @@ When you're ready to leave the canned demos, the `@acm/framework` package gives 
 
 ```typescript
 import { ACMFramework, ExecutionEngine } from '@acm/framework';
-import { createOllamaClient } from '@acm/llm';
+import { createVLLMClient } from '@acm/llm';
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
 import { MemoryLedger } from '@acm/runtime';
 
-const llm = createOllamaClient('llama3.1');
+const llm = createVLLMClient('Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8', 'http://localhost:8001/v1');
 const tools = new SimpleToolRegistry();
 const capabilities = new SimpleCapabilityRegistry();
 // Register your tools and capabilities here
@@ -79,9 +79,10 @@ const framework = ACMFramework.create({
     call: llm.generateWithTools!,
     llmConfig: {
       provider: llm.name(),
-      model: 'llama3.1',
+      model: 'Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8',
       temperature: 0.1,
       maxTokens: 512,
+      baseUrl: 'http://localhost:8001/v1',
     },
     allowedTools: ['search', 'refund'],
   },
@@ -120,10 +121,10 @@ Key behaviors surfaced by the helper:
 
 ### Local LLM Prerequisites
 
-Most samples expect an OpenAI-compatible endpoint. The framework provides helper factories for common local setups:
+Most samples expect an OpenAI-compatible endpoint. We validate releases against vLLM running Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8:
 
-- **Ollama** — Instal from [ollama.ai](https://ollama.ai), run `ollama pull llama3.1`, then `ollama serve` (default port `11434`).
-- **vLLM** — `pip install vllm`, then `vllm serve mistralai/Mistral-7B-Instruct-v0.2 --port 8000`.
+- **vLLM (recommended)** — `pip install vllm`, then launch `python -m vllm.entrypoints.openai.api_server --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --port 8001`.
+- **Other providers** — Bring any OpenAI-compatible endpoint (for example, managed OpenAI, Ollama) and adjust `--provider`, `--model`, and `--base-url` accordingly.
 
 ## Architecture
 
@@ -164,14 +165,14 @@ packages/
 import { ACMFramework } from '@acm/framework';
 import { StructuredLLMPlanner } from '@acm/planner';
 import { MemoryLedger } from '@acm/runtime';
-import { createOllamaClient } from '@acm/llm';
+import { createVLLMClient } from '@acm/llm';
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
 
 const tools = new SimpleToolRegistry();
 const capabilities = new SimpleCapabilityRegistry();
 // Register your tools/capabilities as shown in Option 2
 
-const llm = createOllamaClient('llama3.1');
+const llm = createVLLMClient('Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8', 'http://localhost:8001/v1');
 
 const framework = ACMFramework.create({
   capabilityRegistry: capabilities,
@@ -179,7 +180,11 @@ const framework = ACMFramework.create({
   planner: { instance: new StructuredLLMPlanner({ planCount: 3 }) },
   nucleus: {
     call: llm.generateWithTools!,
-    llmConfig: { provider: llm.name(), model: 'llama3.1' },
+    llmConfig: {
+      provider: llm.name(),
+      model: 'Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8',
+      baseUrl: 'http://localhost:8001/v1',
+    },
   },
 });
 
@@ -257,9 +262,9 @@ capabilities.register(
 ```typescript
 import { StructuredLLMPlanner } from '@acm/planner';
 import { executePlan } from '@acm/runtime';
-import { createOllamaClient } from '@acm/llm';
+import { createVLLMClient } from '@acm/llm';
 
-const llm = createOllamaClient('llama3.1');
+const llm = createVLLMClient('Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8', 'http://localhost:8001/v1');
 const planner = new StructuredLLMPlanner();
 
 // Generate plans

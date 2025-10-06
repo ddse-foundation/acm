@@ -6,7 +6,7 @@ This quickstart walks through installing the framework, running the canonical ex
 
 - Node.js ≥ 18.0.0
 - pnpm ≥ 8.0.0
-- An OpenAI-compatible LLM endpoint (Ollama or vLLM are the most common local choices)
+- An OpenAI-compatible LLM endpoint (release testing uses vLLM with Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8)
 
 ## 1. Clone & Build the Framework
 
@@ -21,46 +21,39 @@ pnpm build
 
 ## 2. Start a Local LLM Provider
 
-The example workflows expect an OpenAI-compatible API. Choose the provider that best suits your environment.
-
-### Option A: Ollama (Recommended for laptops)
+The example workflows expect an OpenAI-compatible API. For deterministic testing we standardize on vLLM serving Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8.
 
 ```bash
-curl -fsSL https://ollama.ai/install.sh | sh
-ollama pull llama3.1
-ollama serve
+pip install "vllm>=0.5"
+python -m vllm.entrypoints.openai.api_server \
+  --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 \
+  --port 8001 \
+  --tensor-parallel-size 1
 ```
 
-### Option B: vLLM (Great for GPUs or remote hosts)
+Verify the endpoint is up:
 
 ```bash
-pip install vllm
-vllm serve mistralai/Mistral-7B-Instruct-v0.2 --port 8000
+curl http://localhost:8001/v1/models
 ```
 
-Confirm the server is reachable:
-
-```bash
-curl http://localhost:11434/v1/models   # Ollama default
-# or
-curl http://localhost:8000/v1/models    # vLLM default
-```
+> **Using another provider?** Any OpenAI-compatible endpoint works (managed OpenAI, Ollama, etc.). Just adjust `--provider`, `--model`, and `--base-url` in the CLI examples below, and update client factories inside your code.
 
 ## 3. Run the Canonical Examples
 
 The `@acm/examples` package demonstrates refund and issue-resolution workflows with full ledger output, policy enforcement, and replay bundle generation.
 
 ```bash
-# Refund workflow with Ollama
-pnpm --filter @acm/examples demo -- --provider ollama --model llama3.1 --goal refund
+# Refund workflow with vLLM (Qwen 30B FP8)
+pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal refund
 
-# Issue workflow with vLLM
-pnpm --filter @acm/examples demo -- --provider vllm --model mistralai/Mistral-7B-Instruct-v0.2 --goal issues
+# Issue workflow with the same model
+pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal issues
 
 # Disable streaming or switch execution engines
-pnpm --filter @acm/examples demo -- --no-stream --engine runtime --goal refund
-pnpm --filter @acm/examples demo -- --engine langgraph --goal refund
-pnpm --filter @acm/examples demo -- --engine msaf --goal refund
+pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --no-stream --engine runtime --goal refund
+pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --engine langgraph --goal refund
+pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --engine msaf --goal refund
 ```
 
 What you should observe:
@@ -120,7 +113,7 @@ Create `my-agent.ts` alongside the monorepo packages to experiment with the SDK 
 ```typescript
 import { Tool, Task, type RunContext } from '@acm/sdk';
 import { executePlan, MemoryLedger } from '@acm/runtime';
-import { createOllamaClient } from '@acm/llm';
+import { createVLLMClient } from '@acm/llm';
 import { StructuredLLMPlanner } from '@acm/planner';
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
 
@@ -156,7 +149,7 @@ capabilities.register(
 const goal = { id: 'goal-1', intent: 'Greet the user' };
 const context = { id: 'ctx-1', facts: { userName: 'Alice' } };
 
-const llm = createOllamaClient('llama3.1');
+const llm = createVLLMClient('Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8', 'http://localhost:8001/v1');
 const planner = new StructuredLLMPlanner();
 
 const { plans } = await planner.plan({
@@ -198,7 +191,7 @@ Once you're comfortable with the primitives, migrate to the high-level orchestra
 
 ```typescript
 import { ACMFramework, ExecutionEngine } from '@acm/framework';
-import { createOllamaClient } from '@acm/llm';
+import { createVLLMClient } from '@acm/llm';
 import { MemoryLedger } from '@acm/runtime';
 import { ExternalContextProviderAdapter } from '@acm/sdk';
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
@@ -207,7 +200,7 @@ const tools = new SimpleToolRegistry();
 const capabilities = new SimpleCapabilityRegistry();
 // Register the same tools/tasks you used earlier
 
-const llm = createOllamaClient('llama3.1');
+const llm = createVLLMClient('Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8', 'http://localhost:8001/v1');
 const contextProvider = new ExternalContextProviderAdapter();
 
 const framework = ACMFramework.create({
@@ -218,9 +211,10 @@ const framework = ACMFramework.create({
     call: llm.generateWithTools!,
     llmConfig: {
       provider: llm.name(),
-      model: 'llama3.1',
+      model: 'Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8',
       temperature: 0.1,
       maxTokens: 512,
+      baseUrl: 'http://localhost:8001/v1',
     },
     allowedTools: ['greet', 'filesystem'],
   },

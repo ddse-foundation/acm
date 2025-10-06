@@ -3,6 +3,7 @@
 Goal: ship a tiny library junior developers can use in minutes. Everything is plain TypeScript/JavaScript. No JSON/YAML files. No schema or policy DSLs. Keep the mental model: Tool → Task → Capability → Plan → Execute.
 
 ## Principles
+
 - Full ACM v0.5 coverage: context lifecycle, plan alternatives/guards, policy & verification hooks, memory ledger, replay bundle, engine adapters.
 - Ease-of-use, not reduced scope: code-first APIs and a simple CLI with flags/env (no YAML/JSON authoring required).
 - Pluggable providers/adapters: LLM (Ollama/vLLM via OpenAI-compatible), MCP tools, engines (LangGraph, Microsoft Agent Framework).
@@ -101,7 +102,7 @@ Goal: a single command that runs an ACM v0.5-conformant flow end-to-end using a 
 
 ## CLI UX (no config files)
 
-- Command: `acm-demo --provider ollama --model llama3.1 --goal refund --engine langgraph`
+- Command: `acm-demo --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal refund --engine langgraph`
 - Flags
   - `--provider`: `ollama` | `vllm`
   - `--model`: model name (e.g., `llama3.1`, `qwen2.5:7b`, `mixtral`)
@@ -209,6 +210,6 @@ Goal: a single command that runs an ACM v0.5-conformant flow end-to-end using a 
 ## Developer flow (0 to first run)
 
 1) Start local LLM server (Ollama or vLLM)
-2) Run: `acm-demo --provider ollama --model llama3.1 --goal refund --engine runtime`
+2) Run: `acm-demo --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal refund --engine runtime`
 3) Observe streaming tokens, Nucleus pre/post decisions, and task progress
 4) Optional: add `--engine langgraph` or `--save-bundle`

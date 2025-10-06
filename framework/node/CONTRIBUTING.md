@@ -74,7 +74,7 @@ pnpm dev
 pnpm --filter @acm/examples demo -- --help
 
 # Example: Run refund workflow
-pnpm --filter @acm/examples demo -- --provider ollama --model llama3.1 --goal refund
+pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal refund
 ```
 
 ### Cleaning

@@ -140,16 +140,17 @@ toolRegistry.register(new MyTool());
 
 ## Example Sessions
 
-### Local Ollama
+### Local vLLM (Qwen)
 
 ```bash
-ollama serve
-ollama pull llama3.1
+python -m vllm.entrypoints.openai.api_server \
+  --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 \
+  --port 8001
 
 acm-aicoder \
-  --provider ollama \
-  --model llama3.1 \
-  --base-url http://localhost:11434 \
+  --provider vllm \
+  --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 \
+  --base-url http://localhost:8001/v1 \
   --workspace ~/project
 ```
 
@@ -190,7 +191,7 @@ Ensure all required flags are provided. Check error message for details.
 ### Budget Exceeded
 
 - Use a model with a higher token allowance or adjust provider configuration
-- Run locally: `--provider ollama --model llama3.1 --base-url http://localhost:11434`
+- Run locally: `--provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1`
 
 ### Layout Issues
 

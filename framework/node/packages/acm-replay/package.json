@@ -1,6 +1,6 @@
 {
   "name": "@acm/replay",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "description": "Replay bundle export and import for ACM",
   "type": "module",
   "main": "./dist/index.js",

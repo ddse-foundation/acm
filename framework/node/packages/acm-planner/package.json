@@ -1,6 +1,6 @@
 {
   "name": "@acm/planner",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "description": "ACM v0.5 Planner - LLM-based plan generation",
   "type": "module",
   "main": "./dist/index.js",
