@@ -7,7 +7,7 @@ _Tracks_: `acm-aicoder-demo-cli` (developer-first CLI) and `ResumableExecutor` (
 | Track | Goal | Primary Owner | Target Outcome |
 | --- | --- | --- | --- |
 | CLI | Deliver an installable `acm-aicoder-demo` CLI that exercises the full ACM flow with provider/model/engine flags, live streaming, MCP toggles, and replay bundle exports. | Runtime DX | GA-ready CLI published to npm with documentation, examples, and CI coverage. |
-| Resumable Executor | Add checkpointing and resume semantics to `@acm/runtime`, enabling executions to pause/restart with deterministic replay safety. | Runtime Core | Stable `ResumableExecutor` class with pluggable stores, adapter integrations, and acceptance tests. |
+| Resumable Executor | Add checkpointing and resume semantics to `@ddse/acm-runtime`, enabling executions to pause/restart with deterministic replay safety. | Runtime Core | Stable `ResumableExecutor` class with pluggable stores, adapter integrations, and acceptance tests. |
 
 ### Cross-cutting success criteria
 
@@ -22,7 +22,7 @@ _Tracks_: `acm-aicoder-demo-cli` (developer-first CLI) and `ResumableExecutor` (
 | Phase | Scope | Exit Criteria |
 | --- | --- | --- |
 | **R0 – Design & contracts** | ADR covering checkpoint cadence, storage contract, ledger alignment, failure semantics. | Stakeholders sign off; no breaking API changes pending. |
-| **R1 – Checkpoint generation** | Emit deterministic checkpoints after each task/guard via MemoryLedger snapshots and serializer. | `pnpm --filter @acm/runtime test` passes; checkpoints stable across re-runs. |
+| **R1 – Checkpoint generation** | Emit deterministic checkpoints after each task/guard via MemoryLedger snapshots and serializer. | `pnpm --filter @ddse/acm-runtime test` passes; checkpoints stable across re-runs. |
 | **R2 – Resume semantics** | Implement `ResumableExecutor` that hydrates from checkpoint and continues execution with feature flag. | Resumed runs yield identical outputs/ledger as uninterrupted run. |
 | **R3 – Adapter integration** | Update LangGraph/MSAF adapters to accept resume metadata with safe fallbacks. | Cross-adapter tests green; fallback path documented. |
 | **R4 – Hardening & DX** | Provide store implementations, CLI resume flag, tracing/docs, replay compatibility tests. | Manual smoke resumes succeed; docs and runbook approved. |
@@ -30,7 +30,7 @@ _Tracks_: `acm-aicoder-demo-cli` (developer-first CLI) and `ResumableExecutor` (
 #### Key deliverables by phase (Resumable)
 
 - **R0**: ADR (`docs/adr/00X-resumable-executor.md`), `CheckpointStore` interface (`put`, `get`, `list`, `prune`), execution options draft (`resumeFrom`, `checkpointInterval`).
-- **R1**: `@acm/runtime/checkpoint.ts`, tests covering success/guard failure/retry/policy denial snapshots, overhead benchmarks.
+- **R1**: `@ddse/acm-runtime/checkpoint.ts`, tests covering success/guard failure/retry/policy denial snapshots, overhead benchmarks.
 - **R2**: `ResumableExecutor` class + factory, option validation with `executePlan`, resume integration tests (mid-plan, after failure).
 - **R3**: Adapter updates with `resumeFrom` support, contract tests for adapters, documentation on limitations.
 - **R4**: `FileCheckpointStore`, `MemoryCheckpointStore`, CLI `--resume <runId>` flag, replay bundle update notes, operational runbook.
@@ -47,7 +47,7 @@ _Tracks_: `acm-aicoder-demo-cli` (developer-first CLI) and `ResumableExecutor` (
 | Phase | Scope | Exit Criteria |
 | --- | --- | --- |
 | **C0 – Scaffolding** | Bootstrap package, command runner, flag parsing, telemetry hooks. | CLI command runs `--help`; snapshots locked; lint/build/test pass. |
-| **C1 – Planner & Provider wiring** | Integrate `@acm/llm`, planner orchestration, provider presets, streaming sink. | Running CLI prints planner stream and final plan summary. |
+| **C1 – Planner & Provider wiring** | Integrate `@ddse/acm-llm`, planner orchestration, provider presets, streaming sink. | Running CLI prints planner stream and final plan summary. |
 | **C2 – Execution engines** | Support runtime and LangGraph/MSAF adapters, structured event stream. | CLI completes refund/issues flows against runtime + LangGraph smoke tests. |
 | **C3 – MCP & replay** | Add MCP toggles, tool discovery feedback, replay bundle export. | CLI run with `--save-bundle` writes bundle matching spec; tests assert structure. |
 | **C4 – Polish & release** | Documentation, packaging, release automation. | Dry-run publish success; GA release tagged; docs merged. |
@@ -58,7 +58,7 @@ _Tracks_: `acm-aicoder-demo-cli` (developer-first CLI) and `ResumableExecutor` (
 - **C1**: `providers.ts` presets, `plan.ts` orchestrator returning Plan-A/B + rationale, streaming renderer skeleton.
 - **C2**: `run.ts` bridging plan → engine/ledger/policy/verification hooks, adapter wiring tests (mocks).
 - **C3**: `--mcp-server` flag + config loader, replay bundle writer hooked to `StreamSink`, documentation on bundle structure.
-- **C4**: README updates, `pnpm --filter @acm/cli demo` script, release checklist and CI integration.
+- **C4**: README updates, `pnpm --filter @ddse/acm-cli demo` script, release checklist and CI integration.
 
 #### CLI Risks & Mitigations
 

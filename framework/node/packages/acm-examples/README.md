@@ -1,4 +1,4 @@
-# @acm/examples
+# @ddse/acm-examples
 
 End-to-end ACM demos showcasing deterministic scenarios, streaming execution, and replay capture for the Node.js framework helper.
 
@@ -14,7 +14,7 @@ End-to-end ACM demos showcasing deterministic scenarios, streaming execution, an
 
 ```bash
 pnpm install
-pnpm --filter @acm/examples build
+pnpm --filter @ddse/acm-examples build
 ```
 
 ## Running the demo CLI
@@ -23,16 +23,16 @@ pnpm --filter @acm/examples build
 
 ```bash
 # Entitlement decisioning with default Ollama client
-pnpm --filter @acm/examples demo -- --scenario entitlement
+pnpm --filter @ddse/acm-examples demo -- --scenario entitlement
 
 # Knowledge acceleration using vLLM
-pnpm --filter @acm/examples demo -- --provider vllm --model qwen2.5:7b --scenario knowledge
+pnpm --filter @ddse/acm-examples demo -- --provider vllm --model qwen2.5:7b --scenario knowledge
 
 # Incident triage with persistent checkpoints
-pnpm --filter @acm/examples demo -- --scenario incidents --checkpoint-dir ./tmp/checkpoints
+pnpm --filter @ddse/acm-examples demo -- --scenario incidents --checkpoint-dir ./tmp/checkpoints
 
 # Invoice reconciliation with replay bundle export
-pnpm --filter @acm/examples demo -- --scenario invoices --save-bundle
+pnpm --filter @ddse/acm-examples demo -- --scenario invoices --save-bundle
 ```
 
 ### CLI options
@@ -79,7 +79,7 @@ Verification expressions from each task are executed locally before continuing, 
 All workflows are validated in `tests/integration.test.ts` with a stubbed LLM and the same reference plans:
 
 ```bash
-pnpm --filter @acm/examples test
+pnpm --filter @ddse/acm-examples test
 ```
 
 Running the suite will iterate over every scenario, execute its plan, and assert the expected outputs—ideal for CI or for verifying modifications to tools/tasks.

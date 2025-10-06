@@ -11,10 +11,10 @@ This document describes the testing infrastructure and how to write tests for AC
 pnpm test
 
 # Run tests for a specific package
-pnpm --filter @acm/examples test
+pnpm --filter @ddse/acm-examples test
 
 # Run specific test suite
-pnpm --filter @acm/examples test:bm25
+pnpm --filter @ddse/acm-examples test:bm25
 ```
 
 ### Individual Test Files
@@ -82,7 +82,7 @@ Integration tests verify that components work together correctly.
 
 ```typescript
 // tests/integration.test.ts
-import { executePlan } from '@acm/runtime';
+import { executePlan } from '@ddse/acm-runtime';
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '../src/registries.js';
 
 async function testBasicExecution() {

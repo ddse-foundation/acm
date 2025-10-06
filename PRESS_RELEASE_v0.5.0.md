@@ -15,7 +15,7 @@
 - **Structured planning → deterministic‑style runtime** — A structured planner emits plan candidates with rationale, prompt digests, and tool‑call envelopes. The runtime executes plans with **guards, retries/backoff, policy/verification hooks, checkpointing**, and **append‑only decision ledger**.
 - **Replay bundles** — Every run can export a **single bundle** containing planner outputs, tool envelopes, ledger entries, policy decisions, checkpoints, and task I/O — supporting audits, RCA, and regression testing.
 - **Adapters & interoperability** — Bridges to **LangGraph** and **Microsoft Agent Framework** preserve ACM contracts while executing in external engines. **MCP (Model Context Protocol)** tools are discoverable as first‑class integrations.
-- **Developer experience** — A high‑level `@acm/framework` façade wires planner, runtime, nucleus configuration, context providers, and adapters so teams can execute ACM‑compliant workflows with **one call**. Reference demos and an **AI Coder** TUI illustrate end‑to‑end planning→execution→replay.
+- **Developer experience** — A high‑level `@ddse/acm-framework` façade wires planner, runtime, nucleus configuration, context providers, and adapters so teams can execute ACM‑compliant workflows with **one call**. Reference demos and an **AI Coder** TUI illustrate end‑to‑end planning→execution→replay.
 
 ### Reference Use Cases (included in repo)
 
@@ -38,7 +38,7 @@ pnpm install
 pnpm build
 
 # Run a reference demo with vLLM/Qwen (OpenAI-compatible server on :8001)
-pnpm --filter @acm/examples demo -- \
+pnpm --filter @ddse/acm-examples demo -- \
   --provider vllm \  --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 \  --base-url http://localhost:8001/v1 \  --scenario entitlement
 ```
 

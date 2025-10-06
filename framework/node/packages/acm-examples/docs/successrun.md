@@ -4,9 +4,9 @@
 
 ```bash
 
-node$ pnpm --filter @acm/examples demo --scenario coaching --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1
+node$ pnpm --filter @ddse/acm-examples demo --scenario coaching --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1
 
-> @acm/examples@0.1.0 demo /mnt/backup1/home/manna/workspace/ml/ddse/ddse-composer/framework/node/packages/acm-examples
+> @ddse/acm-examples@0.1.0 demo /mnt/backup1/home/manna/workspace/ml/ddse/ddse-composer/framework/node/packages/acm-examples
 > node ./dist/bin/acm-demo.js "--scenario" "coaching" "--provider" "vllm" "--model" "Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8" "--base-url" "http://localhost:8001/v1"
 
 
@@ -205,9 +205,9 @@ Outputs:
 
 ```bash
 
-node$ pnpm --filter @acm/examples demo --scenario invoices --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1
+node$ pnpm --filter @ddse/acm-examples demo --scenario invoices --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1
 
-> @acm/examples@0.1.0 demo /mnt/backup1/home/manna/workspace/ml/ddse/ddse-composer/framework/node/packages/acm-examples
+> @ddse/acm-examples@0.1.0 demo /mnt/backup1/home/manna/workspace/ml/ddse/ddse-composer/framework/node/packages/acm-examples
 > node ./dist/bin/acm-demo.js "--scenario" "invoices" "--provider" "vllm" "--model" "Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8" "--base-url" "http://localhost:8001/v1"
 
 
@@ -448,9 +448,9 @@ Outputs:
 
 ```bash
 
-node$ pnpm --filter @acm/examples demo --scenario incidents --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1
+node$ pnpm --filter @ddse/acm-examples demo --scenario incidents --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1
 
-> @acm/examples@0.1.0 demo /mnt/backup1/home/manna/workspace/ml/ddse/ddse-composer/framework/node/packages/acm-examples
+> @ddse/acm-examples@0.1.0 demo /mnt/backup1/home/manna/workspace/ml/ddse/ddse-composer/framework/node/packages/acm-examples
 > node ./dist/bin/acm-demo.js "--scenario" "incidents" "--provider" "vllm" "--model" "Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8" "--base-url" "http://localhost:8001/v1"
 
 
@@ -645,9 +645,9 @@ Outputs:
 
 ```bash
 
-node$ pnpm --filter @acm/examples demo --scenario knowledge --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1
+node$ pnpm --filter @ddse/acm-examples demo --scenario knowledge --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1
 
-> @acm/examples@0.1.0 demo /mnt/backup1/home/manna/workspace/ml/ddse/ddse-composer/framework/node/packages/acm-examples
+> @ddse/acm-examples@0.1.0 demo /mnt/backup1/home/manna/workspace/ml/ddse/ddse-composer/framework/node/packages/acm-examples
 > node ./dist/bin/acm-demo.js "--scenario" "knowledge" "--provider" "vllm" "--model" "Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8" "--base-url" "http://localhost:8001/v1"
 
 
@@ -809,9 +809,9 @@ Outputs:
 ## Scenario: Entitlement Decisioning
 
 ```bash
-node$ pnpm --filter @acm/examples demo --scenario entitlement --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1
+node$ pnpm --filter @ddse/acm-examples demo --scenario entitlement --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1
 
-> @acm/examples@0.1.0 demo /mnt/backup1/home/manna/workspace/ml/ddse/ddse-composer/framework/node/packages/acm-examples
+> @ddse/acm-examples@0.1.0 demo /mnt/backup1/home/manna/workspace/ml/ddse/ddse-composer/framework/node/packages/acm-examples
 > node ./dist/bin/acm-demo.js "--scenario" "entitlement" "--provider" "vllm" "--model" "Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8" "--base-url" "http://localhost:8001/v1"
 
 

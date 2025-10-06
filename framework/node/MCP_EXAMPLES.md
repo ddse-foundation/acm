@@ -10,7 +10,7 @@ Access local filesystem operations:
 
 ```bash
 # Run with filesystem MCP server
-pnpm --filter @acm/examples demo -- \
+pnpm --filter @ddse/acm-examples demo -- \
   --use-mcp \
   --mcp-server 'npx -y @modelcontextprotocol/server-filesystem /tmp' \
   --goal issues
@@ -33,7 +33,7 @@ Interact with GitHub repositories:
 export GITHUB_TOKEN=your_token_here
 
 # Run with GitHub MCP server
-pnpm --filter @acm/examples demo -- \
+pnpm --filter @ddse/acm-examples demo -- \
   --use-mcp \
   --mcp-server 'npx -y @modelcontextprotocol/server-github' \
   --goal issues
@@ -51,7 +51,7 @@ Simple key-value storage:
 
 ```bash
 # Run with memory MCP server
-pnpm --filter @acm/examples demo -- \
+pnpm --filter @ddse/acm-examples demo -- \
   --use-mcp \
   --mcp-server 'npx -y @modelcontextprotocol/server-memory' \
   --goal refund
@@ -71,7 +71,7 @@ Web search via Brave:
 export BRAVE_API_KEY=your_key_here
 
 # Run with Brave search MCP server
-pnpm --filter @acm/examples demo -- \
+pnpm --filter @ddse/acm-examples demo -- \
   --use-mcp \
   --mcp-server 'npx -y @modelcontextprotocol/server-brave-search' \
   --goal issues
@@ -86,8 +86,8 @@ Available tools:
 ### Basic Setup
 
 ```typescript
-import { McpClientManager, McpToolRegistry, CombinedToolRegistry } from '@acm/mcp';
-import { SimpleToolRegistry } from '@acm/examples/registries';
+import { McpClientManager, McpToolRegistry, CombinedToolRegistry } from '@ddse/acm-mcp';
+import { SimpleToolRegistry } from '@ddse/acm-examples/registries';
 
 // Connect to MCP server
 const mcpManager = new McpClientManager();
@@ -122,7 +122,7 @@ await mcpManager.disconnect();
 ### Creating MCP-Aware Tasks
 
 ```typescript
-import { Task, type RunContext } from '@acm/sdk';
+import { Task, type RunContext } from '@ddse/acm-sdk';
 
 class FileSearchTask extends Task<
   { directory: string; pattern: string },
@@ -200,9 +200,9 @@ for (const toolName of mcpRegistry.list()) {
 Complete example using filesystem MCP server:
 
 ```typescript
-import { McpClientManager, McpToolRegistry, CombinedToolRegistry } from '@acm/mcp';
-import { executePlan } from '@acm/runtime';
-import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
+import { McpClientManager, McpToolRegistry, CombinedToolRegistry } from '@ddse/acm-mcp';
+import { executePlan } from '@ddse/acm-runtime';
+import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@ddse/acm-examples/registries';
 
 async function runFileWorkflow() {
   // Setup MCP

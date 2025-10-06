@@ -1,5 +1,5 @@
 {
-  "name": "@acm/adapters",
+  "name": "@ddse/acm-adapters",
   "version": "0.5.0",
   "description": "Framework adapters for ACM (LangGraph, Microsoft Agent Framework)",
   "type": "module",
@@ -17,8 +17,8 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@acm/sdk": "workspace:*",
-    "@acm/runtime": "workspace:*"
+    "@ddse/acm-sdk": "workspace:*",
+    "@ddse/acm-runtime": "workspace:*"
   },
   "peerDependencies": {
     "@langchain/langgraph": "^0.2.0"

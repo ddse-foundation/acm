@@ -1,5 +1,5 @@
 {
-  "name": "@acm/examples",
+  "name": "@ddse/acm-examples",
   "version": "0.5.0",
   "description": "ACM v0.5 Examples - CLI demo and sample implementations",
   "type": "module",
@@ -15,14 +15,14 @@
     "test:bm25": "node ./dist/tests/bm25.test.js"
   },
   "dependencies": {
-    "@acm/framework": "workspace:*",
-    "@acm/sdk": "workspace:*",
-    "@acm/runtime": "workspace:*",
-    "@acm/llm": "workspace:*",
-    "@acm/planner": "workspace:*",
-    "@acm/mcp": "workspace:*",
-    "@acm/adapters": "workspace:*",
-    "@acm/replay": "workspace:*"
+    "@ddse/acm-framework": "workspace:*",
+    "@ddse/acm-sdk": "workspace:*",
+    "@ddse/acm-runtime": "workspace:*",
+    "@ddse/acm-llm": "workspace:*",
+    "@ddse/acm-planner": "workspace:*",
+    "@ddse/acm-mcp": "workspace:*",
+    "@ddse/acm-adapters": "workspace:*",
+    "@ddse/acm-replay": "workspace:*"
   },
   "keywords": ["acm", "examples", "cli"],
   "license": "MIT"

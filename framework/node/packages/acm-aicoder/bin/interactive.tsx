@@ -6,8 +6,8 @@
 
 import React from 'react';
 import { render } from 'ink';
-import { ExternalContextProviderAdapter } from '@acm/sdk';
-import { createOllamaClient, createVLLMClient } from '@acm/llm';
+import { ExternalContextProviderAdapter } from '@ddse/acm-sdk';
+import { createOllamaClient, createVLLMClient } from '@ddse/acm-llm';
 import { App } from '../src/ui/App.js';
 import { AppStore } from '../src/ui/store.js';
 import { InteractiveRuntime } from '../src/runtime/interactive-runtime.js';

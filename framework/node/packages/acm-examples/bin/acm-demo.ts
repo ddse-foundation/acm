@@ -12,12 +12,12 @@ import {
   normalizePlan,
   normalizePlannerResult,
   type NormalizedPlannerResult,
-} from '@acm/sdk';
-import { MemoryLedger, FileCheckpointStore } from '@acm/runtime';
-import { createOllamaClient, createVLLMClient } from '@acm/llm';
-import type { LLM, ToolCall } from '@acm/llm';
-import { ACMFramework, ExecutionEngine } from '@acm/framework';
-import { ReplayBundleExporter, type TaskIORecord } from '@acm/replay';
+} from '@ddse/acm-sdk';
+import { MemoryLedger, FileCheckpointStore } from '@ddse/acm-runtime';
+import { createOllamaClient, createVLLMClient } from '@ddse/acm-llm';
+import type { LLM, ToolCall } from '@ddse/acm-llm';
+import { ACMFramework, ExecutionEngine } from '@ddse/acm-framework';
+import { ReplayBundleExporter, type TaskIORecord } from '@ddse/acm-replay';
 
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '../src/registries.js';
 import { SimplePolicyEngine } from '../src/policy.js';

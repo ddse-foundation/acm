@@ -1,5 +1,5 @@
 // Enhanced Developer Tasks using Context Engine and V2 Tools
-import { Task, type RunContext } from '@acm/sdk';
+import { Task, type RunContext } from '@ddse/acm-sdk';
 import path from 'path';
 import type { ContextPack } from '../context/types.js';
 

@@ -1,5 +1,5 @@
 // Edit Tools - Code modification with safety
-import { Tool } from '@acm/sdk';
+import { Tool } from '@ddse/acm-sdk';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 

@@ -1,7 +1,7 @@
 // Interactive Runtime Orchestrator
 // Connects ACM framework components with the TUI
 
-import type { LLM } from '@acm/llm';
+import type { LLM } from '@ddse/acm-llm';
 import {
   type Goal,
   type Context,
@@ -11,10 +11,10 @@ import {
   type LLMCallFn,
   type CapabilityRegistry,
   ExternalContextProviderAdapter,
-} from '@acm/sdk';
-import { type PlannerResult } from '@acm/planner';
-import { ExecutionTranscript, MemoryLedger, type ExecutionTranscriptEvent } from '@acm/runtime';
-import { ACMFramework } from '@acm/framework';
+} from '@ddse/acm-sdk';
+import { type PlannerResult } from '@ddse/acm-planner';
+import { ExecutionTranscript, MemoryLedger, type ExecutionTranscriptEvent } from '@ddse/acm-runtime';
+import { ACMFramework } from '@ddse/acm-framework';
 import type { SessionConfig } from '../config/session.js';
 import { BudgetManager } from './budget-manager.js';
 import { AppStore } from '../ui/store.js';

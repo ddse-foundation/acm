@@ -1,5 +1,5 @@
 // Workspace Context Retrieval Tool
-import { Tool, type ContextRetrievalArtifact } from '@acm/sdk';
+import { Tool, type ContextRetrievalArtifact } from '@ddse/acm-sdk';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { CodeSearch, WorkspaceIndexer, type WorkspaceIndex } from '../context/index.js';

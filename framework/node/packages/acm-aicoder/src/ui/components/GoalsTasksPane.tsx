@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
-import type { Goal, Plan, Context } from '@acm/sdk';
+import type { Goal, Plan, Context } from '@ddse/acm-sdk';
 import type { TaskState } from '../store.js';
 
 interface GoalsTasksPaneProps {

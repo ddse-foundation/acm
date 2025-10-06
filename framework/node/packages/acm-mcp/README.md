@@ -1,4 +1,4 @@
-# @acm/mcp
+# @ddse/acm-mcp
 
 MCP (Model Context Protocol) tool integration for ACM.
 
@@ -16,7 +16,7 @@ This package provides integration with MCP servers, allowing ACM agents to use t
 ## Installation
 
 ```bash
-pnpm add @acm/mcp
+pnpm add @ddse/acm-mcp
 ```
 
 ## Usage
@@ -24,7 +24,7 @@ pnpm add @acm/mcp
 ### Connecting to an MCP Server
 
 ```typescript
-import { McpClientManager, McpToolRegistry } from '@acm/mcp';
+import { McpClientManager, McpToolRegistry } from '@ddse/acm-mcp';
 
 // Create and connect to an MCP server
 const manager = new McpClientManager();
@@ -43,8 +43,8 @@ console.log(mcpRegistry.list());
 ### Using MCP Tools with ACM
 
 ```typescript
-import { CombinedToolRegistry } from '@acm/mcp';
-import { SimpleToolRegistry } from '@acm/examples/registries';
+import { CombinedToolRegistry } from '@ddse/acm-mcp';
+import { SimpleToolRegistry } from '@ddse/acm-examples/registries';
 
 // Combine local tools with MCP tools
 const localTools = new SimpleToolRegistry();
@@ -66,7 +66,7 @@ const result = await executePlan({
 ### Example: Using Filesystem MCP Server
 
 ```typescript
-import { McpClientManager, CombinedToolRegistry } from '@acm/mcp';
+import { McpClientManager, CombinedToolRegistry } from '@ddse/acm-mcp';
 
 // Connect to filesystem MCP server
 const manager = new McpClientManager();

@@ -1,5 +1,5 @@
 {
-  "name": "@acm/framework",
+  "name": "@ddse/acm-framework",
   "version": "0.5.0",
   "description": "High-level developer wrapper for the ACM planner and runtime",
   "type": "module",
@@ -17,10 +17,10 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@acm/sdk": "workspace:*",
-    "@acm/planner": "workspace:*",
-    "@acm/runtime": "workspace:*",
-    "@acm/adapters": "workspace:*"
+    "@ddse/acm-sdk": "workspace:*",
+    "@ddse/acm-planner": "workspace:*",
+    "@ddse/acm-runtime": "workspace:*",
+    "@ddse/acm-adapters": "workspace:*"
   },
   "keywords": ["acm", "framework", "planner", "runtime"],
   "license": "MIT"

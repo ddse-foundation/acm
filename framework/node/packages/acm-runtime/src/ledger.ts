@@ -1,5 +1,5 @@
 // Memory ledger implementation
-import type { LedgerEntry } from '@acm/sdk';
+import type { LedgerEntry } from '@ddse/acm-sdk';
 import { createHash } from 'crypto';
 
 export class MemoryLedger {

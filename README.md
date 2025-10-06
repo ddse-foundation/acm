@@ -48,13 +48,13 @@ The framework follows the [ACM specification](spec/acm-spec%20v0.5.md), treating
 
 | Pillar | What You Get | Key Packages |
 |--------|---------------|---------------|
-| **Contract-First SDK** | Typed contracts for tools, tasks, capabilities, ledger entries, guard expressions, policy hooks, and verification adapters. | [`@acm/sdk`](framework/node/packages/acm-sdk/README.md) |
-| **Structured Planning** | Multi-plan generation with rationale, prompt digests, tool-call envelopes, and deterministic selectors. | [`@acm/planner`](framework/node/packages/acm-planner/README.md) |
-| **Deterministic Runtime** | Guard evaluation, policy gates, retries/backoff, checkpointing, streaming sinks, and ledger emission. | [`@acm/runtime`](framework/node/packages/acm-runtime/README.md) |
-| **High-Level Orchestrator** | Single-call helper that wires planner, runtime, nucleus, context providers, and adapters. | [`@acm/framework`](framework/node/packages/acm-framework/README.md) |
-| **Adapters & Integrations** | LangGraph / Microsoft Agent Framework bridges plus Model Context Protocol tooling. | [`@acm/adapters`](framework/node/packages/acm-adapters/README.md), [`@acm/mcp`](framework/node/packages/acm-mcp/README.md) |
-| **Replay & Analysis** | Export/import replay bundles with ledger verification and tool-call inspection. | [`@acm/replay`](framework/node/packages/acm-replay/README.md) |
-| **Reference Experiences** | Deterministic demos and a production-style AI coding assistant with budgeting and streaming UX. | [`@acm/examples`](framework/node/packages/acm-examples/README.md), [`@acm/aicoder`](framework/node/packages/acm-aicoder/README.md) |
+| **Contract-First SDK** | Typed contracts for tools, tasks, capabilities, ledger entries, guard expressions, policy hooks, and verification adapters. | [`@ddse/acm-sdk`](framework/node/packages/acm-sdk/README.md) |
+| **Structured Planning** | Multi-plan generation with rationale, prompt digests, tool-call envelopes, and deterministic selectors. | [`@ddse/acm-planner`](framework/node/packages/acm-planner/README.md) |
+| **Deterministic Runtime** | Guard evaluation, policy gates, retries/backoff, checkpointing, streaming sinks, and ledger emission. | [`@ddse/acm-runtime`](framework/node/packages/acm-runtime/README.md) |
+| **High-Level Orchestrator** | Single-call helper that wires planner, runtime, nucleus, context providers, and adapters. | [`@ddse/acm-framework`](framework/node/packages/acm-framework/README.md) |
+| **Adapters & Integrations** | LangGraph / Microsoft Agent Framework bridges plus Model Context Protocol tooling. | [`@ddse/acm-adapters`](framework/node/packages/acm-adapters/README.md), [`@ddse/acm-mcp`](framework/node/packages/acm-mcp/README.md) |
+| **Replay & Analysis** | Export/import replay bundles with ledger verification and tool-call inspection. | [`@ddse/acm-replay`](framework/node/packages/acm-replay/README.md) |
+| **Reference Experiences** | Deterministic demos and a production-style AI coding assistant with budgeting and streaming UX. | [`@ddse/acm-examples`](framework/node/packages/acm-examples/README.md), [`@ddse/acm-aicoder`](framework/node/packages/acm-aicoder/README.md) |
 
 ---
 
@@ -91,16 +91,16 @@ acm/
 
 | Package | Description | Status |
 |---------|-------------|--------|
-| [`@acm/sdk`](framework/node/packages/acm-sdk/) | Base contracts, registries, policy/verification interfaces, ledger types. | ✅ Stable @ v0.5.0 |
-| [`@acm/runtime`](framework/node/packages/acm-runtime/) | Deterministic runtime, checkpointing, resumable execution, guard evaluation. | ✅ Stable @ v0.5.0 |
-| [`@acm/planner`](framework/node/packages/acm-planner/) | Structured LLM planner with plan alternatives, prompt hashing, tool envelopes. | ✅ Stable @ v0.5.0 |
-| [`@acm/framework`](framework/node/packages/acm-framework/) | High-level façade combining planner + runtime + nucleus wiring. | ✅ Stable @ v0.5.0 |
-| [`@acm/llm`](framework/node/packages/acm-llm/) | OpenAI-compatible clients for Ollama, vLLM, and custom providers. | ✅ Stable @ v0.5.0 |
-| [`@acm/adapters`](framework/node/packages/acm-adapters/) | LangGraph/MSAF adapters preserving ACM contracts. | ✅ Stable @ v0.5.0 |
-| [`@acm/mcp`](framework/node/packages/acm-mcp/) | Model Context Protocol tooling and registries. | ✅ Stable @ v0.5.0 |
-| [`@acm/replay`](framework/node/packages/acm-replay/) | Replay bundle export/import, ledger validation utilities. | ✅ Stable @ v0.5.0 |
-| [`@acm/examples`](framework/node/packages/acm-examples/) | CLI demos, refund/issue flows, replay bundle samples. | ✅ Stable @ v0.5.0 |
-| [`@acm/aicoder`](framework/node/packages/acm-aicoder/) | Developer assistant with streaming TUI and budgeting. | ✅ Stable @ v0.5.0 |
+| [`@ddse/acm-sdk`](framework/node/packages/acm-sdk/) | Base contracts, registries, policy/verification interfaces, ledger types. | ✅ Stable @ v0.5.0 |
+| [`@ddse/acm-runtime`](framework/node/packages/acm-runtime/) | Deterministic runtime, checkpointing, resumable execution, guard evaluation. | ✅ Stable @ v0.5.0 |
+| [`@ddse/acm-planner`](framework/node/packages/acm-planner/) | Structured LLM planner with plan alternatives, prompt hashing, tool envelopes. | ✅ Stable @ v0.5.0 |
+| [`@ddse/acm-framework`](framework/node/packages/acm-framework/) | High-level façade combining planner + runtime + nucleus wiring. | ✅ Stable @ v0.5.0 |
+| [`@ddse/acm-llm`](framework/node/packages/acm-llm/) | OpenAI-compatible clients for Ollama, vLLM, and custom providers. | ✅ Stable @ v0.5.0 |
+| [`@ddse/acm-adapters`](framework/node/packages/acm-adapters/) | LangGraph/MSAF adapters preserving ACM contracts. | ✅ Stable @ v0.5.0 |
+| [`@ddse/acm-mcp`](framework/node/packages/acm-mcp/) | Model Context Protocol tooling and registries. | ✅ Stable @ v0.5.0 |
+| [`@ddse/acm-replay`](framework/node/packages/acm-replay/) | Replay bundle export/import, ledger validation utilities. | ✅ Stable @ v0.5.0 |
+| [`@ddse/acm-examples`](framework/node/packages/acm-examples/) | CLI demos, refund/issue flows, replay bundle samples. | ✅ Stable @ v0.5.0 |
+| [`@ddse/acm-aicoder`](framework/node/packages/acm-aicoder/) | Developer assistant with streaming TUI and budgeting. | ✅ Stable @ v0.5.0 |
 
 > **Language Ports:** Python and Java bindings follow the same specification and architecture; see `framework/python/` and `framework/java/` for progress trackers.
 
@@ -127,16 +127,16 @@ pnpm build
 
 ```bash
 # Refund workflow demo with vLLM (tested with Qwen)
-pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal refund
+pnpm --filter @ddse/acm-examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal refund
 
 # Export a replay bundle while running the issue-resolution flow
-pnpm --filter @acm/examples demo -- --goal issues --save-bundle --checkpoint-dir ./checkpoints
+pnpm --filter @ddse/acm-examples demo -- --goal issues --save-bundle --checkpoint-dir ./checkpoints
 ```
 
 ### Launch the AI Coder Experience
 
 ```bash
-pnpm --filter @acm/aicoder demo \
+pnpm --filter @ddse/acm-aicoder demo \
   --provider vllm \
   --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 \
   --base-url http://localhost:8001/v1 \
@@ -146,10 +146,10 @@ pnpm --filter @acm/aicoder demo \
 ### Build Your First Plan Programmatically
 
 ```typescript
-import { ACMFramework, ExecutionEngine } from '@acm/framework';
-import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
-import { createVLLMClient } from '@acm/llm';
-import { MemoryLedger } from '@acm/runtime';
+import { ACMFramework, ExecutionEngine } from '@ddse/acm-framework';
+import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@ddse/acm-examples/registries';
+import { createVLLMClient } from '@ddse/acm-llm';
+import { MemoryLedger } from '@ddse/acm-runtime';
 
 const registry = new SimpleCapabilityRegistry();
 const tools = new SimpleToolRegistry();
@@ -188,9 +188,9 @@ console.log(run.execution.outputsByTask);
 ## Plan → Execute → Replay Flow
 
 1. **Normalize Goal & Context** — IDs, provenance, and scope metadata are enforced before planning.
-2. **Structured Planning** — `@acm/planner` generates multiple plan candidates with rationale, tool envelopes, and prompt hashes recorded in the ledger.
-3. **Policy-Aware Execution** — `@acm/runtime` executes the selected plan, evaluates guards, invokes policy and verification hooks, and checkpoints progress.
-4. **Ledger & Replay** — Every planner and runtime decision streams into the `MemoryLedger`, enabling replay bundle export via `@acm/replay` for audits, testing, or regression harnesses.
+2. **Structured Planning** — `@ddse/acm-planner` generates multiple plan candidates with rationale, tool envelopes, and prompt hashes recorded in the ledger.
+3. **Policy-Aware Execution** — `@ddse/acm-runtime` executes the selected plan, evaluates guards, invokes policy and verification hooks, and checkpoints progress.
+4. **Ledger & Replay** — Every planner and runtime decision streams into the `MemoryLedger`, enabling replay bundle export via `@ddse/acm-replay` for audits, testing, or regression harnesses.
 5. **Adapters & Integrations** — Optional hooks route execution through LangGraph/MSAF engines or hydrate context via MCP tools without breaking ACM contracts.
 
 ---
@@ -224,7 +224,7 @@ Runbook for resumable execution lives in [framework/node/docs/tdr/RUNBOOK_RESUMA
 - ✅ **v0.5.0 (Current)** — Contract-complete Node implementation, resumable runtime, replay bundles, MCP integration, AI Coder experience.
 - 🚧 **Python Port** — Tracking in `framework/python/` with parity milestones.
 - 🚧 **Java Port** — Tracking in `framework/java/` aligned to the same spec artifacts.
-- 🧭 **Future** — Unified CLI (`@acm/cli`), extended verification grammars, hosted replay dashboards.
+- 🧭 **Future** — Unified CLI (`@ddse/acm-cli`), extended verification grammars, hosted replay dashboards.
 
 Detailed plans live in:
 

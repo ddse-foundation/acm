@@ -160,7 +160,7 @@ For organizations already using LangGraph or MAF, ACM can be layered as the plan
 
 ## ACM AI Coder (Interactive Demo)
 
-The `@acm/aicoder` package (`framework/node/packages/acm-aicoder`) is a practical TUI demonstrating how ACM accelerates building complex, tool-rich applications:
+The `@ddse/acm-aicoder` package (`framework/node/packages/acm-aicoder`) is a practical TUI demonstrating how ACM accelerates building complex, tool-rich applications:
 
 - Nucleus integration: A shared LLM call with structured tool calls and hooks (preflight/postcheck) drives reasoning; NUCLEUS_INFERENCE reasoning is surfaced live in the UI.
 - Tool discipline: File, grep, search, diff, edit, build, and test tools are registered under a governed policy engine with allowed paths.

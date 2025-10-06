@@ -29,7 +29,7 @@ The ACM AI Coder Phase 2 introduces an **interactive-only experience** with a th
 pnpm install
 
 # Build the package
-pnpm --filter @acm/aicoder build
+pnpm --filter @ddse/acm-aicoder build
 ```
 
 ## Quick Start
@@ -97,7 +97,7 @@ Phase 2 is built strictly on ACM v0.5 components:
 
 ### Tools & Tasks
 
-- All tools extend `Tool<I, O>` from `@acm/sdk`
+- All tools extend `Tool<I, O>` from `@ddse/acm-sdk`
 - Tasks extend `Task<I, O>` and leverage context builder
 - Tool call envelopes logged to ledger for determinism
 
@@ -125,12 +125,12 @@ The ACM AI Coder is built on the ACM framework and showcases all its capabilitie
 
 ### ACM Framework Integration
 
-1. **SDK Layer**: All tools and tasks extend `Tool<I, O>` and `Task<I, O>` from `@acm/sdk`
+1. **SDK Layer**: All tools and tasks extend `Tool<I, O>` and `Task<I, O>` from `@ddse/acm-sdk`
 2. **Context Engine**: Intelligent repository understanding feeds into planning
 3. **Planning Phase**: LLM analyzes goal + context, generates Plan-A and Plan-B
-4. **Runtime Execution**: `@acm/runtime` executes plans with streaming, checkpoints, and verification
+4. **Runtime Execution**: `@ddse/acm-runtime` executes plans with streaming, checkpoints, and verification
 5. **Policy Engine**: Safety guards with path restrictions and action gating
-6. **Replay Bundle**: Complete audit trail via `@acm/replay`
+6. **Replay Bundle**: Complete audit trail via `@ddse/acm-replay`
 
 ### Workflow
 
@@ -171,7 +171,7 @@ This tool demonstrates every aspect of the ACM framework:
 
 ```bash
 # Run integration tests
-pnpm --filter @acm/aicoder test
+pnpm --filter @ddse/acm-aicoder test
 ```
 
 <!-- markdownlint-enable MD024 MD032 -->
@@ -180,10 +180,10 @@ pnpm --filter @acm/aicoder test
 
 ```bash
 # Build TypeScript
-pnpm --filter @acm/aicoder build
+pnpm --filter @ddse/acm-aicoder build
 
 # Watch mode for development
-pnpm --filter @acm/aicoder dev
+pnpm --filter @ddse/acm-aicoder dev
 ```
 
 ## Examples
@@ -191,7 +191,7 @@ pnpm --filter @acm/aicoder dev
 ### Example 1: Deep Workspace Analysis
 
 ```bash
-pnpm --filter @acm/aicoder exec acm-aicoder --goal analyze --workspace .
+pnpm --filter @ddse/acm-aicoder exec acm-aicoder --goal analyze --workspace .
 ```
 
 This will:
@@ -213,7 +213,7 @@ Output includes:
 ### Example 2: Search for Code Patterns
 
 ```bash
-pnpm --filter @acm/aicoder exec acm-aicoder --goal custom
+pnpm --filter @ddse/acm-aicoder exec acm-aicoder --goal custom
 # Enter: "Search for all error handling patterns in the codebase"
 ```
 
@@ -227,7 +227,7 @@ This will:
 ### Example 3: Implement a New Function
 
 ```bash
-pnpm --filter @acm/aicoder exec acm-aicoder --goal custom
+pnpm --filter @ddse/acm-aicoder exec acm-aicoder --goal custom
 # Enter: "Implement a function to validate email addresses in src/utils.ts"
 ```
 
@@ -243,7 +243,7 @@ This will:
 ### Example 4: Refactor Symbol Names
 
 ```bash
-pnpm --filter @acm/aicoder exec acm-aicoder --goal custom
+pnpm --filter @ddse/acm-aicoder exec acm-aicoder --goal custom
 # Enter: "Rename function getUserData to fetchUserData everywhere"
 ```
 
@@ -258,7 +258,7 @@ This will:
 ### Example 5: Fix TypeScript Errors
 
 ```bash
-pnpm --filter @acm/aicoder exec acm-aicoder --goal custom
+pnpm --filter @ddse/acm-aicoder exec acm-aicoder --goal custom
 # Enter: "Fix all TypeScript compilation errors"
 ```
 
@@ -274,7 +274,7 @@ This will:
 ### Example 6: Generate Unit Tests
 
 ```bash
-pnpm --filter @acm/aicoder exec acm-aicoder --goal custom
+pnpm --filter @ddse/acm-aicoder exec acm-aicoder --goal custom
 # Enter: "Generate unit tests for the validateEmail function in src/utils.ts"
 ```
 
@@ -291,10 +291,10 @@ This will:
 
 ```bash
 # Start a long operation
-pnpm --filter @acm/aicoder exec acm-aicoder --goal implementFeature
+pnpm --filter @ddse/acm-aicoder exec acm-aicoder --goal implementFeature
 
 # If interrupted (Ctrl+C), resume later:
-pnpm --filter @acm/aicoder exec acm-aicoder --resume run-1696348800000
+pnpm --filter @ddse/acm-aicoder exec acm-aicoder --resume run-1696348800000
 ```
 
 The resume will:
@@ -374,11 +374,11 @@ import {
   SimpleCapabilityRegistry,
   SimpleToolRegistry,
   SimplePolicyEngine,
-} from '@acm/aicoder';
+} from '@ddse/acm-aicoder';
 
-import { executeResumablePlan } from '@acm/runtime';
-import { StructuredLLMPlanner } from '@acm/planner';
-import { createOllamaClient } from '@acm/llm';
+import { executeResumablePlan } from '@ddse/acm-runtime';
+import { StructuredLLMPlanner } from '@ddse/acm-planner';
+import { createOllamaClient } from '@ddse/acm-llm';
 
 // Setup
 const rootPath = process.cwd();
@@ -476,15 +476,15 @@ console.log('Execution complete:', result);
 
 ```bash
 # Build TypeScript
-pnpm --filter @acm/aicoder build
+pnpm --filter @ddse/acm-aicoder build
 
 # Watch mode for development
-pnpm --filter @acm/aicoder dev
+pnpm --filter @ddse/acm-aicoder dev
 ```
 
 ### Test Suite (Preview)
 
 ```bash
 # Run integration tests (coming soon)
-pnpm --filter @acm/aicoder test
+pnpm --filter @ddse/acm-aicoder test
 ```

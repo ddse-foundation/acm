@@ -1,5 +1,5 @@
 {
-  "name": "@acm/runtime",
+  "name": "@ddse/acm-runtime",
   "version": "0.5.0",
   "description": "ACM v0.5 Runtime - Plan execution engine",
   "type": "module",
@@ -18,7 +18,7 @@
     "test": "tsc && node ./dist/tests/resumable.test.js"
   },
   "dependencies": {
-    "@acm/sdk": "workspace:*"
+    "@ddse/acm-sdk": "workspace:*"
   },
   "keywords": ["acm", "runtime", "execution"],
     "license": "MIT"

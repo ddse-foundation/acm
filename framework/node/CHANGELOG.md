@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Phase 4 completion for Node: Nucleus contract available across planner/runtime; structured planner tool-call envelopes; expanded replay bundles with Nucleus inferences and policy transcripts.
-- `@acm/framework` orchestration helper wiring nucleus, planner, runtime, and adapters with a single API.
+- `@ddse/acm-framework` orchestration helper wiring nucleus, planner, runtime, and adapters with a single API.
 
 ### Changed
 
@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known Issues / Roadmap
 
-- CLI consolidation (`@acm/cli`) is planned; use package-specific CLIs for now.
+- CLI consolidation (`@ddse/acm-cli`) is planned; use package-specific CLIs for now.
 - Adapter resumability: LangGraph/MSAF checkpoint/resume path emits warnings; improvements targeted in the next release.
 - Ledger enrichment: Additional audit fields (phase/decision for Nucleus inferences, full LLM params, canonical digests) are planned enhancements; current behavior is functional and will be extended without breaking changes.
 
@@ -29,13 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Core Packages
-- **@acm/sdk**: Core types and abstract classes
+- **@ddse/acm-sdk**: Core types and abstract classes
   - Tool, Task, CapabilityRegistry, ToolRegistry abstracts
   - Goal, Context, Plan, TaskSpec, LedgerEntry types
   - PolicyEngine and StreamSink interfaces
   - DefaultStreamSink implementation
 
-- **@acm/runtime**: Plan execution engine
+- **@ddse/acm-runtime**: Plan execution engine
   - executePlan() with full ACM v0.5 semantics
   - Guard expression evaluation
   - Retry logic with exponential/fixed backoff
@@ -44,19 +44,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Verification assertion support
   - Streaming progress updates
 
-- **@acm/llm**: LLM integration
+- **@ddse/acm-llm**: LLM integration
   - OpenAICompatClient for OpenAI-compatible APIs
   - Streaming token generation support
   - Ollama and vLLM presets
   - Zero external dependencies
 
-- **@acm/planner**: LLM-based plan generation
+- **@ddse/acm-planner**: LLM-based plan generation
   - StructuredLLMPlanner for Goal → Plan-A/B generation
   - Context reference computation (SHA-256)
   - Safe fallback on parsing errors
   - Streaming support
 
-- **@acm/examples**: Demo and samples
+- **@ddse/acm-examples**: Demo and samples
   - Complete CLI application
   - Sample tools (search, entity extraction, risk assessment, refund, notifications)
   - Sample tasks (simple, multi-tool, complex workflows)

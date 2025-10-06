@@ -1,5 +1,5 @@
 // ExecutionTranscript helper observes ledger append events and emits structured narrative updates
-import type { LedgerEntry, StreamSink } from '@acm/sdk';
+import type { LedgerEntry, StreamSink } from '@ddse/acm-sdk';
 import type { MemoryLedger } from './ledger.js';
 import type { TaskNarrative } from './executor.js';
 

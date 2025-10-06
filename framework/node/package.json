@@ -1,5 +1,5 @@
 {
-  "name": "@acm/root",
+  "name": "@ddse/acm",
   "version": "0.5.0",
   "private": true,
   "description": "ACM v0.5 Node Framework - Root workspace",

@@ -30,7 +30,7 @@ This is the **first public release**. Where we discuss fairness and enterprise r
 
 - **Adapters** for **LangGraph** and **Microsoft Agent Framework** preserve ACM contracts while running on external engines.
 - **MCP integration** (Model Context Protocol) treats external tools as first‑class, discoverable capabilities.
-- **`@acm/framework` façade** wires planner, runtime, nucleus config, context providers, and adapters for **one‑call** execution.
+- **`@ddse/acm-framework` façade** wires planner, runtime, nucleus config, context providers, and adapters for **one‑call** execution.
 - **Examples & AI Coder** demonstrate planning→execution→replay, budgeting, and streaming UX in real workflows.
 
 ---
@@ -47,7 +47,7 @@ pnpm build
 Run a reference demo with **vLLM** (OpenAI‑compatible API on `:8001`) and **Qwen/Qwen3‑Coder‑30B‑A3B‑Instruct‑FP8**:
 
 ```bash
-pnpm --filter @acm/examples demo \
+pnpm --filter @ddse/acm-examples demo \
   --provider vllm \  --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 \  --base-url http://localhost:8001/v1 \  --scenario entitlement
 ```
 
@@ -77,7 +77,7 @@ Each ships as runnable examples and can export **Replay Bundles** for QA and RCA
 ## Known Issues & Limitations (v0.5.0)
 
 - **Adapter resumability** — Checkpoint/resume across external engines is **preview**; warnings are emitted where parity is incomplete.
-- **CLI consolidation** — Package‑specific CLIs remain; unified `@acm/cli` is planned.
+- **CLI consolidation** — Package‑specific CLIs remain; unified `@ddse/acm-cli` is planned.
 - **Ledger enrichment** — Additional audit fields (phase markers, canonical prompt digests) are planned without API breakage.
 - **Security posture** — Example policies and verification hooks are provided; threat model hardening and conformance tests are in progress.
 
@@ -104,7 +104,7 @@ python -m vllm.entrypoints.openai.api_server \  --model Qwen/Qwen3-Coder-30B-A3B
 3) **Execute sample workflows**
 
 ```bash
-pnpm --filter @acm/examples demo --scenario entitlement  --save-bundle
+pnpm --filter @ddse/acm-examples demo --scenario entitlement  --save-bundle
 ```
 
 ---

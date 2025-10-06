@@ -51,4 +51,4 @@ jobs:
       - name: Publish packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: pnpm publish -r --access public --no-git-checks --tag $NPM_DIST_TAG
+        run: pnpm publish -r --filter "@ddse/*" --access public --no-git-checks --tag "$NPM_DIST_TAG"

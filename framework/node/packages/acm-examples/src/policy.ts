@@ -1,5 +1,5 @@
 // Simple policy engine implementation
-import { PolicyEngine, type PolicyDecision } from '@acm/sdk';
+import { PolicyEngine, type PolicyDecision } from '@ddse/acm-sdk';
 
 export class SimplePolicyEngine implements PolicyEngine {
   async evaluate(

@@ -1,4 +1,4 @@
-import { Tool } from '@acm/sdk';
+import { Tool } from '@ddse/acm-sdk';
 import {
   getTranscript,
   getAgent,

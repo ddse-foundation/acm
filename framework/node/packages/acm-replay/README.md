@@ -1,4 +1,4 @@
-# @acm/replay
+# @ddse/acm-replay
 
 Replay bundle export and import for ACM, providing complete audit trails and reproducibility.
 
@@ -22,7 +22,7 @@ This package enables exporting and importing complete ACM execution bundles. Rep
 ## Installation
 
 ```bash
-pnpm add @acm/replay
+pnpm add @ddse/acm-replay
 ```
 
 ## Usage
@@ -30,7 +30,7 @@ pnpm add @acm/replay
 ### Exporting a Replay Bundle
 
 ```typescript
-import { ReplayBundleExporter } from '@acm/replay';
+import { ReplayBundleExporter } from '@ddse/acm-replay';
 
 // After execution, export the bundle
 const bundlePath = await ReplayBundleExporter.export({
@@ -75,7 +75,7 @@ console.log(`Bundle exported to: ${bundlePath}`);
 ### Loading a Replay Bundle
 
 ```typescript
-import { ReplayBundleExporter } from '@acm/replay';
+import { ReplayBundleExporter } from '@ddse/acm-replay';
 
 // Load bundle
 const bundle = await ReplayBundleExporter.load('./replay/run-12345');
@@ -89,7 +89,7 @@ console.log('Task I/O records:', bundle.taskIO.length);
 ### Validating a Bundle
 
 ```typescript
-import { ReplayBundleExporter } from '@acm/replay';
+import { ReplayBundleExporter } from '@ddse/acm-replay';
 
 const validation = await ReplayBundleExporter.validate('./replay/run-12345');
 
@@ -106,7 +106,7 @@ The replay package integrates seamlessly with the ACM demo CLI:
 
 ```bash
 # Run with replay bundle export
-pnpm --filter @acm/examples demo -- --goal refund --save-bundle
+pnpm --filter @ddse/acm-examples demo -- --goal refund --save-bundle
 
 # Bundle will be saved to ./replay/<runId>/
 ```

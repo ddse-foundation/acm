@@ -1,5 +1,5 @@
 // Guard evaluator
-import type { GuardExpr, Context } from '@acm/sdk';
+import type { GuardExpr, Context } from '@ddse/acm-sdk';
 
 export function evaluateGuard(
   expr: GuardExpr,

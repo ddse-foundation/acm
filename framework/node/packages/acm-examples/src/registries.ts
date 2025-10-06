@@ -1,5 +1,5 @@
 // Concrete registry implementations
-import { CapabilityRegistry, ToolRegistry, type Capability, type Task, type Tool } from '@acm/sdk';
+import { CapabilityRegistry, ToolRegistry, type Capability, type Task, type Tool } from '@ddse/acm-sdk';
 
 export class SimpleCapabilityRegistry extends CapabilityRegistry {
   private tasks = new Map<string, Task>();

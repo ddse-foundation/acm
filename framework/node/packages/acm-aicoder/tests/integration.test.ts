@@ -11,7 +11,7 @@ import {
   SimpleToolRegistry,
   WorkspaceContextRetrievalTool,
 } from '../src/index.js';
-import { MemoryLedger, executePlan } from '@acm/runtime';
+import { MemoryLedger, executePlan } from '@ddse/acm-runtime';
 import {
   Nucleus,
   Task,
@@ -26,7 +26,7 @@ import {
   type PreflightResult,
   type InternalContextScope,
   ExternalContextProviderAdapter,
-} from '@acm/sdk';
+} from '@ddse/acm-sdk';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 

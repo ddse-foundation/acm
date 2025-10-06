@@ -11,9 +11,9 @@ import {
   type RunContext,
   type NucleusFactory,
   type NucleusConfig,
-} from '@acm/sdk';
-import { createInstrumentedToolGetter } from '@acm/runtime';
-import type { MemoryLedger } from '@acm/runtime';
+} from '@ddse/acm-sdk';
+import { createInstrumentedToolGetter } from '@ddse/acm-runtime';
+import type { MemoryLedger } from '@ddse/acm-runtime';
 
 /**
  * LangGraph adapter options

@@ -61,7 +61,7 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 pnpm build
 
 # Build specific package
-pnpm --filter @acm/sdk build
+pnpm --filter @ddse/acm-sdk build
 
 # Watch mode for development
 pnpm dev
@@ -71,10 +71,10 @@ pnpm dev
 
 ```bash
 # Run the CLI demo
-pnpm --filter @acm/examples demo -- --help
+pnpm --filter @ddse/acm-examples demo -- --help
 
 # Example: Run refund workflow
-pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal refund
+pnpm --filter @ddse/acm-examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal refund
 ```
 
 ### Cleaning
@@ -104,7 +104,7 @@ pnpm clean
 ### Example
 
 ```typescript
-import type { Goal, Context } from '@acm/sdk';
+import type { Goal, Context } from '@ddse/acm-sdk';
 
 export class MyTask extends Task<MyInput, MyOutput> {
   constructor() {
@@ -124,7 +124,7 @@ export class MyTask extends Task<MyInput, MyOutput> {
 - **Functions/Methods**: camelCase (e.g., `executePlan`, `evaluateGuard`)
 - **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_RETRIES`)
 - **Files**: kebab-case (e.g., `memory-ledger.ts`)
-- **Packages**: kebab-case with acm prefix (e.g., `@acm/sdk`)
+- **Packages**: kebab-case with acm prefix (e.g., `@ddse/acm-sdk`)
 
 ## Testing
 
@@ -135,7 +135,7 @@ export class MyTask extends Task<MyInput, MyOutput> {
 pnpm test
 
 # Test specific package
-pnpm --filter @acm/runtime test
+pnpm --filter @ddse/acm-runtime test
 ```
 
 ### Writing Tests
@@ -260,7 +260,7 @@ mkdir -p packages/acm-newpackage/src
 
 ```json
 {
-  "name": "@acm/newpackage",
+  "name": "@ddse/acm-newpackage",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -306,9 +306,9 @@ Each package should have its own README with:
 - API reference
 - Examples
 
-### `@acm/framework` Notes
+### `@ddse/acm-framework` Notes
 
-- Run `pnpm --filter @acm/framework build` (and applicable tests) before opening a PR. The helper is a thin layer over planner/runtime contracts, so type regressions are caught at build time.
+- Run `pnpm --filter @ddse/acm-framework build` (and applicable tests) before opening a PR. The helper is a thin layer over planner/runtime contracts, so type regressions are caught at build time.
 - When changing helper signatures or defaults, update `README.md`, `GETTING_STARTED.md`, and `packages/acm-framework/README.md` in the same PR so users see a consistent story.
 - Preserve ACM v0.5 guarantees: context packets must stay immutable, ledger events must be appended through `MemoryLedger`, and execution engine selection (`ACM`, `LANGGRAPH`, `MSAF`) cannot silently drop policy/verification hooks.
 - Document new options clearly (e.g., `existingPlan`, `contextProvider`, `nucleus.allowedTools`) and add integration tests or examples under `packages/acm-framework` when behavior shifts.

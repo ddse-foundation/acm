@@ -1,4 +1,4 @@
-# @acm/llm
+# @ddse/acm-llm
 
 OpenAI-compatible LLM client with streaming support for Ollama and vLLM.
 
@@ -9,7 +9,7 @@ The LLM package provides a unified client interface for local LLM providers usin
 ## Installation
 
 ```bash
-pnpm add @acm/llm @acm/sdk
+pnpm add @ddse/acm-llm @ddse/acm-sdk
 ```
 
 ## Features
@@ -26,7 +26,7 @@ pnpm add @acm/llm @acm/sdk
 ### Basic Usage with Ollama
 
 ```typescript
-import { createOllamaClient } from '@acm/llm';
+import { createOllamaClient } from '@ddse/acm-llm';
 
 const client = createOllamaClient('llama3.1');
 
@@ -43,7 +43,7 @@ console.log(response.text);
 ### Streaming
 
 ```typescript
-import { createOllamaClient } from '@acm/llm';
+import { createOllamaClient } from '@ddse/acm-llm';
 
 const client = createOllamaClient('llama3.1');
 
@@ -59,7 +59,7 @@ for await (const chunk of client.generateStream([
 ### Using vLLM
 
 ```typescript
-import { createVLLMClient } from '@acm/llm';
+import { createVLLMClient } from '@ddse/acm-llm';
 
 const client = createVLLMClient('qwen2.5:7b');
 
@@ -72,7 +72,7 @@ const response = await client.generate([
 ### Custom Configuration
 
 ```typescript
-import { OpenAICompatClient } from '@acm/llm';
+import { OpenAICompatClient } from '@ddse/acm-llm';
 
 const client = new OpenAICompatClient({
   baseUrl: 'http://localhost:8000/v1',
@@ -85,8 +85,8 @@ const client = new OpenAICompatClient({
 ### With ACM Planner
 
 ```typescript
-import { createOllamaClient } from '@acm/llm';
-import { StructuredLLMPlanner } from '@acm/planner';
+import { createOllamaClient } from '@ddse/acm-llm';
+import { StructuredLLMPlanner } from '@ddse/acm-planner';
 
 const llm = createOllamaClient('llama3.1');
 const planner = new StructuredLLMPlanner();

@@ -1,5 +1,5 @@
 {
-  "name": "@acm/sdk",
+  "name": "@ddse/acm-sdk",
   "version": "0.5.0",
   "description": "ACM v0.5 SDK - Abstract classes and types",
   "type": "module",

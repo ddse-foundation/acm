@@ -21,24 +21,24 @@ pnpm test
 
 ```bash
 # Basic demo
-pnpm --filter @acm/examples demo -- --goal refund
+pnpm --filter @ddse/acm-examples demo -- --goal refund
 
 # With release-tested vLLM provider
-pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1
+pnpm --filter @ddse/acm-examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1
 
 # With LangGraph engine
-pnpm --filter @acm/examples demo -- --engine langgraph
+pnpm --filter @ddse/acm-examples demo -- --engine langgraph
 
 # Save replay bundle
-pnpm --filter @acm/examples demo -- --save-bundle
+pnpm --filter @ddse/acm-examples demo -- --save-bundle
 
 # With MCP tools
-pnpm --filter @acm/examples demo -- \
+pnpm --filter @ddse/acm-examples demo -- \
   --use-mcp \
   --mcp-server 'npx -y @modelcontextprotocol/server-filesystem /tmp'
 
 # All options
-pnpm --filter @acm/examples demo -- --help
+pnpm --filter @ddse/acm-examples demo -- --help
 ```
 
 ## Using MCP Servers
@@ -70,7 +70,7 @@ export BRAVE_API_KEY=your_key
 ### Basic Tool
 
 ```typescript
-import { Tool } from '@acm/sdk';
+import { Tool } from '@ddse/acm-sdk';
 
 class MyTool extends Tool<{ input: string }, { output: string }> {
   name() { return 'my-tool'; }
@@ -84,7 +84,7 @@ class MyTool extends Tool<{ input: string }, { output: string }> {
 ### Basic Task
 
 ```typescript
-import { Task, type RunContext } from '@acm/sdk';
+import { Task, type RunContext } from '@ddse/acm-sdk';
 
 class MyTask extends Task<{ query: string }, { result: any }> {
   constructor() {
@@ -102,7 +102,7 @@ class MyTask extends Task<{ query: string }, { result: any }> {
 ### Execute Plan
 
 ```typescript
-import { executePlan } from '@acm/runtime';
+import { executePlan } from '@ddse/acm-runtime';
 
 const result = await executePlan({
   goal: { id: 'g1', intent: 'Do something' },
@@ -116,7 +116,7 @@ const result = await executePlan({
 ### MCP Integration
 
 ```typescript
-import { McpClientManager, McpToolRegistry, CombinedToolRegistry } from '@acm/mcp';
+import { McpClientManager, McpToolRegistry, CombinedToolRegistry } from '@ddse/acm-mcp';
 
 const manager = new McpClientManager();
 await manager.connect({
@@ -135,7 +135,7 @@ await manager.disconnect();
 ### LangGraph Adapter
 
 ```typescript
-import { asLangGraph } from '@acm/adapters';
+import { asLangGraph } from '@ddse/acm-adapters';
 
 const adapter = asLangGraph({
   goal, context, plan,
@@ -149,7 +149,7 @@ const result = await adapter.execute();
 ### MS Agent Framework Adapter
 
 ```typescript
-import { wrapAgentNodes } from '@acm/adapters';
+import { wrapAgentNodes } from '@ddse/acm-adapters';
 
 const adapter = wrapAgentNodes({
   goal, context, plan,
@@ -163,7 +163,7 @@ const result = await adapter.execute();
 ### Replay Bundle
 
 ```typescript
-import { ReplayBundleExporter } from '@acm/replay';
+import { ReplayBundleExporter } from '@ddse/acm-replay';
 
 // Export
 await ReplayBundleExporter.export({
@@ -184,7 +184,7 @@ const { valid, errors } = await ReplayBundleExporter.validate('./replay/run-123'
 ### BM25 Search
 
 ```typescript
-import { BM25Search } from '@acm/examples/search';
+import { BM25Search } from '@ddse/acm-examples/search';
 
 const search = new BM25Search();
 search.index(documents);
@@ -202,10 +202,10 @@ for (const result of results) {
 pnpm test
 
 # Specific package
-pnpm --filter @acm/examples test
+pnpm --filter @ddse/acm-examples test
 
 # Specific test suite
-pnpm --filter @acm/examples test:bm25
+pnpm --filter @ddse/acm-examples test:bm25
 
 # Build and test
 pnpm build && pnpm test
@@ -218,7 +218,7 @@ pnpm build && pnpm test
 pnpm dev
 
 # Build specific package
-pnpm --filter @acm/sdk build
+pnpm --filter @ddse/acm-sdk build
 
 # Clean build artifacts
 pnpm clean
@@ -231,28 +231,28 @@ pnpm clean && pnpm build
 
 ```bash
 # SDK package
-pnpm --filter @acm/sdk <command>
+pnpm --filter @ddse/acm-sdk <command>
 
 # Runtime package
-pnpm --filter @acm/runtime <command>
+pnpm --filter @ddse/acm-runtime <command>
 
 # LLM package
-pnpm --filter @acm/llm <command>
+pnpm --filter @ddse/acm-llm <command>
 
 # Planner package
-pnpm --filter @acm/planner <command>
+pnpm --filter @ddse/acm-planner <command>
 
 # MCP package
-pnpm --filter @acm/mcp <command>
+pnpm --filter @ddse/acm-mcp <command>
 
 # Adapters package
-pnpm --filter @acm/adapters <command>
+pnpm --filter @ddse/acm-adapters <command>
 
 # Replay package
-pnpm --filter @acm/replay <command>
+pnpm --filter @ddse/acm-replay <command>
 
 # Examples package
-pnpm --filter @acm/examples <command>
+pnpm --filter @ddse/acm-examples <command>
 ```
 
 ## Common CLI Flags

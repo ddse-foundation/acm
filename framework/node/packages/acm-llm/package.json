@@ -1,5 +1,5 @@
 {
-  "name": "@acm/llm",
+  "name": "@ddse/acm-llm",
   "version": "0.5.0",
   "description": "ACM v0.5 LLM - Provider-agnostic LLM client",
   "type": "module",
@@ -17,7 +17,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@acm/sdk": "workspace:*"
+    "@ddse/acm-sdk": "workspace:*"
   },
   "keywords": ["acm", "llm", "openai"],
   "license": "MIT"

@@ -24,7 +24,7 @@ acm-demo --resume run-1234567890 --checkpoint-dir ./checkpoints
 ### Programmatic Usage
 
 ```typescript
-import { executeResumablePlan, FileCheckpointStore } from '@acm/runtime';
+import { executeResumablePlan, FileCheckpointStore } from '@ddse/acm-runtime';
 
 const checkpointStore = new FileCheckpointStore('./checkpoints');
 const runId = 'my-workflow-001';
@@ -59,7 +59,7 @@ const resumedResult = await executeResumablePlan({
 ### Listing Checkpoints
 
 ```typescript
-import { ResumableExecutor, FileCheckpointStore } from '@acm/runtime';
+import { ResumableExecutor, FileCheckpointStore } from '@ddse/acm-runtime';
 
 const executor = new ResumableExecutor(
   new FileCheckpointStore('./checkpoints')
@@ -99,7 +99,7 @@ cat ./checkpoints/run-1234567890/checkpoint-xyz.json | jq
 For testing and development:
 
 ```typescript
-import { MemoryCheckpointStore } from '@acm/runtime';
+import { MemoryCheckpointStore } from '@ddse/acm-runtime';
 
 const store = new MemoryCheckpointStore();
 // Checkpoints stored in memory, lost on process exit
@@ -110,7 +110,7 @@ const store = new MemoryCheckpointStore();
 For production use with persistent storage:
 
 ```typescript
-import { FileCheckpointStore } from '@acm/runtime';
+import { FileCheckpointStore } from '@ddse/acm-runtime';
 
 const store = new FileCheckpointStore('/var/acm/checkpoints');
 // Checkpoints stored as JSON files
@@ -121,7 +121,7 @@ const store = new FileCheckpointStore('/var/acm/checkpoints');
 Implement the `CheckpointStore` interface for custom backends (database, S3, etc.):
 
 ```typescript
-import { CheckpointStore, Checkpoint } from '@acm/runtime';
+import { CheckpointStore, Checkpoint } from '@ddse/acm-runtime';
 
 class DatabaseCheckpointStore implements CheckpointStore {
   async put(runId: string, checkpoint: Checkpoint): Promise<void> {

@@ -17,10 +17,10 @@ importers:
 
   packages/acm-adapters:
     dependencies:
-      '@acm/runtime':
+      '@ddse/acm-runtime':
         specifier: workspace:*
         version: link:../acm-runtime
-      '@acm/sdk':
+      '@ddse/acm-sdk':
         specifier: workspace:*
         version: link:../acm-sdk
       '@langchain/langgraph':
@@ -36,22 +36,22 @@ importers:
 
   packages/acm-aicoder:
     dependencies:
-      '@acm/framework':
+      '@ddse/acm-framework':
         specifier: workspace:*
         version: link:../acm-framework
-      '@acm/llm':
+      '@ddse/acm-llm':
         specifier: workspace:*
         version: link:../acm-llm
-      '@acm/planner':
+      '@ddse/acm-planner':
         specifier: workspace:*
         version: link:../acm-planner
-      '@acm/replay':
+      '@ddse/acm-replay':
         specifier: workspace:*
         version: link:../acm-replay
-      '@acm/runtime':
+      '@ddse/acm-runtime':
         specifier: workspace:*
         version: link:../acm-runtime
-      '@acm/sdk':
+      '@ddse/acm-sdk':
         specifier: workspace:*
         version: link:../acm-sdk
       chalk:
@@ -88,55 +88,55 @@ importers:
 
   packages/acm-examples:
     dependencies:
-      '@acm/adapters':
+      '@ddse/acm-adapters':
         specifier: workspace:*
         version: link:../acm-adapters
-      '@acm/framework':
+      '@ddse/acm-framework':
         specifier: workspace:*
         version: link:../acm-framework
-      '@acm/llm':
+      '@ddse/acm-llm':
         specifier: workspace:*
         version: link:../acm-llm
-      '@acm/mcp':
+      '@ddse/acm-mcp':
         specifier: workspace:*
         version: link:../acm-mcp
-      '@acm/planner':
+      '@ddse/acm-planner':
         specifier: workspace:*
         version: link:../acm-planner
-      '@acm/replay':
+      '@ddse/acm-replay':
         specifier: workspace:*
         version: link:../acm-replay
-      '@acm/runtime':
+      '@ddse/acm-runtime':
         specifier: workspace:*
         version: link:../acm-runtime
-      '@acm/sdk':
+      '@ddse/acm-sdk':
         specifier: workspace:*
         version: link:../acm-sdk
 
   packages/acm-framework:
     dependencies:
-      '@acm/adapters':
+      '@ddse/acm-adapters':
         specifier: workspace:*
         version: link:../acm-adapters
-      '@acm/planner':
+      '@ddse/acm-planner':
         specifier: workspace:*
         version: link:../acm-planner
-      '@acm/runtime':
+      '@ddse/acm-runtime':
         specifier: workspace:*
         version: link:../acm-runtime
-      '@acm/sdk':
+      '@ddse/acm-sdk':
         specifier: workspace:*
         version: link:../acm-sdk
 
   packages/acm-llm:
     dependencies:
-      '@acm/sdk':
+      '@ddse/acm-sdk':
         specifier: workspace:*
         version: link:../acm-sdk
 
   packages/acm-mcp:
     dependencies:
-      '@acm/sdk':
+      '@ddse/acm-sdk':
         specifier: workspace:*
         version: link:../acm-sdk
       '@modelcontextprotocol/sdk':
@@ -152,19 +152,19 @@ importers:
 
   packages/acm-planner:
     dependencies:
-      '@acm/llm':
+      '@ddse/acm-llm':
         specifier: workspace:*
         version: link:../acm-llm
-      '@acm/sdk':
+      '@ddse/acm-sdk':
         specifier: workspace:*
         version: link:../acm-sdk
 
   packages/acm-replay:
     dependencies:
-      '@acm/runtime':
+      '@ddse/acm-runtime':
         specifier: workspace:*
         version: link:../acm-runtime
-      '@acm/sdk':
+      '@ddse/acm-sdk':
         specifier: workspace:*
         version: link:../acm-sdk
     devDependencies:
@@ -177,7 +177,7 @@ importers:
 
   packages/acm-runtime:
     dependencies:
-      '@acm/sdk':
+      '@ddse/acm-sdk':
         specifier: workspace:*
         version: link:../acm-sdk
 

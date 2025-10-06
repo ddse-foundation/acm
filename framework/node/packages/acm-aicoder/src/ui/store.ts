@@ -2,8 +2,8 @@
 // Manages chat messages, tasks, events, and budget state
 
 import { EventEmitter } from 'events';
-import type { Plan, Goal, Context } from '@acm/sdk';
-import type { TaskNarrative } from '@acm/runtime';
+import type { Plan, Goal, Context } from '@ddse/acm-sdk';
+import type { TaskNarrative } from '@ddse/acm-runtime';
 import type { BudgetStatus } from '../runtime/budget-manager.js';
 
 export type MessageRole = 'user' | 'planner' | 'nucleus' | 'system';

@@ -1,4 +1,4 @@
-# @acm/runtime
+# @ddse/acm-runtime
 
 ACM v0.5 execution engine with guards, retries, policy hooks, and memory ledger.
 
@@ -9,7 +9,7 @@ The runtime package provides deterministic plan execution with full ACM v0.5 sem
 ## Installation
 
 ```bash
-pnpm add @acm/runtime @acm/sdk
+pnpm add @ddse/acm-runtime @ddse/acm-sdk
 ```
 
 ## Features
@@ -29,8 +29,8 @@ pnpm add @acm/runtime @acm/sdk
 ### Basic Execution
 
 ```typescript
-import { executePlan, MemoryLedger } from '@acm/runtime';
-import type { Goal, Context, Plan } from '@acm/sdk';
+import { executePlan, MemoryLedger } from '@ddse/acm-runtime';
+import type { Goal, Context, Plan } from '@ddse/acm-sdk';
 
 const result = await executePlan({
   goal: { id: 'g1', intent: 'Process order' },
@@ -49,7 +49,7 @@ console.log('Ledger entries:', result.ledger.length);
 ### With Policy Enforcement
 
 ```typescript
-import { PolicyEngine, type PolicyDecision } from '@acm/sdk';
+import { PolicyEngine, type PolicyDecision } from '@ddse/acm-sdk';
 
 class MyPolicyEngine implements PolicyEngine {
   async evaluate(action: string, payload: any): Promise<PolicyDecision> {
@@ -97,7 +97,7 @@ const result = await executePlan({
 ### With Streaming
 
 ```typescript
-import { DefaultStreamSink } from '@acm/sdk';
+import { DefaultStreamSink } from '@ddse/acm-sdk';
 
 const stream = new DefaultStreamSink();
 
@@ -118,7 +118,7 @@ const result = await executePlan({
 ### Memory Ledger
 
 ```typescript
-import { MemoryLedger } from '@acm/runtime';
+import { MemoryLedger } from '@ddse/acm-runtime';
 
 const ledger = new MemoryLedger();
 
@@ -142,7 +142,7 @@ for (const entry of ledger.getEntries()) {
 Execute plans with automatic checkpointing and resume support:
 
 ```typescript
-import { executeResumablePlan, FileCheckpointStore } from '@acm/runtime';
+import { executeResumablePlan, FileCheckpointStore } from '@ddse/acm-runtime';
 
 // Setup checkpoint storage
 const checkpointStore = new FileCheckpointStore('./checkpoints');
@@ -180,7 +180,7 @@ const result = await executeResumablePlan({
 Using the ResumableExecutor class:
 
 ```typescript
-import { ResumableExecutor, FileCheckpointStore } from '@acm/runtime';
+import { ResumableExecutor, FileCheckpointStore } from '@ddse/acm-runtime';
 
 const executor = new ResumableExecutor(
   new FileCheckpointStore('./checkpoints')

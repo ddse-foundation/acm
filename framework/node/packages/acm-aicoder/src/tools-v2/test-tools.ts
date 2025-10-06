@@ -1,5 +1,5 @@
 // Test and Build Tools
-import { Tool } from '@acm/sdk';
+import { Tool } from '@ddse/acm-sdk';
 import * as path from 'path';
 
 /**

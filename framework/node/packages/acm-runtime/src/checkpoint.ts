@@ -4,7 +4,7 @@ import type {
   Context,
   Plan,
   LedgerEntry,
-} from '@acm/sdk';
+} from '@ddse/acm-sdk';
 import type { TaskExecutionRecord } from './executor.js';
 
 /**

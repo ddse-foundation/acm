@@ -6,7 +6,7 @@ This guide explains how to publish the ACM packages to npm for public use.
 
 - npm account with publishing permissions
 - 2FA enabled (recommended)
-- Access to @acm scope on npm (or use a different scope)
+- Access to @ddse/acm scope on npm (or use a different scope)
 
 ## Preparation
 
@@ -26,8 +26,8 @@ done
 If you need to use a different npm scope, update all package.json files:
 
 ```bash
-# Replace @acm with your scope (e.g., @yourorg)
-find packages -name package.json -exec sed -i 's/@acm/@yourorg/g' {} \;
+# Replace @ddse/acm with your scope (e.g., @yourorg)
+find packages -name package.json -exec sed -i 's/@ddse/acm-@yourorg/g' {} \;
 ```
 
 Also update references in:
@@ -183,16 +183,16 @@ After publishing, verify:
 
 ```bash
 # Check package is available
-npm info @acm/sdk
+npm info @ddse/acm-sdk
 
 # Test installation
 mkdir /tmp/test-acm
 cd /tmp/test-acm
 npm init -y
-npm install @acm/sdk @acm/runtime @acm/llm @acm/planner
+npm install @ddse/acm-sdk @ddse/acm-runtime @ddse/acm-llm @ddse/acm-planner
 
 # Try importing
-node -e "import('@acm/sdk').then(m => console.log(Object.keys(m)))"
+node -e "import('@ddse/acm-sdk').then(m => console.log(Object.keys(m)))"
 ```
 
 ## Post-Publishing
@@ -219,7 +219,7 @@ git push origin v0.1.0
 Update README.md installation instructions:
 
 ```bash
-npm install @acm/sdk @acm/runtime @acm/llm @acm/planner
+npm install @ddse/acm-sdk @ddse/acm-runtime @ddse/acm-llm @ddse/acm-planner
 ```
 
 ### 4. Announce

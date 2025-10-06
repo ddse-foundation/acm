@@ -7,7 +7,7 @@ import {
   type Tool, 
   type Task,
   type PolicyDecision,
-} from '@acm/sdk';
+} from '@ddse/acm-sdk';
 
 /**
  * Simple Capability Registry

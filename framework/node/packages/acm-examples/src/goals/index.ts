@@ -1,5 +1,5 @@
 // Goal/context index derived from scenario catalog
-import type { Goal, Context } from '@acm/sdk';
+import type { Goal, Context } from '@ddse/acm-sdk';
 import { scenarios, type ScenarioKey } from '../examples/scenarios.js';
 
 type GoalMap = Record<ScenarioKey, Goal> & Record<string, Goal>;

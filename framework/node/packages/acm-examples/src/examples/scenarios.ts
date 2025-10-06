@@ -1,5 +1,5 @@
-import type { Goal, Context, Plan } from '@acm/sdk';
-import type { ExecutePlanResult } from '@acm/runtime';
+import type { Goal, Context, Plan } from '@ddse/acm-sdk';
+import type { ExecutePlanResult } from '@ddse/acm-runtime';
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '../registries.js';
 import {
   FetchCustomerProfileTool,

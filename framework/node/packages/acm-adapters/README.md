@@ -1,4 +1,4 @@
-# @acm/adapters
+# @ddse/acm-adapters
 
 Framework adapters for ACM, providing integration with LangGraph and Microsoft Agent Framework.
 
@@ -17,7 +17,7 @@ This package provides adapters that allow ACM plans to be executed using popular
 ## Installation
 
 ```bash
-pnpm add @acm/adapters
+pnpm add @ddse/acm-adapters
 ```
 
 For LangGraph support, also install:
@@ -30,8 +30,8 @@ pnpm add @langchain/langgraph
 ### LangGraph Adapter
 
 ```typescript
-import { asLangGraph } from '@acm/adapters';
-import { executePlan } from '@acm/runtime';
+import { asLangGraph } from '@ddse/acm-adapters';
+import { executePlan } from '@ddse/acm-runtime';
 
 // Create adapter
 const adapter = asLangGraph({
@@ -55,7 +55,7 @@ const result = await adapter.execute();
 ### Microsoft Agent Framework Adapter
 
 ```typescript
-import { wrapAgentNodes } from '@acm/adapters';
+import { wrapAgentNodes } from '@ddse/acm-adapters';
 
 // Create adapter
 const adapter = wrapAgentNodes({
@@ -79,7 +79,7 @@ const result = await adapter.execute();
 ### Full Example with CLI
 
 ```typescript
-import { asLangGraph, wrapAgentNodes } from '@acm/adapters';
+import { asLangGraph, wrapAgentNodes } from '@ddse/acm-adapters';
 
 // ... setup goal, context, plan, registries ...
 

@@ -1,4 +1,4 @@
-import { ExternalContextProviderAdapter, Tool, type ContextRetrievalArtifact } from '@acm/sdk';
+import { ExternalContextProviderAdapter, Tool, type ContextRetrievalArtifact } from '@ddse/acm-sdk';
 import { getCustomerProfile, getPolicy } from '../data/entitlement.js';
 import { getSnippetMeta, loadSnippetContent } from '../data/knowledge.js';
 import { getIncident, findRoutingRule } from '../data/incidents.js';

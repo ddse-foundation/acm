@@ -10,7 +10,7 @@ import {
   type NucleusToolDefinition,
   type Plan,
   type StreamSink,
-} from '@acm/sdk';
+} from '@ddse/acm-sdk';
 
 export type PlannerOptions = {
   goal: Goal;

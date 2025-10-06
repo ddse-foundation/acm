@@ -1,19 +1,19 @@
-# @acm/framework
+# @ddse/acm-framework
 
 High-level helper that wraps the ACM structured planner and runtime behind a single `setup`/`execute` flow. It is intended for developers who want to run the full ACM pipeline without manually orchestrating planners, registries, and the nucleus configuration.
 
 ## Installation
 
 ```bash
-pnpm add @acm/framework
+pnpm add @ddse/acm-framework
 ```
 
 ## Quick Usage
 
 ```typescript
-import { ACMFramework } from '@acm/framework';
-import { createOllamaClient } from '@acm/llm';
-import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/aicoder';
+import { ACMFramework } from '@ddse/acm-framework';
+import { createOllamaClient } from '@ddse/acm-llm';
+import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@ddse/acm-aicoder';
 
 const llm = createOllamaClient('llama3.1');
 
@@ -73,7 +73,7 @@ and `resumeFrom` execution. You can opt into the adapter engines when you want
 LangGraph or Microsoft Agent Framework compatibility:
 
 ```typescript
-import { ACMFramework, ExecutionEngine } from '@acm/framework';
+import { ACMFramework, ExecutionEngine } from '@ddse/acm-framework';
 
 const framework = ACMFramework.create({
   // ...existing configuration
@@ -94,7 +94,7 @@ keep `ExecutionEngine.ACM` (the default).
 
 ## Related Packages
 
-- `@acm/sdk` — lower-level abstractions used by this helper.
-- `@acm/planner` — structured planner leveraged internally.
-- `@acm/runtime` — deterministic execution engine invoked by `execute()`.
-- `@acm/adapters` — LangGraph and MS Agent Framework adapters optionally used by the wrapper.
+- `@ddse/acm-sdk` — lower-level abstractions used by this helper.
+- `@ddse/acm-planner` — structured planner leveraged internally.
+- `@ddse/acm-runtime` — deterministic execution engine invoked by `execute()`.
+- `@ddse/acm-adapters` — LangGraph and MS Agent Framework adapters optionally used by the wrapper.

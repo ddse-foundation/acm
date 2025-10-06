@@ -1,7 +1,7 @@
 // Replay Bundle Exporter for ACM
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import type { Goal, Context, Plan, LedgerEntry } from '@acm/sdk';
+import type { Goal, Context, Plan, LedgerEntry } from '@ddse/acm-sdk';
 
 /**
  * Replay bundle metadata

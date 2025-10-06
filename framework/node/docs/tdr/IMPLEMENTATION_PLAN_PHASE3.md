@@ -18,7 +18,7 @@ The goal of Phase 3 is to ship an aiCoder CLI that convincingly demonstrates ACM
 
 - Replacing a full IDE; we focus on terminal-first developer journeys.
 - Implementing hosted multi-user services; Phase 3 targets single-developer environments.
-- Building custom LLM models; we rely on existing provider clients (`@acm/llm`).
+- Building custom LLM models; we rely on existing provider clients (`@ddse/acm-llm`).
 
 ---
 
@@ -72,7 +72,7 @@ Release is gated on an acceptance demo showing bugfix + feature journeys end-to-
 - Implement core tools registered with ACM:
   - `CodeReadTool` (structured file/directory reads with size limits and syntax highlighting).
   - `CodeEditTool` (diff-based edits with git integration, fallback to MCP patch). Includes dry-run + conflict detection.
-  - `TemplateGenerateTool` (prompt LLM via `@acm/llm` to emit boilerplate with guardrails).
+  - `TemplateGenerateTool` (prompt LLM via `@ddse/acm-llm` to emit boilerplate with guardrails).
   - `CodeReviewTool` (static analysis summary using LLM + optional lint command output).
 - Bridge to MCP: auto-launch filesystem server, optional git server, discovery + caching of remote tools.
 - Define reusable run contexts and tool metadata (mutating vs read-only, requires approval, recommended guard). Document usage.
@@ -97,7 +97,7 @@ Release is gated on an acceptance demo showing bugfix + feature journeys end-to-
   - Parse flags (provider/model, engine, goal templates, analysis-only, auto-approve, resume, config file).
   - Kick off `StructuredLLMPlanner` with streaming structured tool-calls; render Plan A/B with rationale and risk scoring; allow regenerate or manual selection.
   - Manage approvals: require user ack for plan selection, branching, and any mutating tasks.
-- Integrate `@acm/runtime` (resumable executor) with `FileCheckpointStore`, optional `--resume` flag, and progress persistence.
+- Integrate `@ddse/acm-runtime` (resumable executor) with `FileCheckpointStore`, optional `--resume` flag, and progress persistence.
 - Provide engine adapters (runtime, LangGraph, MSAF) with capability parity checks; warn when features degrade.
 - Acceptance: integration test simulating interactive session (mock stdin/stdout) exercising plan selection and approvals.
 
@@ -127,7 +127,7 @@ Release is gated on an acceptance demo showing bugfix + feature journeys end-to-
 
 - Produce docs: README with quickstart, walkthroughs, flag reference; GIF-based demo; troubleshooting (MCP setup, provider credentials).
 - Update root docs (`MCP_EXAMPLES.md`, `TESTING.md`, framework README) with aiCoder references and sample commands.
-- Add `pnpm --filter @acm-aicoder-demo-cli demo` script and optional `docker compose` recipe for sandboxed runs.
+- Add `pnpm --filter @ddse/acm-aicoder-demo-cli demo` script and optional `docker compose` recipe for sandboxed runs.
 - Prepare changelog and release checklist, including semantic versioning and publish guard to npm (dry-run + provenance).
 - Roll out CI jobs (lint/build/test, e2e scenarios, bundle validation) on Linux & macOS, with nightly replay regression run.
 

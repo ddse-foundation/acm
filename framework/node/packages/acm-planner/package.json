@@ -1,5 +1,5 @@
 {
-  "name": "@acm/planner",
+  "name": "@ddse/acm-planner",
   "version": "0.5.0",
   "description": "ACM v0.5 Planner - LLM-based plan generation",
   "type": "module",
@@ -17,8 +17,8 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@acm/sdk": "workspace:*",
-    "@acm/llm": "workspace:*"
+    "@ddse/acm-sdk": "workspace:*",
+    "@ddse/acm-llm": "workspace:*"
   },
   "keywords": ["acm", "planner", "llm"],
   "license": "MIT"

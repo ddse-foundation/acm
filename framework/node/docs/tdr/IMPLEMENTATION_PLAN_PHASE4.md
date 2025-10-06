@@ -19,7 +19,7 @@ Phase 4 extends the code-first Node framework to satisfy the next tranche of ACM
 | Workstream | Lead Package(s) | Key Deliverables | Dependencies |
 |------------|-----------------|------------------|---------------|
 | Spec Contract Restoration | `packages/acm-sdk`, `packages/acm-runtime`, `packages/acm-replay` | Expanded data types (Goal/Context/Plan/Task/Ledger), migration codemods, schema validators | Spec v0.5 requirements |
-| Structured Planner Tool Calls | `packages/acm-planner`, `packages/acm-llm` | New tool-call schema, ReAct-style planner loop, multi-plan rationale capture, streaming integration | Spec contracts, `@acm/llm` streaming API |
+| Structured Planner Tool Calls | `packages/acm-planner`, `packages/acm-llm` | New tool-call schema, ReAct-style planner loop, multi-plan rationale capture, streaming integration | Spec contracts, `@ddse/acm-llm` streaming API |
 | Tool-Call Discipline Everywhere | `packages/acm-runtime`, `packages/acm-sdk`, `packages/acm-mcp` | Tool registry updates, runtime adapters emitting tool-call envelopes, validation utilities | Spec contracts, structured planner schema, existing tool registry |
 | Nucleus Contract Introduction | `packages/acm-sdk` | `Nucleus` abstract class/interface, `LLMCall` config types, helper factories | Spec contracts, tool-call schema |
 | Context Orchestration Enhancements | `packages/acm-sdk`, `packages/acm-runtime` | Internal context scope data structures, provenance tracking, promotion APIs | Nucleus contract, spec contracts |
@@ -33,7 +33,7 @@ Phase 4 extends the code-first Node framework to satisfy the next tranche of ACM
 
 ### 3.1 Spec Contract Restoration
 
-- Expand `GoalCard`, `ContextPacket`, `PlanArtifact`, `TaskSpec`, and `LedgerEntry` types in `@acm/sdk` to match ACM v0.5 definitions, including provenance lists, policy/verifier references, retry policies, and typed error routes.
+- Expand `GoalCard`, `ContextPacket`, `PlanArtifact`, `TaskSpec`, and `LedgerEntry` types in `@ddse/acm-sdk` to match ACM v0.5 definitions, including provenance lists, policy/verifier references, retry policies, and typed error routes.
 - Provide migration codemods and adapter utilities so existing examples/tests can supply the richer shapes with minimal manual edits.
 - Rework hash utilities so `contextRef` is a SHA-256 of the normalized Context Packet and ensure ledger entries carry content digests and optional signatures.
 - Update replay and runtime validators to fail fast when required fields are missing or malformed.
@@ -53,7 +53,7 @@ Phase 4 extends the code-first Node framework to satisfy the next tranche of ACM
 ### 3.3 Tool-Call Discipline Everywhere
 
 - Extend `ToolRegistry` to register tool metadata including schema references, deterministic version IDs, and capability bindings.
-- Introduce a `ToolCallEnvelope` type in `@acm/sdk` and require runtime adapters to emit tool calls using this structure, writing envelopes into the ledger before execution and on completion.
+- Introduce a `ToolCallEnvelope` type in `@ddse/acm-sdk` and require runtime adapters to emit tool calls using this structure, writing envelopes into the ledger before execution and on completion.
 - Audit existing tool invocations (`task.execute`, MCP adapters, replay rehydration) and wrap them through a helper that enforces schema validation, ledger logging, and trace correlation.
 - Add lint rules/tests ensuring no module parses JSON strings from LLM responses directly or bypasses the envelope helper.
 
@@ -64,7 +64,7 @@ Phase 4 extends the code-first Node framework to satisfy the next tranche of ACM
   - Abstract class `Nucleus` with `preflight`, `invoke`, `postcheck`, `recordInference`, and `getInternalContext` methods wired to ledger events.
   - A typed `LLMCall` method signature that consumes and returns the shared tool-call envelope structures, ensuring structured IO parity with planner/tool usage.
 - Provide a base implementation `DeterministicNucleus` handling ledger writes, prompt hashing, and internal context storage via dependency-injected adapters.
-- Export new artifacts via `@acm/sdk` barrel and retrofit planner/runtime constructors to demand a Nucleus factory.
+- Export new artifacts via `@ddse/acm-sdk` barrel and retrofit planner/runtime constructors to demand a Nucleus factory.
 
 ### 3.5 Context Orchestration Enhancements
 
@@ -83,7 +83,7 @@ Phase 4 extends the code-first Node framework to satisfy the next tranche of ACM
 
 ### 3.7 Tool-Native Default Execution
 
-- Replace synthetic demo tools with MCP-backed or LLM-backed implementations in `@acm/examples` while keeping deterministic fixtures for tests behind feature flags.
+- Replace synthetic demo tools with MCP-backed or LLM-backed implementations in `@ddse/acm-examples` while keeping deterministic fixtures for tests behind feature flags.
 - Wire the CLI (`acm-demo`, `aicoder`) to register MCP transports by default, surfacing configuration templates for common hosts (Ollama, OpenAI, Azure).
 - Provide guardrails for offline/test scenarios by supplying documented fallbacks that still route through the `ToolCallEnvelope` helper.
 - Update onboarding docs to walk through configuring real tools and highlight deterministic replay expectations.

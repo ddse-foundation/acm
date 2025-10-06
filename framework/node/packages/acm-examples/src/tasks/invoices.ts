@@ -1,4 +1,4 @@
-import { Task, type RunContext } from '@acm/sdk';
+import { Task, type RunContext } from '@ddse/acm-sdk';
 import type { InvoiceRecord, PurchaseOrderRecord } from '../data/invoices.js';
 import {
   type FetchInvoiceInput,

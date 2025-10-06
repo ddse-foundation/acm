@@ -1,4 +1,4 @@
-# @acm/planner
+# @ddse/acm-planner
 
 Structured tool-call planner generating Plan-A/B alternatives with safe fallback.
 
@@ -9,7 +9,7 @@ The planner package uses LLM tool calls to generate execution plans from goals a
 ## Installation
 
 ```bash
-pnpm add @acm/planner @acm/llm @acm/sdk
+pnpm add @ddse/acm-planner @ddse/acm-llm @ddse/acm-sdk
 ```
 
 ## Features
@@ -25,8 +25,8 @@ pnpm add @acm/planner @acm/llm @acm/sdk
 ### Basic Planning
 
 ```typescript
-import { StructuredLLMPlanner } from '@acm/planner';
-import { createOllamaClient } from '@acm/llm';
+import { StructuredLLMPlanner } from '@ddse/acm-planner';
+import { createOllamaClient } from '@ddse/acm-llm';
 
 const llm = createOllamaClient('llama3.1');
 const planner = new StructuredLLMPlanner();
@@ -65,7 +65,7 @@ const plan = result.plans[0];
 ### Tool-Call Telemetry
 
 ```typescript
-import { DefaultStreamSink } from '@acm/sdk';
+import { DefaultStreamSink } from '@ddse/acm-sdk';
 
 const result = await planner.plan({ goal, context, capabilities, llm });
 

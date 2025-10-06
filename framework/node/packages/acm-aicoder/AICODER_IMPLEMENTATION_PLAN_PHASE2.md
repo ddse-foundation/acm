@@ -8,7 +8,7 @@
 
 ## 1. Objectives
 
-Phase 2 evolves `@acm/aicoder` from the current Phase 1 showcase into an always-interactive, production-grade developer companion that runs entirely inside a full-screen terminal UI powered by the ACM v0.5 runtime. The primary objectives are:
+Phase 2 evolves `@ddse/acm-aicoder` from the current Phase 1 showcase into an always-interactive, production-grade developer companion that runs entirely inside a full-screen terminal UI powered by the ACM v0.5 runtime. The primary objectives are:
 
 1. **Interactive-only experience:** Launch exclusively in a full-screen TUI with a three-column layout (Chat ▸ Goal/Tasks ▸ Event Stream). No alternate modes.
 2. **Environment provisioning at launch:** Require `--provider`, `--model`, and `--workspace` CLI parameters (with optional `--base-url`) and persist them in session metadata.
@@ -78,10 +78,10 @@ Key integrations:
 
 | Workstream | Lead Packages | Deliverables | Dependencies |
 |------------|---------------|--------------|--------------|
-| Interactive TUI Shell | `packages/acm-aicoder` (bin + new `src/ui`), `@acm/sdk` (stream sinks) | Full-screen layout, command handling, streaming renderer | Ink/Blessed evaluation, planner event API |
+| Interactive TUI Shell | `packages/acm-aicoder` (bin + new `src/ui`), `@ddse/acm-sdk` (stream sinks) | Full-screen layout, command handling, streaming renderer | Ink/Blessed evaluation, planner event API |
 | Model & Engine Provisioning | `packages/acm-aicoder/bin`, `src/config` | CLI parameter validation, session metadata persistence | TUI shell |
-| Budget Governance | `packages/acm-aicoder/src/runtime`, `@acm/runtime` hooks | Provider metadata registry, spend estimator, enforcement hooks | Model provisioning, ledger access |
-| Adaptive Tasks & Nucleus Integration | `packages/acm-aicoder/src/tasks-v2`, `src/tools-v2`, `@acm/sdk` | Context builder hooks, retry orchestration, envelope logging | Planner/Nucleus Phase 4 surfaces |
+| Budget Governance | `packages/acm-aicoder/src/runtime`, `@ddse/acm-runtime` hooks | Provider metadata registry, spend estimator, enforcement hooks | Model provisioning, ledger access |
+| Adaptive Tasks & Nucleus Integration | `packages/acm-aicoder/src/tasks-v2`, `src/tools-v2`, `@ddse/acm-sdk` | Context builder hooks, retry orchestration, envelope logging | Planner/Nucleus Phase 4 surfaces |
 | Memory Lifecycle & Cleanup | `packages/acm-aicoder/src/runtime`, `packages/acm-replay` | Context teardown routines, replay snapshot generation | Adaptive tasks, budget controller |
 | Documentation & ACM Usage Guide | `packages/acm-aicoder/README.md`, new `AICODER_IMPLEMENTATION_PLAN_PHASE2.md` | How-to guide for developers, ACM integration walkthrough | Completion of above workstreams |
 | Capability Map & Task Expansion | `packages/acm-aicoder/src/tasks-v2`, `src/context`, `packages/acm-planner` | Industry-leading capability catalog, task library aligned to developer workflows, planner policy updates | Adaptive tasks, context engine |
@@ -247,8 +247,8 @@ Phase 2 exists to showcase the ACM framework at production scale; every subsyste
 ## 10. Appendix — Quick Start (Planned)
 
 1. `pnpm install`
-2. `pnpm --filter @acm/aicoder run build`
-3. `pnpm --filter @acm/aicoder acm-aicoder --provider vllm --model gpt-4o --base-url https://api.openai.com --workspace /path/to/project`
+2. `pnpm --filter @ddse/acm-aicoder run build`
+3. `pnpm --filter @ddse/acm-aicoder acm-aicoder --provider vllm --model gpt-4o --base-url https://api.openai.com --workspace /path/to/project`
 4. Interact via TUI:
    - Left column: chat with reasoning stream
    - Middle column: goal, tasks, budget metrics

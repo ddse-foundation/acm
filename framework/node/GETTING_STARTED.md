@@ -41,19 +41,19 @@ curl http://localhost:8001/v1/models
 
 ## 3. Run the Canonical Examples
 
-The `@acm/examples` package demonstrates refund and issue-resolution workflows with full ledger output, policy enforcement, and replay bundle generation.
+The `@ddse/acm-examples` package demonstrates refund and issue-resolution workflows with full ledger output, policy enforcement, and replay bundle generation.
 
 ```bash
 # Refund workflow with vLLM (Qwen 30B FP8)
-pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal refund
+pnpm --filter @ddse/acm-examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal refund
 
 # Issue workflow with the same model
-pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal issues
+pnpm --filter @ddse/acm-examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal issues
 
 # Disable streaming or switch execution engines
-pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --no-stream --engine runtime --goal refund
-pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --engine langgraph --goal refund
-pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --engine msaf --goal refund
+pnpm --filter @ddse/acm-examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --no-stream --engine runtime --goal refund
+pnpm --filter @ddse/acm-examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --engine langgraph --goal refund
+pnpm --filter @ddse/acm-examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --engine msaf --goal refund
 ```
 
 What you should observe:
@@ -68,13 +68,13 @@ Resumable execution (Phase 2 feature) lets you checkpoint progress. Replay bundl
 
 ```bash
 # Enable checkpointing during execution
-pnpm --filter @acm/examples demo -- --goal refund --checkpoint-dir ./checkpoints
+pnpm --filter @ddse/acm-examples demo -- --goal refund --checkpoint-dir ./checkpoints
 
 # Resume after an interruption
-pnpm --filter @acm/examples demo -- --resume <run-id> --checkpoint-dir ./checkpoints
+pnpm --filter @ddse/acm-examples demo -- --resume <run-id> --checkpoint-dir ./checkpoints
 
 # Export replay bundles (includes plans, ledger, tool-call envelopes)
-pnpm --filter @acm/examples demo -- --goal refund --save-bundle --checkpoint-dir ./checkpoints
+pnpm --filter @ddse/acm-examples demo -- --goal refund --save-bundle --checkpoint-dir ./checkpoints
 ```
 
 ✅ **Benefits**: Restart from the last successful task, inspect intermediate state, and validate execution offline.
@@ -111,11 +111,11 @@ The ledger entries recorded here are the same artifacts exported in replay bundl
 Create `my-agent.ts` alongside the monorepo packages to experiment with the SDK directly.
 
 ```typescript
-import { Tool, Task, type RunContext } from '@acm/sdk';
-import { executePlan, MemoryLedger } from '@acm/runtime';
-import { createVLLMClient } from '@acm/llm';
-import { StructuredLLMPlanner } from '@acm/planner';
-import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
+import { Tool, Task, type RunContext } from '@ddse/acm-sdk';
+import { executePlan, MemoryLedger } from '@ddse/acm-runtime';
+import { createVLLMClient } from '@ddse/acm-llm';
+import { StructuredLLMPlanner } from '@ddse/acm-planner';
+import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@ddse/acm-examples/registries';
 
 class GreetTool extends Tool<{ name: string }, { greeting: string }> {
   name() { return 'greet'; }
@@ -185,16 +185,16 @@ npx tsx my-agent.ts
 - Implement policy and verification checks via `PolicyEngine`/`VerificationEngine`.
 - Experiment with structured planner overrides; the Nucleus contract is available in Node v0.5.0.
 
-## 7. Level Up with the `@acm/framework` Helper
+## 7. Level Up with the `@ddse/acm-framework` Helper
 
 Once you're comfortable with the primitives, migrate to the high-level orchestrator so you can reuse planning, execution, and streaming defaults without boilerplate.
 
 ```typescript
-import { ACMFramework, ExecutionEngine } from '@acm/framework';
-import { createVLLMClient } from '@acm/llm';
-import { MemoryLedger } from '@acm/runtime';
-import { ExternalContextProviderAdapter } from '@acm/sdk';
-import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
+import { ACMFramework, ExecutionEngine } from '@ddse/acm-framework';
+import { createVLLMClient } from '@ddse/acm-llm';
+import { MemoryLedger } from '@ddse/acm-runtime';
+import { ExternalContextProviderAdapter } from '@ddse/acm-sdk';
+import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@ddse/acm-examples/registries';
 
 const tools = new SimpleToolRegistry();
 const capabilities = new SimpleCapabilityRegistry();
@@ -255,7 +255,7 @@ The helper stays within ACM v0.5 compliance (context packets, ledger hygiene, to
 When the Nucleus emits a `request_context_retrieval` directive, you can satisfy it automatically instead of failing the run by plugging in the `ExternalContextProviderAdapter`.
 
 ```typescript
-import { ExternalContextProviderAdapter, Tool } from '@acm/sdk';
+import { ExternalContextProviderAdapter, Tool } from '@ddse/acm-sdk';
 
 class FilesystemSnapshotTool extends Tool<{ path: string }, { type: string; content: any }> {
   name() {
@@ -305,16 +305,16 @@ cat packages/acm-examples/src/tasks/index.ts
 cat packages/acm-examples/src/goals/index.ts
 
 # Run package-level tests
-pnpm --filter @acm/examples test
+pnpm --filter @ddse/acm-examples test
 ```
 
 ## 10. Optional: Review the AI Coder Reference Experience
 
-`@acm/aicoder` showcases how the framework scales to a full developer assistant with streaming TUI, policy gates, and resumable execution. Treat it as an end-to-end example wired entirely through the same SDK/runtime surfaces.
+`@ddse/acm-aicoder` showcases how the framework scales to a full developer assistant with streaming TUI, policy gates, and resumable execution. Treat it as an end-to-end example wired entirely through the same SDK/runtime surfaces.
 
 ```bash
 # Launch the interactive demo (no LLM required for the walkthrough)
-pnpm --filter @acm/aicoder demo
+pnpm --filter @ddse/acm-aicoder demo
 
 # View detailed documentation
 cat packages/acm-aicoder/README.md

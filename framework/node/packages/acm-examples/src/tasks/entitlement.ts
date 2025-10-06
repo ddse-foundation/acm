@@ -1,4 +1,4 @@
-import { Task, type RunContext } from '@acm/sdk';
+import { Task, type RunContext } from '@ddse/acm-sdk';
 import type { CustomerProfile } from '../data/entitlement.js';
 import {
   type FetchCustomerProfileInput,

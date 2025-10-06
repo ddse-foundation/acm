@@ -10,7 +10,7 @@ import {
   type StreamSink,
   type RunContext,
   ExternalContextProviderAdapter,
-} from '@acm/sdk';
+} from '@ddse/acm-sdk';
 import { evaluateGuard } from './guards.js';
 import { MemoryLedger } from './ledger.js';
 import { withRetry } from './retry.js';

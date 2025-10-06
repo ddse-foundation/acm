@@ -13,9 +13,9 @@ import {
   type InternalContextScope,
   type LedgerEntry,
   type LLMCallFn,
-} from '@acm/sdk';
-import { MemoryLedger } from '@acm/runtime';
-import { ACMFramework } from '@acm/framework';
+} from '@ddse/acm-sdk';
+import { MemoryLedger } from '@ddse/acm-runtime';
+import { ACMFramework } from '@ddse/acm-framework';
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '../src/registries.js';
 import { registerExampleContextProviders } from '../src/context/index.js';
 import { listScenarioKeys, scenarios, type ScenarioDefinition } from '../src/examples/scenarios.js';

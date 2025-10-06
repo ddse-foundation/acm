@@ -1,4 +1,4 @@
-# @acm/sdk
+# @ddse/acm-sdk
 
 Core types and abstract classes for the ACM v0.5 Node.js Framework.
 
@@ -9,7 +9,7 @@ The SDK package provides the foundational types and interfaces that all other AC
 ## Installation
 
 ```bash
-pnpm add @acm/sdk
+pnpm add @ddse/acm-sdk
 ```
 
 ## What's Included
@@ -41,7 +41,7 @@ pnpm add @acm/sdk
 ### Defining a Tool
 
 ```typescript
-import { Tool } from '@acm/sdk';
+import { Tool } from '@ddse/acm-sdk';
 
 export class MyTool extends Tool<{ input: string }, { output: string }> {
   name(): string {
@@ -58,7 +58,7 @@ export class MyTool extends Tool<{ input: string }, { output: string }> {
 ### Defining a Task
 
 ```typescript
-import { Task, type RunContext } from '@acm/sdk';
+import { Task, type RunContext } from '@ddse/acm-sdk';
 
 export class MyTask extends Task<{ query: string }, { result: any }> {
   constructor() {
@@ -93,7 +93,7 @@ export class MyTask extends Task<{ query: string }, { result: any }> {
 ### Implementing Registries
 
 ```typescript
-import { CapabilityRegistry, ToolRegistry, type Capability, type Task, type Tool } from '@acm/sdk';
+import { CapabilityRegistry, ToolRegistry, type Capability, type Task, type Tool } from '@ddse/acm-sdk';
 
 export class MyCapabilityRegistry extends CapabilityRegistry {
   private tasks = new Map<string, Task>();
@@ -129,7 +129,7 @@ export class MyCapabilityRegistry extends CapabilityRegistry {
 ### Using Streaming
 
 ```typescript
-import { DefaultStreamSink } from '@acm/sdk';
+import { DefaultStreamSink } from '@ddse/acm-sdk';
 
 const stream = new DefaultStreamSink();
 

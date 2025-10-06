@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import type { Tool, ToolCallEnvelope, ToolRegistry } from '@acm/sdk';
+import type { Tool, ToolCallEnvelope, ToolRegistry } from '@ddse/acm-sdk';
 import type { MemoryLedger } from './ledger.js';
 
 type ToolGetterOptions = {

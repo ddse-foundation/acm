@@ -1,5 +1,5 @@
 // Search Tools - Code search and pattern matching
-import { Tool } from '@acm/sdk';
+import { Tool } from '@ddse/acm-sdk';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { CodeSearch, type SearchResult as ContextSearchResult } from '../context/index.js';

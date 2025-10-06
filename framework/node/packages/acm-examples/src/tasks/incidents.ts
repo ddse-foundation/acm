@@ -1,4 +1,4 @@
-import { Task, type RunContext } from '@acm/sdk';
+import { Task, type RunContext } from '@ddse/acm-sdk';
 import type { IncidentRecord, IncidentSeverity } from '../data/incidents.js';
 import {
   type FetchIncidentInput,

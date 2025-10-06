@@ -1,5 +1,5 @@
 {
-  "name": "@acm/aicoder",
+  "name": "@ddse/acm-aicoder",
   "version": "0.5.0",
   "description": "ACM AI Coder Demo - Production-ready developer workflow automation",
   "type": "module",
@@ -22,12 +22,12 @@
     "acm-aicoder": "node ./dist/bin/interactive.js"
   },
   "dependencies": {
-    "@acm/sdk": "workspace:*",
-    "@acm/runtime": "workspace:*",
-    "@acm/llm": "workspace:*",
-    "@acm/planner": "workspace:*",
-    "@acm/replay": "workspace:*",
-    "@acm/framework": "workspace:*",
+    "@ddse/acm-sdk": "workspace:*",
+    "@ddse/acm-runtime": "workspace:*",
+    "@ddse/acm-llm": "workspace:*",
+    "@ddse/acm-planner": "workspace:*",
+    "@ddse/acm-replay": "workspace:*",
+    "@ddse/acm-framework": "workspace:*",
     "enquirer": "^2.4.1",
     "chalk": "^5.3.0",
     "ora": "^8.0.1",

@@ -8,10 +8,10 @@ importers:
 
   .:
     dependencies:
-      '@acm/llm':
+      '@ddse/acm-llm':
         specifier: workspace:*
         version: link:../acm-llm
-      '@acm/sdk':
+      '@ddse/acm-sdk':
         specifier: workspace:*
         version: link:../acm-sdk
       json5:

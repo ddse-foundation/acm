@@ -19,8 +19,8 @@ import type {
   NucleusInvokeResult,
   InternalContextScope,
   LedgerEntry,
-} from '@acm/sdk';
-import { Task, Nucleus } from '@acm/sdk';
+} from '@ddse/acm-sdk';
+import { Task, Nucleus } from '@ddse/acm-sdk';
 
 // Simple test capability
 class TestTask extends Task {

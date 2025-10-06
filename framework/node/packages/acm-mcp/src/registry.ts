@@ -1,5 +1,5 @@
 // MCP Tool Registry for ACM
-import { ToolRegistry } from '@acm/sdk';
+import { ToolRegistry } from '@ddse/acm-sdk';
 import { McpTool, McpClientManager } from './client.js';
 
 /**

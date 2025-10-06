@@ -12,19 +12,19 @@ import {
   type PolicyEngine,
   type StreamSink,
   type ToolRegistry,
-} from '@acm/sdk';
+} from '@ddse/acm-sdk';
 import {
   StructuredLLMPlanner,
   type PlannerOptions,
   type PlannerResult,
-} from '@acm/planner';
+} from '@ddse/acm-planner';
 import {
   executeResumablePlan,
   MemoryLedger,
   type ExecutePlanResult,
   type ResumableExecutePlanOptions,
-} from '@acm/runtime';
-import { LangGraphAdapter, MSAgentFrameworkAdapter } from '@acm/adapters';
+} from '@ddse/acm-runtime';
+import { LangGraphAdapter, MSAgentFrameworkAdapter } from '@ddse/acm-adapters';
 
 export type PlanSelector = (result: PlannerResult) => Plan;
 

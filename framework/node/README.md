@@ -16,9 +16,9 @@ The ACM Node.js Framework gives engineers a coherent set of SDKs, runtime servic
 - **Nucleus Abstraction**: Shared reasoning core that standardizes LLM calls, internal context retrieval, and ledger recording. Available in Node v0.5.0.
 - **Open LLM Support**: OpenAI-compatible client with presets for Ollama and vLLM; bring your own provider via configuration.
 - **MCP Integration**: Discover and invoke Model Context Protocol servers as first-class tools.
-- **High-Level Orchestration**: Ship the `@acm/framework` helper for wiring planning + execution behind a single call while preserving ACM v0.5 guarantees.
+- **High-Level Orchestration**: Ship the `@ddse/acm-framework` helper for wiring planning + execution behind a single call while preserving ACM v0.5 guarantees.
 - **Replay & Validation**: Export/import replay bundles with ledger verification, tool-call inspection, and test fixtures.
-- **Reference Implementations**: `@acm/examples` package with refund and issue-resolution workflows; `@acm/aicoder` developer experience built on the framework.
+- **Reference Implementations**: `@ddse/acm-examples` package with refund and issue-resolution workflows; `@ddse/acm-aicoder` developer experience built on the framework.
 
 ## Quick Start
 
@@ -38,34 +38,34 @@ pnpm build
 
 ### Explore the Framework Examples
 
-The primary entry point for learning the framework is the `@acm/examples` package. It ships with refund and issue-resolution workflows that exercise the runtime, planner, ledger, and replay tooling.
+The primary entry point for learning the framework is the `@ddse/acm-examples` package. It ships with refund and issue-resolution workflows that exercise the runtime, planner, ledger, and replay tooling.
 
 ```bash
 # Run the refund workflow with vLLM (tested with Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8)
-pnpm --filter @acm/examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal refund
+pnpm --filter @ddse/acm-examples demo -- --provider vllm --model Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --base-url http://localhost:8001/v1 --goal refund
 
 # Switch to vLLM
-pnpm --filter @acm/examples demo -- --provider vllm --model mistralai/Mistral-7B-Instruct-v0.2 --goal issues
+pnpm --filter @ddse/acm-examples demo -- --provider vllm --model mistralai/Mistral-7B-Instruct-v0.2 --goal issues
 
 # Inspect replay bundle output
-pnpm --filter @acm/examples demo -- --goal refund --save-bundle --checkpoint-dir ./checkpoints
+pnpm --filter @ddse/acm-examples demo -- --goal refund --save-bundle --checkpoint-dir ./checkpoints
 
 # Execute package tests
-pnpm --filter @acm/examples test
-pnpm --filter @acm/examples test:bm25
+pnpm --filter @ddse/acm-examples test
+pnpm --filter @ddse/acm-examples test:bm25
 ```
 
 You can also target alternative engines via `--engine langgraph` or `--engine msaf`, relying on the adapters that ship with the monorepo.
 
-### Shortcut: Run Planning + Execution with `@acm/framework`
+### Shortcut: Run Planning + Execution with `@ddse/acm-framework`
 
-When you're ready to leave the canned demos, the `@acm/framework` package gives you a typed wrapper around the planner, runtime, adapters, and nucleus wiring:
+When you're ready to leave the canned demos, the `@ddse/acm-framework` package gives you a typed wrapper around the planner, runtime, adapters, and nucleus wiring:
 
 ```typescript
-import { ACMFramework, ExecutionEngine } from '@acm/framework';
-import { createVLLMClient } from '@acm/llm';
-import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
-import { MemoryLedger } from '@acm/runtime';
+import { ACMFramework, ExecutionEngine } from '@ddse/acm-framework';
+import { createVLLMClient } from '@ddse/acm-llm';
+import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@ddse/acm-examples/registries';
+import { MemoryLedger } from '@ddse/acm-runtime';
 
 const llm = createVLLMClient('Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8', 'http://localhost:8001/v1');
 const tools = new SimpleToolRegistry();
@@ -146,8 +146,8 @@ packages/
 
 ### Reference Implementations
 
-- **`@acm/examples`** provides minimal, deterministic flows (refund, issues, BM25 search) that illustrate the framework fundamentals.
-- **`@acm/aicoder`** demonstrates how the framework supports production-grade developer workflows (streaming UI, policy checks, resumable execution). Treat it as a case study; all surfaces still depend on the core SDK/runtime abstractions.
+- **`@ddse/acm-examples`** provides minimal, deterministic flows (refund, issues, BM25 search) that illustrate the framework fundamentals.
+- **`@ddse/acm-aicoder`** demonstrates how the framework supports production-grade developer workflows (streaming UI, policy checks, resumable execution). Treat it as a case study; all surfaces still depend on the core SDK/runtime abstractions.
 
 ### Core Concepts
 
@@ -159,14 +159,14 @@ packages/
 
 ## Building Your First Agent
 
-### Option 1: Let `@acm/framework` orchestrate everything for you
+### Option 1: Let `@ddse/acm-framework` orchestrate everything for you
 
 ```typescript
-import { ACMFramework } from '@acm/framework';
-import { StructuredLLMPlanner } from '@acm/planner';
-import { MemoryLedger } from '@acm/runtime';
-import { createVLLMClient } from '@acm/llm';
-import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
+import { ACMFramework } from '@ddse/acm-framework';
+import { StructuredLLMPlanner } from '@ddse/acm-planner';
+import { MemoryLedger } from '@ddse/acm-runtime';
+import { createVLLMClient } from '@ddse/acm-llm';
+import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@ddse/acm-examples/registries';
 
 const tools = new SimpleToolRegistry();
 const capabilities = new SimpleCapabilityRegistry();
@@ -212,7 +212,7 @@ This path keeps you compliant with the spec while avoiding boilerplate. You can 
 #### 1. Define Tools
 
 ```typescript
-import { Tool } from '@acm/sdk';
+import { Tool } from '@ddse/acm-sdk';
 
 class SearchTool extends Tool<{ query: string }, { results: string[] }> {
   name() { return 'search'; }
@@ -227,7 +227,7 @@ class SearchTool extends Tool<{ query: string }, { results: string[] }> {
 #### 2. Create Tasks
 
 ```typescript
-import { Task, type RunContext } from '@acm/sdk';
+import { Task, type RunContext } from '@ddse/acm-sdk';
 
 class MyTask extends Task<{ query: string }, { data: any }> {
   constructor() {
@@ -245,7 +245,7 @@ class MyTask extends Task<{ query: string }, { data: any }> {
 #### 3. Setup Registries
 
 ```typescript
-import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@acm/examples/registries';
+import { SimpleCapabilityRegistry, SimpleToolRegistry } from '@ddse/acm-examples/registries';
 
 const tools = new SimpleToolRegistry();
 tools.register(new SearchTool());
@@ -260,9 +260,9 @@ capabilities.register(
 #### 4. Plan and Execute
 
 ```typescript
-import { StructuredLLMPlanner } from '@acm/planner';
-import { executePlan } from '@acm/runtime';
-import { createVLLMClient } from '@acm/llm';
+import { StructuredLLMPlanner } from '@ddse/acm-planner';
+import { executePlan } from '@ddse/acm-runtime';
+import { createVLLMClient } from '@ddse/acm-llm';
 
 const llm = createVLLMClient('Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8', 'http://localhost:8001/v1');
 const planner = new StructuredLLMPlanner();
@@ -289,7 +289,7 @@ const result = await executePlan({
 
 ### SDK
 
-`@acm/sdk` exports the formal ACM contracts plus helpers for building reusable components:
+`@ddse/acm-sdk` exports the formal ACM contracts plus helpers for building reusable components:
 
 - `Tool<I, O>` — Base class enforcing schema-aware tool execution.
 - `Task<I, O>` — Abstract task with retry policy, capability metadata, and optional Nucleus injection.
@@ -300,7 +300,7 @@ const result = await executePlan({
 
 ### Runtime
 
-`@acm/runtime` executes plans deterministically:
+`@ddse/acm-runtime` executes plans deterministically:
 
 - `executePlan(options)` — Core engine with resumable execution and checkpointing.
 - `MemoryLedger` — Append-only decision log with tamper-evident hashes.
@@ -309,14 +309,14 @@ const result = await executePlan({
 
 ### Planner
 
-`@acm/planner` handles structured plan generation:
+`@ddse/acm-planner` handles structured plan generation:
 
 - `StructuredLLMPlanner.plan(options)` — Generates one or more plan candidates backed by tool-call envelopes.
 - Streaming hooks and prompt digests recorded for replay bundles.
 
 ### LLM Integration
 
-`@acm/llm` provides OpenAI-compatible clients with presets:
+`@ddse/acm-llm` provides OpenAI-compatible clients with presets:
 
 - `createOllamaClient(model, baseUrl?)`
 - `createVLLMClient(model, baseUrl?)`
@@ -327,8 +327,8 @@ const result = await executePlan({
 Use the `ExternalContextProviderAdapter` when you want the Nucleus preflight to hydrate missing context automatically instead of throwing an error:
 
 ```typescript
-import { ExternalContextProviderAdapter, Tool } from '@acm/sdk';
-import { executePlan } from '@acm/runtime';
+import { ExternalContextProviderAdapter, Tool } from '@ddse/acm-sdk';
+import { executePlan } from '@ddse/acm-runtime';
 
 const crmClient = createCrmClient();
 
@@ -369,13 +369,13 @@ By default the adapter matches directives whose prefix equals the tool name (e.g
 
 ### MCP + Adapters
 
-- `@acm/mcp`: `McpClientManager`, `McpToolRegistry`, `CombinedToolRegistry`.
-- `@acm/adapters`: `asLangGraph`, `wrapAgentNodes` to embed ACM runtime into external orchestrators.
+- `@ddse/acm-mcp`: `McpClientManager`, `McpToolRegistry`, `CombinedToolRegistry`.
+- `@ddse/acm-adapters`: `asLangGraph`, `wrapAgentNodes` to embed ACM runtime into external orchestrators.
 
 ### Replay & Tooling
 
-- `@acm/replay`: Export/import bundles, validate ledger traces, and inspect tool-call envelopes.
-- `@acm/cli` *(coming soon)*: Consolidated CLI experience that defaults to tool-native execution paths.
+- `@ddse/acm-replay`: Export/import bundles, validate ledger traces, and inspect tool-call envelopes.
+- `@ddse/acm-cli` *(coming soon)*: Consolidated CLI experience that defaults to tool-native execution paths.
 
 ## Configuration
 
@@ -386,7 +386,7 @@ The example CLI exposes code-first flags that mirror ACM concepts:
 --model <name>                     Model name to load
 --base-url <url>                   Override LLM API endpoint
 --engine <runtime|langgraph|msaf>  Execution engine adapter
---goal <refund|issues|...>         Example goals provided by @acm/examples
+--goal <refund|issues|...>         Example goals provided by @ddse/acm-examples
 --no-stream                        Disable streaming output
 --save-bundle                      Export replay bundle artifacts
 --use-mcp                          Enable MCP tool discovery
@@ -423,7 +423,7 @@ Each package follows the same layout (`src/`, `dist/`, `package.json`, `tsconfig
 
 ## Example Library Highlights
 
-The `@acm/examples` package showcases:
+The `@ddse/acm-examples` package showcases:
 
 1. **Refund Flow** — Multi-step workflow with risk scoring, policy enforcement, and notifications.
 2. **Issues Flow** — Read-only analysis pipeline demonstrating guard and policy evaluation.
@@ -443,7 +443,7 @@ Completed in Node v0.5.0 (see [`IMPLEMENTATION_PLAN_PHASE4.md`](./IMPLEMENTATION
 
 Next up (post v0.5.0):
 
-- CLI consolidation (`@acm/cli`).
+- CLI consolidation (`@ddse/acm-cli`).
 - Adapter improvements for checkpoint/resume in LangGraph/MSAF.
 - Additional audit metadata in ledger entries (phase/decision fields, fuller LLM params).
 
