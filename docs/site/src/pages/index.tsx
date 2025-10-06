@@ -33,7 +33,7 @@ function HomepageHeader() {
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container text--center">
-        <div className="version-badge">Currently documenting {siteConfig.customFields?.releaseVersion}</div>
+        <div className="version-badge">Latest Release {siteConfig.customFields?.releaseVersion}</div>
         <Heading as="h1" className="hero__title">
           Build trustworthy agent systems with ACM v0.5.0
         </Heading>
