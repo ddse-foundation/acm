@@ -9,3 +9,4 @@ export * from './stream.js';
 export * from './nucleus.js';
 export * from './context.js';
 export * from './context-provider.js';
+export * from './utils.js';

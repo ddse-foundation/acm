@@ -1,0 +1,38 @@
+[
+  {
+    "id": "POL-TRAVEL-PLUS",
+    "benefitCode": "BEN-TRAVEL-PLUS",
+    "description": "Provides global lounge access and concierge booking support.",
+    "requiredTier": "PLATINUM",
+    "minAccountAgeDays": 730,
+    "requiresComplianceClearance": false,
+    "slaMinutes": 30
+  },
+  {
+    "id": "POL-PRIORITY-SUPPORT",
+    "benefitCode": "BEN-PRIORITY-SUPPORT",
+    "description": "24/7 engineer escalation with one-hour SLA.",
+    "requiredTier": "GOLD",
+    "minAccountAgeDays": 180,
+    "requiresComplianceClearance": false,
+    "slaMinutes": 60
+  },
+  {
+    "id": "POL-ANALYTICS-LABS",
+    "benefitCode": "BEN-ANALYTICS-LABS",
+    "description": "Early access to analytics beta features.",
+    "requiredTier": "PLATINUM",
+    "minAccountAgeDays": 1460,
+    "requiresComplianceClearance": true,
+    "slaMinutes": 120
+  },
+  {
+    "id": "POL-INSIGHTS-LITE",
+    "benefitCode": "BEN-INSIGHTS-LITE",
+    "description": "Baseline insights and monthly reporting package.",
+    "requiredTier": "STANDARD",
+    "minAccountAgeDays": 90,
+    "requiresComplianceClearance": false,
+    "slaMinutes": 240
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "CUST-104233",
+    "name": "Sofia Anders",
+    "tier": "PLATINUM",
+    "accountAgeDays": 2190,
+    "complianceFlags": [],
+    "benefits": ["BEN-TRAVEL-PLUS", "BEN-PRIORITY-SUPPORT", "BEN-ANALYTICS-LABS"],
+    "supervisor": {
+      "name": "Dylan Mistry",
+      "email": "dylan.mistry@northwind.example"
+    }
+  },
+  {
+    "id": "CUST-204918",
+    "name": "Jacob Martinez",
+    "tier": "GOLD",
+    "accountAgeDays": 980,
+    "complianceFlags": ["ATTESTATION_PENDING"],
+    "benefits": ["BEN-PRIORITY-SUPPORT"],
+    "supervisor": {
+      "name": "Nina Patel",
+      "email": "nina.patel@northwind.example"
+    }
+  },
+  {
+    "id": "CUST-552144",
+    "name": "Li Wei",
+    "tier": "STANDARD",
+    "accountAgeDays": 320,
+    "complianceFlags": [],
+    "benefits": ["BEN-INSIGHTS-LITE"],
+    "supervisor": {
+      "name": "Marcus Lee",
+      "email": "marcus.lee@northwind.example"
+    }
+  }
+]

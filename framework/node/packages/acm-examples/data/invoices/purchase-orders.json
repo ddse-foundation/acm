@@ -1,0 +1,38 @@
+[
+  {
+    "id": "PO-99231",
+    "initiator": "Darius Patel",
+    "department": "Network Engineering",
+    "total": 18500,
+    "currency": "USD",
+    "status": "approved",
+    "lines": [
+      { "sku": "SRV-FW-EDGE", "description": "Edge firewall appliance", "quantity": 5, "unitPrice": 2500 },
+      { "sku": "SRV-SUP-24M", "description": "24 month premium support", "quantity": 5, "unitPrice": 200 }
+    ]
+  },
+  {
+    "id": "PO-99244",
+    "initiator": "Megan Lee",
+    "department": "People Operations",
+    "total": 6200,
+    "currency": "USD",
+    "status": "approved",
+    "lines": [
+      { "sku": "TRN-COACHING", "description": "Onsite coaching workshop", "quantity": 3, "unitPrice": 1800 },
+      { "sku": "TRN-MATERIALS", "description": "Participant materials", "quantity": 30, "unitPrice": 20 }
+    ]
+  },
+  {
+    "id": "PO-99267",
+    "initiator": "Laila Ortiz",
+    "department": "Manufacturing",
+    "total": 11800,
+    "currency": "USD",
+    "status": "pending",
+    "lines": [
+      { "sku": "MFG-CNC-LEASE", "description": "CNC equipment lease", "quantity": 1, "unitPrice": 9600 },
+      { "sku": "MFG-SAFETY-KIT", "description": "Safety equipment kit", "quantity": 40, "unitPrice": 55 }
+    ]
+  }
+]

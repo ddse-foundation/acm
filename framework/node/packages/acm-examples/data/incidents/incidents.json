@@ -1,0 +1,30 @@
+[
+  {
+    "id": "INC-2045",
+    "service": "checkout-api",
+    "reportedAt": "2025-10-05T03:22:00Z",
+    "customerImpact": "MAJOR",
+    "category": "OUTAGE",
+    "signalScore": 0.91,
+    "declaredSeverity": "CRITICAL",
+    "vipCustomer": true
+  },
+  {
+    "id": "INC-2078",
+    "service": "analytics-stream",
+    "reportedAt": "2025-10-05T09:40:00Z",
+    "customerImpact": "MINOR",
+    "category": "PERFORMANCE",
+    "signalScore": 0.63,
+    "declaredSeverity": "MEDIUM"
+  },
+  {
+    "id": "INC-2099",
+    "service": "identity-core",
+    "reportedAt": "2025-10-05T11:05:00Z",
+    "customerImpact": "MAJOR",
+    "category": "SECURITY",
+    "signalScore": 0.74,
+    "declaredSeverity": "HIGH"
+  }
+]

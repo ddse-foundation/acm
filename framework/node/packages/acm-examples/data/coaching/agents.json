@@ -1,0 +1,16 @@
+[
+  {
+    "id": "AG-883",
+    "name": "Priya Singh",
+    "region": "AMER",
+    "tenureMonths": 28,
+    "managerEmail": "luis.mendez@northwind.example"
+  },
+  {
+    "id": "AG-905",
+    "name": "Jordan Lee",
+    "region": "EMEA",
+    "tenureMonths": 14,
+    "managerEmail": "ella.thompson@northwind.example"
+  }
+]

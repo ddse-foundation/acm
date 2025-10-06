@@ -43,6 +43,7 @@ The Agentic Contract Model (ACM) is a proposed specification and framework that 
 
 ## Executive Summary
 
+> **v0.5 disclosure:** This is the first public release of the ACM spec and reference framework. Claims in this document describe current capabilities and an evidence-backed roadmap. Where we discuss fairness and enterprise readiness, we mean *enablement and design intent*, not guarantees, until independent pilots and benchmarks are published.
 
 **Agentic Contract Model (ACM) Overview:** ACM is a formal specification that defines five core abstractions – **Goal, Plan, Capability, Task, Tool** – and prescribes how they interact via structured artifacts (Goal Cards, Plans, Capability Maps, etc.). It introduces normative requirements like **Context Packets** (captured, versioned context for planning), a **Memory Ledger** (append-only decision log), and **Replay Bundles** (full trace artifacts for reproducibility). The ACM spec’s objective is to bridge **human or AI-generated intent** with **deterministic execution** in a way that is traceable, auditable, and policy-compliant.
 

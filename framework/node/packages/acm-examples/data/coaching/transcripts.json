@@ -1,0 +1,37 @@
+[
+  {
+    "id": "TRANS-5540",
+    "agentId": "AG-883",
+    "customerSentiment": "NEGATIVE",
+    "complianceFlags": ["DISCLOSURE_MISSED", "CALL_TAG_MISSING"],
+    "transcript": [
+      "Agent: Thank you for calling Northwind Support, this is Priya.",
+      "Customer: I've been waiting three days for someone to unblock my fulfillment feed.",
+      "Agent: I can see the backlog and I'm escalating to our ops team right now.",
+      "Customer: This is costing me money every hour.",
+      "Agent: I completely understand how frustrating that is and I'm logging an urgent ticket.",
+      "Agent: You'll get an update within the next two hours and I'll follow up personally.",
+      "Customer: Please make sure someone actually reaches out this time.",
+      "Agent: Absolutely, I'll send you confirmation as soon as I have it." 
+    ],
+    "callDurationSeconds": 780,
+    "followUpRequired": true
+  },
+  {
+    "id": "TRANS-5581",
+    "agentId": "AG-905",
+    "customerSentiment": "NEUTRAL",
+    "complianceFlags": [],
+    "transcript": [
+      "Agent: Hi, this is Jordan with Northwind Coaching Desk.",
+      "Customer: I'm double-checking the renewal timeline for our premium license.",
+      "Agent: Happy to help—your renewal is scheduled for next month on the 18th.",
+      "Customer: Great, can you send me the quote details?",
+      "Agent: I'll email them right away and flag your account manager to follow up.",
+      "Customer: Perfect, thanks for the quick support.",
+      "Agent: Anytime! Let me know if there's anything else." 
+    ],
+    "callDurationSeconds": 360,
+    "followUpRequired": false
+  }
+]

@@ -1,5 +1,6 @@
 // Integration test for ACM framework
 import {
+  ExternalContextProviderAdapter,
   Nucleus,
   type Goal,
   type Context,
@@ -15,62 +16,15 @@ import {
 } from '@acm/sdk';
 import { MemoryLedger } from '@acm/runtime';
 import { ACMFramework } from '@acm/framework';
-import type { PlannerResult } from '@acm/planner';
-import { SearchTool } from '../src/tools/index.js';
-import { SearchTask } from '../src/tasks/index.js';
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '../src/registries.js';
+import { registerExampleContextProviders } from '../src/context/index.js';
+import { listScenarioKeys, scenarios, type ScenarioDefinition } from '../src/examples/scenarios.js';
 
-class TestNucleus extends Nucleus {
-  private scope?: InternalContextScope;
-
-  constructor(config: NucleusConfig) {
-    super(config);
-  }
-
-  async preflight(): Promise<PreflightResult> {
-    return { status: 'OK' };
-  }
-
-  async invoke(): Promise<NucleusInvokeResult> {
-    return { toolCalls: [] };
-  }
-
-  async postcheck(): Promise<PostcheckResult> {
-    return { status: 'COMPLETE' };
-  }
-
-  recordInference(promptDigest: string): LedgerEntry {
-    return {
-      id: `test-nucleus-${Date.now()}`,
-      ts: Date.now(),
-      type: 'NUCLEUS_INFERENCE',
-      details: { promptDigest },
-    };
-  }
-
-  getInternalContext(): InternalContextScope | undefined {
-    return this.scope;
-  }
-
-  setInternalContext(scope: InternalContextScope): void {
-    this.scope = scope;
-  }
-}
-
-const testNucleusFactory: NucleusFactory = config => new TestNucleus(config);
-
-const nucleusConfig = {
-  llmCall: {
-    provider: 'test',
-    model: 'stub',
-    temperature: 0,
-    maxTokens: 256,
-  },
-  hooks: {
-    preflight: true,
-    postcheck: true,
-  },
-} as const;
+type TestResult = {
+  scenario: ScenarioDefinition;
+  success: boolean;
+  error?: unknown;
+};
 
 const stubLLMCall: LLMCallFn = async () => ({
   reasoning: '',
@@ -78,148 +32,132 @@ const stubLLMCall: LLMCallFn = async () => ({
   raw: {},
 });
 
-const stubFrameworkFactory = (_ledger: MemoryLedger): NucleusFactory => testNucleusFactory;
+function createVerifyFn() {
+  return async (taskId: string, output: any, expressions: string[]): Promise<boolean> => {
+    for (const expr of expressions) {
+      try {
+        const fn = new Function('output', `return ${expr};`);
+        const result = fn(output);
+        if (!result) {
+          console.error(`Verification failed for ${taskId}: ${expr}`);
+          return false;
+        }
+      } catch (error) {
+        console.error(`Verification error for ${taskId}: ${expr}`, error);
+        return false;
+      }
+    }
+    return true;
+  };
+}
 
-async function testBasicExecution() {
-  console.log('Testing basic ACM execution...');
+async function runScenario(definition: ScenarioDefinition): Promise<void> {
+  console.log(`\n▶️  Scenario: ${definition.name} (${definition.key})`);
 
-  // Setup
   const toolRegistry = new SimpleToolRegistry();
-  toolRegistry.register(new SearchTool());
-
   const capabilityRegistry = new SimpleCapabilityRegistry();
-  capabilityRegistry.register({ name: 'search', sideEffects: false }, new SearchTask());
+  definition.registerTools(toolRegistry);
+  definition.registerCapabilities(capabilityRegistry);
 
-  const goal: Goal = {
-    id: 'test-goal',
-    intent: 'Test search functionality',
-  };
-
-  const context: Context = {
-    id: 'test-context',
-    facts: { test: true },
-  };
-
-  const plan: Plan = {
-    id: 'test-plan',
-    contextRef: 'test-context',
-    capabilityMapVersion: 'v1',
-    tasks: [
-      {
-        id: 't1',
-        capability: 'search',
-        input: { query: 'test query' },
-      },
-    ],
-    edges: [],
-  };
+  const adapter = new ExternalContextProviderAdapter();
+  registerExampleContextProviders(adapter);
 
   const framework = ACMFramework.create({
     capabilityRegistry,
     toolRegistry,
     nucleus: {
       call: stubLLMCall,
-      llmConfig: nucleusConfig.llmCall,
-      hooks: nucleusConfig.hooks,
-      factory: stubFrameworkFactory,
+      llmConfig: {
+        provider: 'test',
+        model: 'stub',
+        temperature: 0,
+        maxTokens: 0,
+      },
+      hooks: {
+        preflight: false,
+        postcheck: false,
+      },
     },
+    verify: createVerifyFn(),
+    contextProvider: adapter,
   });
 
-  // Execute
+  const reference = await definition.buildReferencePlan();
+  const plan = reference.plan;
   const ledger = new MemoryLedger();
-  const plannerResult: PlannerResult = {
-    plans: [plan],
-    contextRef: plan.contextRef ?? 'test-context',
-    rationale: 'test-plan',
-  };
 
-  const result = await framework.execute({
-    goal,
-    context,
+  const executeResult = await framework.execute({
+    goal: definition.goal,
+    context: definition.context,
     ledger,
     existingPlan: {
       plan,
-      plannerResult,
+      plannerResult: {
+        plans: [plan],
+        contextRef: plan.contextRef,
+        rationale: `${definition.name} reference plan`,
+      },
     },
   });
 
-  // Verify
-  const taskRecord = result.execution.outputsByTask['t1'];
+  definition.assertExecution(executeResult.execution);
 
-  if (!taskRecord) {
-    throw new Error('Task output not found');
-  }
+  console.log('   ✅ Execution succeeded');
 
-  const taskOutput = taskRecord.output as { results?: unknown[] } | undefined;
-
-  if (!taskOutput?.results) {
-    throw new Error('Search results not found');
-  }
-
-  if (result.execution.ledger.length === 0) {
-    throw new Error('Ledger is empty');
-  }
-
-  console.log('✅ Basic execution test passed');
-  return true;
-}
-
-async function testSearchWithData() {
-  console.log('Testing search with synthetic data...');
-
-  // Wait a bit for data to load
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  const searchTool = new SearchTool();
-  
-  // Search for policy information
-  const result = await searchTool.call({ query: 'return policy' });
-
-  if (!result.results || result.results.length === 0) {
-    console.log('  Note: Search data may not be loaded yet, skipping...');
-    return true;
-  }
-
-  console.log(`  Found ${result.results.length} results`);
-  
-  console.log('✅ Search with data test passed');
-  return true;
-}
-
-async function runIntegrationTests() {
-  console.log('Running ACM Integration Tests\n');
-  console.log('='.repeat(50));
-
-  const tests = [
-    testBasicExecution,
-    testSearchWithData,
-  ];
-
-  let passed = 0;
-  let failed = 0;
-
-  for (const test of tests) {
-    try {
-      await test();
-      passed++;
-    } catch (error) {
-      console.error(`❌ Test failed: ${error}`);
-      failed++;
+  for (const task of plan.tasks) {
+    const record = executeResult.execution.outputsByTask?.[task.id];
+    if (!record?.output) {
+      throw new Error(`Task ${task.id} did not produce an output`);
     }
   }
 
+  if (executeResult.execution.ledger.length === 0) {
+    throw new Error('Ledger is empty after execution');
+  }
+}
+
+async function runIntegrationSuite(): Promise<boolean> {
+  console.log('Running ACM Scenario Integration Suite');
+  console.log('='.repeat(50));
+
+  const keys = listScenarioKeys();
+  const results: TestResult[] = [];
+
+  for (const key of keys) {
+    const scenario = scenarios[key];
+    try {
+      await runScenario(scenario);
+      results.push({ scenario, success: true });
+    } catch (error) {
+      console.error(`   ❌ Scenario failed: ${scenario.name}`);
+      console.error(error);
+      results.push({ scenario, success: false, error });
+    }
+  }
+
+  const passed = results.filter(r => r.success).length;
+  const failed = results.length - passed;
+
   console.log('\n' + '='.repeat(50));
-  console.log(`Results: ${passed} passed, ${failed} failed\n`);
+  console.log(`Summary: ${passed} passed, ${failed} failed`);
+
+  if (failed > 0) {
+    console.log('\nFailed scenarios:');
+    for (const result of results.filter(r => !r.success)) {
+      console.log(` - ${result.scenario.name} (${result.scenario.key})`);
+    }
+  }
 
   return failed === 0;
 }
 
-// Run if executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  runIntegrationTests().then(success => {
-    process.exit(success ? 0 : 1);
-  }).catch(error => {
-    console.error('Test runner error:', error);
-    process.exit(1);
-  });
+  runIntegrationSuite()
+    .then(success => {
+      process.exit(success ? 0 : 1);
+    })
+    .catch(error => {
+      console.error('Test runner error:', error);
+      process.exit(1);
+    });
 }

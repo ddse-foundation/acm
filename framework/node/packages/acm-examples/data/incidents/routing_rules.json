@@ -1,0 +1,36 @@
+[
+  {
+    "id": "ROUTE-CHECKOUT-CRITICAL",
+    "service": "checkout-api",
+    "category": "OUTAGE",
+    "minSeverity": "HIGH",
+    "queue": "incident-bridge",
+    "escalatesTo": "director-oncall@northwind.example",
+    "notes": "Critical checkout outages route directly to the incident bridge."
+  },
+  {
+    "id": "ROUTE-CHECKOUT-MEDIUM",
+    "service": "checkout-api",
+    "category": "OUTAGE",
+    "minSeverity": "MEDIUM",
+    "queue": "payments-oncall",
+    "notes": "Medium outages handled by payments engineers."
+  },
+  {
+    "id": "ROUTE-ANALYTICS-PERF",
+    "service": "analytics-stream",
+    "category": "PERFORMANCE",
+    "minSeverity": "MEDIUM",
+    "queue": "analytics-sre",
+    "notes": "Performance degradations owned by analytics SRE."
+  },
+  {
+    "id": "ROUTE-ID-SECURITY",
+    "service": "identity-core",
+    "category": "SECURITY",
+    "minSeverity": "HIGH",
+    "queue": "security-incident",
+    "escalatesTo": "ciso@northwind.example",
+    "notes": "Security incidents always escalate to CISO contact."
+  }
+]

@@ -1,45 +1,18 @@
-// Sample goals and contexts
+// Goal/context index derived from scenario catalog
 import type { Goal, Context } from '@acm/sdk';
+import { scenarios, type ScenarioKey } from '../examples/scenarios.js';
 
-export const goals = {
-  refund: {
-    id: 'goal-refund-1',
-    intent: 'Issue a refund for order O123 within 2 minutes, CC supervisor',
-    constraints: {
-      maxTimeSeconds: 120,
-      requireSupervisorNotification: true,
-    },
-  } as Goal,
+type GoalMap = Record<ScenarioKey, Goal> & Record<string, Goal>;
+type ContextMap = Record<ScenarioKey, Context> & Record<string, Context>;
 
-  issues: {
-    id: 'goal-issues-1',
-    intent: 'Find top issues and trigger mitigation',
-    constraints: {
-      maxIssues: 5,
-      severityThreshold: 'HIGH',
-    },
-  } as Goal,
-};
+export const goals = Object.keys(scenarios).reduce((acc, key) => {
+  const scenario = scenarios[key as ScenarioKey];
+  acc[key] = scenario.goal;
+  return acc;
+}, {} as GoalMap);
 
-export const contexts = {
-  refund: {
-    id: 'ctx-refund-1',
-    facts: {
-      orderId: 'O123',
-      region: 'EU',
-      customerTier: 'GOLD',
-      refundAmount: 49.99,
-    },
-    version: '1.0',
-  } as Context,
-
-  issues: {
-    id: 'ctx-issues-1',
-    facts: {
-      product: 'ACME-X',
-      region: 'EU',
-      timeRange: 'last_24h',
-    },
-    version: '1.0',
-  } as Context,
-};
+export const contexts = Object.keys(scenarios).reduce((acc, key) => {
+  const scenario = scenarios[key as ScenarioKey];
+  acc[key] = scenario.context;
+  return acc;
+}, {} as ContextMap);

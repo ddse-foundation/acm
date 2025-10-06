@@ -1,0 +1,38 @@
+[
+  {
+    "id": "INV-84721",
+    "supplier": "Skyline Components",
+    "total": 18450,
+    "currency": "USD",
+    "purchaseOrderId": "PO-99231",
+    "receivedAt": "2025-09-29T14:12:00Z",
+    "lines": [
+      { "sku": "SRV-FW-EDGE", "description": "Edge firewall appliance", "quantity": 5, "unitPrice": 2500 },
+      { "sku": "SRV-SUP-24M", "description": "24 month premium support", "quantity": 5, "unitPrice": 190 }
+    ]
+  },
+  {
+    "id": "INV-84758",
+    "supplier": "Northwind Training",
+    "total": 6120,
+    "currency": "USD",
+    "purchaseOrderId": "PO-99244",
+    "receivedAt": "2025-09-30T09:48:00Z",
+    "lines": [
+      { "sku": "TRN-COACHING", "description": "Onsite coaching workshop", "quantity": 3, "unitPrice": 1800 },
+      { "sku": "TRN-MATERIALS", "description": "Participant materials", "quantity": 30, "unitPrice": 18 }
+    ]
+  },
+  {
+    "id": "INV-84761",
+    "supplier": "Rapid Devices",
+    "total": 9200,
+    "currency": "USD",
+    "purchaseOrderId": "PO-99231",
+    "receivedAt": "2025-10-01T11:05:00Z",
+    "lines": [
+      { "sku": "SRV-FW-EDGE", "description": "Edge firewall appliance", "quantity": 4, "unitPrice": 2400 },
+      { "sku": "SRV-SUP-24M", "description": "24 month premium support", "quantity": 4, "unitPrice": 190 }
+    ]
+  }
+]

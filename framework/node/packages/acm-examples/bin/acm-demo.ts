@@ -1,213 +1,286 @@
 #!/usr/bin/env node
 
-// ACM Demo CLI - End-to-end example powered by the ACM Framework helper
-import { DefaultStreamSink, type LLMCallFn } from '@acm/sdk';
+import { parseArgs } from 'node:util';
+import { createInterface } from 'node:readline/promises';
+import { stdin as input, stdout as output, exit } from 'node:process';
+
+import {
+  DefaultStreamSink,
+  ExternalContextProviderAdapter,
+  type LLMCallFn,
+  type Plan,
+  normalizePlan,
+  normalizePlannerResult,
+  type NormalizedPlannerResult,
+} from '@acm/sdk';
 import { MemoryLedger, FileCheckpointStore } from '@acm/runtime';
 import { createOllamaClient, createVLLMClient } from '@acm/llm';
+import type { LLM, ToolCall } from '@acm/llm';
 import { ACMFramework, ExecutionEngine } from '@acm/framework';
 import { ReplayBundleExporter, type TaskIORecord } from '@acm/replay';
-import { goals, contexts } from '../src/goals/index.js';
-import {
-  SearchTool,
-  ExtractEntitiesTool,
-  AssessRiskTool,
-  CreateRefundTxnTool,
-  NotifySupervisorTool,
-} from '../src/tools/index.js';
-import {
-  SearchTask,
-  EnrichAndActTask,
-  RefundFlowTask,
-} from '../src/tasks/index.js';
+
 import { SimpleCapabilityRegistry, SimpleToolRegistry } from '../src/registries.js';
 import { SimplePolicyEngine } from '../src/policy.js';
 import { CLIRenderer } from '../src/renderer.js';
-import * as crypto from 'crypto';
+import { registerExampleContextProviders } from '../src/context/index.js';
+import { getScenario, listScenarioKeys, scenarios, type ScenarioDefinition } from '../src/examples/scenarios.js';
 
-type Provider = 'ollama' | 'vllm';
-type EngineOption = 'runtime' | 'langgraph' | 'msaf';
-type GoalOption = 'refund' | 'issues';
+type LLMProvider = 'ollama' | 'vllm';
 
-type CliConfig = {
-  provider: Provider;
+type CLIOptions = {
+  scenarioKey?: string;
+  provider: LLMProvider;
   model: string;
   baseUrl?: string;
-  engine: EngineOption;
-  goal: GoalOption;
+  engine: ExecutionEngine;
   stream: boolean;
-  saveBundle: boolean;
-  useMcp: boolean;
-  mcpServer?: string;
   resume?: string;
-  checkpointDir?: string;
+  checkpointDir: string;
+  saveBundle: boolean;
+  listOnly: boolean;
 };
 
-// Parse command-line arguments
-function parseArgs(): CliConfig {
-  const args = process.argv.slice(2);
-  const parsed: CliConfig = {
-    provider: 'ollama',
-    model: 'llama3.1',
-    engine: 'runtime',
-    goal: 'refund',
-    stream: true,
-    saveBundle: false,
-    useMcp: false,
-  };
+type RawCLIArgs = {
+  scenario?: string;
+  goal?: string;
+  provider?: string;
+  model?: string;
+  'base-url'?: string;
+  engine?: string;
+  stream?: boolean;
+  resume?: string;
+  'checkpoint-dir'?: string;
+  'save-bundle'?: boolean;
+  list?: boolean;
+  help?: boolean;
+};
 
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    const next = args[i + 1];
+type PlanTask = NonNullable<Plan['tasks']>[number];
 
-    if (arg === '--provider' && next) {
-      parsed.provider = next as Provider;
-      i++;
-    } else if (arg === '--model' && next) {
-      parsed.model = next;
-      i++;
-    } else if (arg === '--base-url' && next) {
-      parsed.baseUrl = next;
-      i++;
-    } else if (arg === '--engine' && next) {
-      parsed.engine = next as EngineOption;
-      i++;
-    } else if (arg === '--goal' && next) {
-      parsed.goal = next as GoalOption;
-      i++;
-    } else if (arg === '--no-stream') {
-      parsed.stream = false;
-    } else if (arg === '--save-bundle') {
-      parsed.saveBundle = true;
-    } else if (arg === '--use-mcp') {
-      parsed.useMcp = true;
-    } else if (arg === '--mcp-server' && next) {
-      parsed.mcpServer = next;
-      i++;
-    } else if (arg === '--resume' && next) {
-      parsed.resume = next;
-      i++;
-    } else if (arg === '--checkpoint-dir' && next) {
-      parsed.checkpointDir = next;
-      i++;
-    } else if (arg === '--help' || arg === '-h') {
-      printHelp();
-      process.exit(0);
-    }
-  }
-
-  return parsed;
-}
+const defaultModelByProvider: Record<LLMProvider, string> = {
+  ollama: 'llama3.1',
+  vllm: 'qwen2.5:7b',
+};
 
 function printHelp(): void {
-  console.log(`
-ACM Demo CLI - End-to-end ACM v0.5 example
-
-Usage: acm-demo [options]
-
-Options:
-  --provider <ollama|vllm>    LLM provider (default: ollama)
-  --model <name>              Model name (default: llama3.1)
-  --base-url <url>            Override API base URL
-  --engine <runtime|langgraph|msaf>  Execution engine (default: runtime)
-  --goal <refund|issues>      Goal to execute (default: refund)
-  --no-stream                 Disable streaming output
-  --save-bundle               Save replay bundle to replay/<runId>/
-  --use-mcp                   Enable MCP tool integration
-  --mcp-server <command>      MCP server command (e.g., 'npx -y @modelcontextprotocol/server-filesystem /tmp')
-  --resume <runId>            Resume from a previous execution
-  --checkpoint-dir <path>     Directory for checkpoint storage (default: ./checkpoints)
-  -h, --help                  Show this help
-
-Examples:
-  acm-demo --provider ollama --model llama3.1 --goal refund
-  acm-demo --provider vllm --model qwen2.5:7b --engine langgraph
-  acm-demo --goal issues --save-bundle
-  acm-demo --engine msaf --use-mcp --mcp-server 'npx -y @modelcontextprotocol/server-filesystem /tmp'
-  acm-demo --resume run-1234567890 --checkpoint-dir ./checkpoints
-  `);
+  console.log(
+    `ACM Demo CLI\n\n` +
+      `Usage:\n` +
+      `  acm-demo [options]\n\n` +
+      `Options:\n` +
+      `  --scenario <key>         Scenario key to execute (${listScenarioKeys().join(', ')})\n` +
+      `  --list                   List available scenarios and exit\n` +
+      `  --provider <ollama|vllm> LLM provider (default: ollama)\n` +
+      `  --model <name>           Model identifier (defaults per provider)\n` +
+      `  --base-url <url>         Override LLM endpoint\n` +
+      `  --engine <acm|langgraph|msaf> Execution engine (default: acm)\n` +
+      `  --resume <runId>         Resume a prior ACM engine run\n` +
+      `  --checkpoint-dir <dir>   Directory for checkpoints (default: ./checkpoints)\n` +
+      `  --no-stream              Disable streaming updates\n` +
+      `  --save-bundle            Export a replay bundle to ./replay/<runId>/\n` +
+      `  -h, --help               Show this help message\n`
+  );
 }
 
-function resolveExecutionEngine(engine: EngineOption): ExecutionEngine {
-  switch (engine) {
-    case 'langgraph':
-      return ExecutionEngine.LANGGRAPH;
-    case 'msaf':
-      return ExecutionEngine.MSAF;
-    case 'runtime':
+function mapLegacyGoal(goal?: string): string | undefined {
+  if (!goal) return undefined;
+  switch (goal.toLowerCase()) {
+    case 'refund':
+      return 'entitlement';
+    case 'issues':
+      return 'knowledge';
     default:
-      return ExecutionEngine.ACM;
+      return goal;
   }
 }
 
-async function main(): Promise<void> {
-  const config = parseArgs();
+function resolveExecutionEngine(engine?: string): ExecutionEngine {
+  if (!engine) {
+    return ExecutionEngine.ACM;
+  }
 
-  console.log('🚀 ACM v0.5 Demo CLI');
-  console.log('='.repeat(60));
-  console.log(`Provider: ${config.provider}`);
-  console.log(`Model: ${config.model}`);
-  console.log(`Engine: ${config.engine}`);
-  console.log(`Goal: ${config.goal}`);
-  console.log('='.repeat(60));
+  const normalized = engine.toUpperCase();
+  switch (normalized) {
+    case 'ACM':
+      return ExecutionEngine.ACM;
+    case 'LANGGRAPH':
+    case 'LANG-GRAPH':
+    case 'LANG_GRAPH':
+      return ExecutionEngine.LANGGRAPH;
+    case 'MSAF':
+    case 'MS_AGENT_FRAMEWORK':
+    case 'MS-AGENT-FRAMEWORK':
+      return ExecutionEngine.MSAF;
+    default:
+      throw new Error(`Unsupported execution engine: ${engine}`);
+  }
+}
+
+function parseCliOptions(): { options: CLIOptions; showHelp: boolean } {
+  const { values } = parseArgs({
+    options: {
+      scenario: { type: 'string' },
+      goal: { type: 'string' },
+      provider: { type: 'string' },
+      model: { type: 'string' },
+      'base-url': { type: 'string' },
+      engine: { type: 'string' },
+      stream: { type: 'boolean', default: true },
+      resume: { type: 'string' },
+      'checkpoint-dir': { type: 'string' },
+      'save-bundle': { type: 'boolean', default: false },
+      list: { type: 'boolean', default: false },
+      help: { type: 'boolean', default: false },
+    },
+    allowPositionals: false,
+  }) as { values: RawCLIArgs };
+
+  const provider = (values.provider ?? 'ollama').toLowerCase();
+  if (provider !== 'ollama' && provider !== 'vllm') {
+    throw new Error(`Unsupported provider: ${values.provider}`);
+  }
+
+  const engine = resolveExecutionEngine(values.engine);
+
+  const scenarioKey = values.scenario ?? mapLegacyGoal(values.goal);
+  const model = values.model ?? defaultModelByProvider[provider as LLMProvider];
+  return {
+    options: {
+      scenarioKey,
+      provider: provider as LLMProvider,
+      model,
+      baseUrl: values['base-url'],
+      engine,
+      stream: values.stream ?? true,
+      resume: values.resume,
+      checkpointDir: values['checkpoint-dir'] ?? './checkpoints',
+      saveBundle: values['save-bundle'] ?? false,
+      listOnly: values.list ?? false,
+    },
+    showHelp: Boolean(values.help),
+  };
+}
+
+async function resolveScenario(options: CLIOptions): Promise<ScenarioDefinition> {
+  if (options.scenarioKey) {
+    const direct = getScenario(options.scenarioKey);
+    if (!direct) {
+      throw new Error(`Unknown scenario: ${options.scenarioKey}`);
+    }
+    return direct;
+  }
+
+  if (!output.isTTY) {
+    throw new Error('No scenario provided and terminal is non-interactive. Use --scenario <key>.');
+  }
+
+  console.log('Please choose a scenario to run:\n');
+  const keys = listScenarioKeys();
+  keys.forEach((key, index) => {
+    const scenario = scenarios[key];
+    console.log(`  [${index + 1}] ${scenario.name} (${key})`);
+    console.log(`      ${scenario.description}`);
+  });
   console.log();
 
-  const llm =
-    config.provider === 'ollama'
-      ? createOllamaClient(config.model, config.baseUrl)
-      : createVLLMClient(config.model, config.baseUrl);
+  const rl = createInterface({ input, output });
+  try {
+    while (true) {
+      const answer = (await rl.question('Enter scenario number or key: ')).trim();
+      if (!answer) {
+        continue;
+      }
 
-  if (!llm.generateWithTools) {
-    throw new Error('Selected LLM provider does not support structured tool calls required by Nucleus.');
+      const numeric = Number.parseInt(answer, 10);
+      if (!Number.isNaN(numeric) && numeric >= 1 && numeric <= keys.length) {
+        return scenarios[keys[numeric - 1]];
+      }
+
+      const byKey = getScenario(answer);
+      if (byKey) {
+        return byKey;
+      }
+
+      console.log(`Invalid selection: ${answer}`);
+    }
+  } finally {
+    rl.close();
   }
+}
+
+function createLLMClient(provider: LLMProvider, model: string, baseUrl?: string): LLM {
+  switch (provider) {
+    case 'ollama':
+      return createOllamaClient(model, baseUrl);
+    case 'vllm':
+      return createVLLMClient(model, baseUrl);
+    default:
+      throw new Error(`Unsupported provider: ${provider satisfies never}`);
+  }
+}
+
+function attachStreaming(renderer: CLIRenderer, stream: DefaultStreamSink): void {
+  stream.attach('planner', chunk => renderer.renderPlannerToken(chunk));
+  stream.attach('task', update => renderer.renderTaskUpdate(update));
+  stream.attach('checkpoint', update => {
+    if (typeof update?.checkpointId === 'string') {
+      console.log(`💾 Checkpoint created: ${update.checkpointId} (${update.tasksCompleted} tasks completed)`);
+    }
+  });
+}
+
+
+async function main(): Promise<void> {
+  const { options, showHelp } = parseCliOptions();
+
+  if (showHelp) {
+    printHelp();
+    return;
+  }
+
+  if (options.listOnly) {
+    console.log('Available scenarios:\n');
+    listScenarioKeys().forEach(key => {
+      const scenario = scenarios[key];
+      console.log(`- ${key}: ${scenario.name}`);
+      console.log(`    ${scenario.description}`);
+    });
+    return;
+  }
+
+  const scenario = await resolveScenario(options);
+
+  console.log(`\n🎯 Scenario: ${scenario.name}`);
+  console.log(`   Key: ${scenario.key}`);
+  console.log(`   Description: ${scenario.description}\n`);
 
   const toolRegistry = new SimpleToolRegistry();
-  toolRegistry.register(new SearchTool());
-  toolRegistry.register(new ExtractEntitiesTool());
-  toolRegistry.register(new AssessRiskTool());
-  toolRegistry.register(new CreateRefundTxnTool());
-  toolRegistry.register(new NotifySupervisorTool());
-
   const capabilityRegistry = new SimpleCapabilityRegistry();
-  capabilityRegistry.register(
-    { name: 'search', sideEffects: false },
-    new SearchTask()
-  );
-  capabilityRegistry.register(
-    { name: 'enrich_and_act', sideEffects: false },
-    new EnrichAndActTask()
-  );
-  capabilityRegistry.register(
-    { name: 'refund_flow', sideEffects: true },
-    new RefundFlowTask()
-  );
+  scenario.registerTools(toolRegistry);
+  scenario.registerCapabilities(capabilityRegistry);
 
-  const goal = goals[config.goal];
-  const context = contexts[config.goal];
+  const adapter = new ExternalContextProviderAdapter();
+  registerExampleContextProviders(adapter);
 
-  if (!goal || !context) {
-    console.error(`Unknown goal: ${config.goal}`);
-    process.exit(1);
-  }
-
+  const llm = createLLMClient(options.provider, options.model, options.baseUrl);
   const stream = new DefaultStreamSink();
   const renderer = new CLIRenderer();
 
-  if (config.stream) {
-    stream.attach('planner', chunk => renderer.renderPlannerToken(chunk));
-    stream.attach('task', update => renderer.renderTaskUpdate(update));
+  if (options.stream) {
+    attachStreaming(renderer, stream);
   }
 
   const verify = async (taskId: string, output: any, expressions: string[]): Promise<boolean> => {
     for (const expr of expressions) {
       try {
-        const func = new Function('output', `return ${expr};`);
-        const result = func(output);
+        const fn = new Function('output', `return ${expr};`);
+        const result = fn(output);
         if (!result) {
           console.error(`Verification failed for ${taskId}: ${expr}`);
           return false;
         }
-      } catch (err) {
-        console.error(`Verification error for ${taskId}: ${expr}`, err);
+      } catch (error) {
+        console.error(`Verification error for ${taskId}: ${expr}`, error);
         return false;
       }
     }
@@ -236,13 +309,16 @@ async function main(): Promise<void> {
       }
     );
 
+    const responseToolCalls = (response.toolCalls ?? []) as ToolCall[];
+    const toolCalls = responseToolCalls.map(tc => ({
+      id: tc.id,
+      name: tc.name,
+      input: tc.arguments,
+    }));
+
     return {
       reasoning: response.text,
-      toolCalls: (response.toolCalls ?? []).map(tc => ({
-        id: tc.id,
-        name: tc.name,
-        input: tc.arguments,
-      })),
+      toolCalls,
       raw: response.raw,
     };
   };
@@ -250,13 +326,13 @@ async function main(): Promise<void> {
   const nucleusConfig = {
     llmCall: {
       provider: llm.name(),
-      model: config.model,
-      temperature: 0.1,
-      maxTokens: 512,
+      model: options.model,
+      temperature: 0.5,
+      maxTokens: 8096,
     },
     hooks: {
-      preflight: true,
-      postcheck: true,
+      preflight: false,
+      postcheck: false,
     },
   } as const;
 
@@ -270,78 +346,106 @@ async function main(): Promise<void> {
       hooks: nucleusConfig.hooks,
     },
     verify,
-    defaultStream: config.stream ? stream : undefined,
+    defaultStream: options.stream ? stream : undefined,
+    contextProvider: adapter,
   });
 
   const ledger = new MemoryLedger();
+  const checkpointStore = new FileCheckpointStore(options.checkpointDir);
+  const runId = options.resume ?? `run-${Date.now()}`;
+  const startedAt = new Date().toISOString();
 
   console.log('📋 Planning...\n');
-
   const planResponse = await framework.plan({
-    goal,
-    context,
-    stream: config.stream ? stream : undefined,
+    goal: scenario.goal,
+    context: scenario.context,
+    stream: options.stream ? stream : undefined,
     ledger,
   });
 
-  const plannerResult = planResponse.result;
-  const plan = planResponse.selectedPlan;
+  const rawPlannerResult = planResponse.result;
+  const rawPlan = planResponse.selectedPlan;
 
-  console.log(`\n✅ Plans generated: ${plannerResult.plans.length}`);
-  if (plannerResult.rationale) {
-    console.log(`Rationale: ${plannerResult.rationale}`);
+  if (!rawPlan) {
+    throw new Error('Structured planner did not return a plan');
   }
 
-  console.log(`\n📋 Executing Plan: ${plan.id}`);
-  const contextPacket = JSON.stringify(planResponse.context);
-  const contextRef = plan.contextRef ?? crypto.createHash('sha256').update(contextPacket).digest('hex');
-  console.log(`Context Ref: ${contextRef}`);
-  console.log(`Tasks: ${plan.tasks.length}`);
+  const normalizeOptions = {
+    capabilityRegistry,
+    defaultContextRef: scenario.context.id ?? scenario.key,
+    planIdPrefix: `${scenario.key}-plan`,
+  } as const;
+
+  const plan = normalizePlan(rawPlan, normalizeOptions);
+  const plannerResult: NormalizedPlannerResult = normalizePlannerResult(
+    rawPlannerResult,
+    plan,
+    normalizeOptions
+  );
+
+  if (plannerResult?.rationale) {
+    console.log('🧠 Planner rationale:\n');
+    console.log(plannerResult.rationale);
+    console.log();
+  }
+
+  if (plannerResult?.plans?.length) {
+    console.log('📝 Planner plan summary (first plan):');
+    const firstPlan = plannerResult.plans[0];
+    console.log(JSON.stringify({
+      id: firstPlan.id,
+      contextRef: firstPlan.contextRef,
+      tasks: (firstPlan.tasks ?? []).map((task: PlanTask) => ({
+        id: task.id,
+        capability: task.capability ?? task.capabilityRef,
+        hasInput: Boolean(task.input && Object.keys(task.input).length > 0),
+        inputPreview: task.input ?? null,
+      })),
+    }, null, 2));
+    console.log();
+  }
+
+  console.log(`\n✅ Plans generated: ${plannerResult?.plans?.length ?? 0}`);
+  if (plan.id) {
+    console.log(`Executing plan ${plan.id}`);
+  }
+  console.log(`Context Ref: ${plan.contextRef ?? 'n/a'}`);
+  console.log('Tasks:');
+  plan.tasks?.forEach((task: PlanTask, index: number) => {
+    console.log(`  ${index + 1}. ${task.id} -> ${task.capability ?? task.capabilityRef ?? 'unknown'}`);
+  });
   console.log();
 
-  const executionEngine = resolveExecutionEngine(config.engine);
-
-  if (executionEngine !== ExecutionEngine.ACM && config.resume) {
-    console.warn('⚠️  Resume not supported for selected engine, ignoring --resume flag');
+  const executionEngine = options.engine;
+  if (executionEngine !== ExecutionEngine.ACM && options.resume) {
+    console.warn('⚠️  Resume is only supported with the ACM engine. Ignoring --resume.');
   }
-
-  const checkpointDir = config.checkpointDir || './checkpoints';
-  const checkpointStore = new FileCheckpointStore(checkpointDir);
-
-  if (config.stream) {
-    stream.attach('checkpoint', (update: any) => {
-      console.log(`💾 Checkpoint created: ${update.checkpointId} (${update.tasksCompleted} tasks completed)`);
-    });
-  }
-
-  const runId = config.resume || `run-${Date.now()}`;
-  const startedAt = new Date().toISOString();
 
   const executeResult = await framework.execute({
-    goal,
-    context,
-    stream: config.stream ? stream : undefined,
+    goal: scenario.goal,
+    context: scenario.context,
+    stream: options.stream ? stream : undefined,
     engine: executionEngine,
     ledger,
-    runId,
     existingPlan: {
       plan,
       plannerResult,
     },
-    resumeFrom: executionEngine === ExecutionEngine.ACM ? config.resume : undefined,
+    resumeFrom: executionEngine === ExecutionEngine.ACM ? options.resume : undefined,
     checkpointStore: executionEngine === ExecutionEngine.ACM ? checkpointStore : undefined,
     checkpointInterval: executionEngine === ExecutionEngine.ACM ? 1 : undefined,
+    runId,
   });
 
   const completedAt = new Date().toISOString();
 
   renderer.renderSummary(executeResult.execution);
+  scenario.assertExecution(executeResult.execution);
 
-  if (config.saveBundle) {
+  if (options.saveBundle) {
     console.log('\n💾 Saving replay bundle...');
-
     const taskIO: TaskIORecord[] = [];
-    for (const taskSpec of plan.tasks) {
+    for (const taskSpec of plan.tasks as PlanTask[]) {
       const record = executeResult.execution.outputsByTask?.[taskSpec.id];
       if (record?.output !== undefined) {
         taskIO.push({
@@ -356,19 +460,19 @@ async function main(): Promise<void> {
 
     const bundlePath = await ReplayBundleExporter.export({
       outputDir: `./replay/${runId}`,
-      goal,
-      context,
+      goal: scenario.goal,
+      context: scenario.context,
       plans: plannerResult.plans,
       selectedPlanId: plan.id,
       ledger: Array.from(executeResult.execution.ledger) as any[],
       taskIO,
       engineTrace: {
         runId,
-        engine: config.engine,
+        engine: executionEngine,
         startedAt,
         completedAt,
         status: 'success',
-        tasks: plan.tasks.map((task: typeof plan.tasks[number]) => ({
+        tasks: (plan.tasks as PlanTask[]).map(task => ({
           taskId: task.id,
           status: executeResult.execution.outputsByTask?.[task.id] ? 'completed' : 'skipped',
           startedAt,
@@ -383,7 +487,9 @@ async function main(): Promise<void> {
   console.log('\n✅ Demo completed successfully!');
 }
 
-main().catch(error => {
-  console.error('Fatal error:', error);
-  process.exit(1);
-});
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(error => {
+    console.error('Fatal error:', error);
+    exit(1);
+  });
+}

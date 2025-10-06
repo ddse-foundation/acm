@@ -1,0 +1,25 @@
+{
+  "snippets": [
+    {
+      "id": "KB-001",
+      "title": "Resetting MFA-secured passwords",
+      "tags": ["identity", "password", "mfa"],
+      "path": "docs/kb-001.md",
+      "summary": "Runbook for agents guiding customers through MFA password reset and device verification."
+    },
+    {
+      "id": "KB-002",
+      "title": "Refund eligibility decision tree",
+      "tags": ["billing", "refund", "policy"],
+      "path": "docs/kb-002.md",
+      "summary": "Policy matrix for issuing refunds based on subscription tier and issue category."
+    },
+    {
+      "id": "KB-003",
+      "title": "Stabilizing API latency regressions",
+      "tags": ["incident", "performance", "api"],
+      "path": "docs/kb-003.md",
+      "summary": "Checklist for diagnosing elevated API latency including caching, rollout, and alerting steps."
+    }
+  ]
+}
