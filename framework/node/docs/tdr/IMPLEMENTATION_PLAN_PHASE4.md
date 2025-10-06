@@ -1,5 +1,7 @@
 # ACM v0.5 Node Framework — Implementation Plan (Phase 4)
 
+> Status: Completed for Node v0.5.0 (Oct 2025). This document is retained for historical reference. All core Phase 4 surfaces (Nucleus contract, structured planner tool calls, enriched telemetry) are implemented in the Node framework. Future work items are tracked in the roadmap and changelog.
+
 **Status:** Draft for internal review  
 **Date:** 2025-10-04  
 **Owners:** Runtime & SDK Engineering (primary), Planner Team, Tooling/MCP Integrations, Policy & Replay Ops
@@ -9,24 +11,6 @@
 ## 1. Objectives
 
 Phase 4 extends the code-first Node framework to satisfy the next tranche of ACM v0.5 requirements. The work is organized around eight concrete change requests informed by the latest implementation review:
-
-### Recent Progress (2025-10-04)
-
-- Runtime and resumable executors now instantiate a Nucleus per task, share the internal context scope, and expose the instance through `RunContext` so tools/tasks operate on the same scoped state.
-- A shared tool-call instrumentation layer wraps every registry lookup, emitting structured `ToolCallEnvelope` entries into the ledger (`TOOL_CALL`) alongside digests and durations to reinforce tool-call discipline.
-- SDK type surfaces were refreshed to include the additional ledger entry type, `RunContext.nucleus`, and `Nucleus.setInternalContext`, preventing downstream code from falling back to untyped casts.
-- Documentation and build artifacts will continue to track these updates so downstream agents (including AI Coder) inherit the Nucleus-first tone without diverging fallbacks.
-
-1. **Structured planner output & selection rigor:** Replace the current JSON-parsing planner flow with deterministic structured tool calls (ReAct-style), support configurable multi-plan generation (defaulting to a single plan), and capture rationale plus prompt digests whenever alternatives are produced.
-2. **Tool-call discipline:** Ensure every tool invocation in the framework—including Nucleus internals—emits structured tool-call envelopes (no ad-hoc JSON parsing or string introspection).
-3. **Spec-compliant SDK contracts:** Restore `Goal`, `Context`, `Plan`, `TaskSpec`, and `LedgerEntry` types to the full ACM v0.5 surface, enabling downstream components to produce auditable artifacts.
-4. **Nucleus contract:** Introduce a shared abstract class/interface describing the Nucleus with a single auditable `LLMCall` member that itself conforms to the structured tool-call envelope (typed inputs/outputs) alongside deterministic configuration.
-5. **Context orchestration:** Extend context-handling abstractions to manage internal scope, enforce provenance tracking, compute immutable content hashes, and gate execution on frozen Context Packets.
-6. **Task/Planner integration:** Refactor Task and Planner abstractions to depend on the Nucleus contract rather than direct LLM clients, wiring pre/post hooks.
-7. **Tool-native default execution:** Make MCP/LLM-backed tools the golden path in CLI/examples, replacing synthetic stubs while preserving deterministic fallbacks for tests.
-8. **Runtime & replay telemetry:** Update execution engine, ledger, and replay packing to capture Nucleus inferences, structured tool calls, internal context artifacts, policy/verification exchanges, and tamper-evident hashes.
-
-Out of scope: productionizing additional engines, expanding policy DSLs, or reworking Phase 3 artifacts beyond the pieces touched above.
 
 ---
 

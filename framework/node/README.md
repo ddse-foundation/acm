@@ -13,12 +13,12 @@ The ACM Node.js Framework gives engineers a coherent set of SDKs, runtime servic
 - **Deterministic Runtime**: Enforces guard evaluation, policy hooks, typed errors, and replay bundle generation for every execution.
 - **Resumable Execution**: Built-in checkpointing and resume mechanics for long-running workflows (Phase 2 complete).
 - **Tool Discipline**: Uniform `ToolCallEnvelope` instrumentation across native tools, MCP integrations, and LLM-backed utilities.
-- **Nucleus Abstraction** *(Phase 4 roadmap)*: Shared reasoning core that standardizes LLM calls, internal context retrieval, and ledger recording.
+- **Nucleus Abstraction**: Shared reasoning core that standardizes LLM calls, internal context retrieval, and ledger recording. Available in Node v0.5.0.
 - **Open LLM Support**: OpenAI-compatible client with presets for Ollama and vLLM; bring your own provider via configuration.
 - **MCP Integration**: Discover and invoke Model Context Protocol servers as first-class tools.
 - **High-Level Orchestration**: Ship the `@acm/framework` helper for wiring planning + execution behind a single call while preserving ACM v0.5 guarantees.
-
-> **Status Banner** — Phase 4 work is underway. Structured planner tool calls, the Nucleus contract, and enriched replay artifacts are actively being integrated (see `IMPLEMENTATION_PLAN_PHASE4.md`). Public docs call out any in-progress surfaces so you can opt into previews deliberately.
+- **Replay & Validation**: Export/import replay bundles with ledger verification, tool-call inspection, and test fixtures.
+- **Reference Implementations**: `@acm/examples` package with refund and issue-resolution workflows; `@acm/aicoder` developer experience built on the framework.
 
 ## Quick Start
 
@@ -370,7 +370,7 @@ By default the adapter matches directives whose prefix equals the tool name (e.g
 ### Replay & Tooling
 
 - `@acm/replay`: Export/import bundles, validate ledger traces, and inspect tool-call envelopes.
-- `@acm/cli` *(coming in Phase 4)*: Consolidated CLI experience that defaults to tool-native execution paths.
+- `@acm/cli` *(coming soon)*: Consolidated CLI experience that defaults to tool-native execution paths.
 
 ## Configuration
 
@@ -403,7 +403,7 @@ pnpm test           # Run monorepo test suites
 - ✅ Memory ledger + replay bundle exports for every run.
 - ✅ MCP tool integration alongside deterministic local tools.
 - ✅ Resumable runtime (checkpoint/resume) with hash-verified artifacts.
-- 🚧 **In Progress (Phase 4)** — Nucleus contract, structured planner tool calls, enriched telemetry.
+- ✅ Nucleus contract, structured planner tool calls, enriched telemetry (Node v0.5.0).
 
 ## Development Workflow
 
@@ -426,18 +426,21 @@ The `@acm/examples` package showcases:
 4. **Replay Artifacts** — Inspectable bundles illustrating ledger fidelity.
 5. **MCP Integration** — Turn-key filesystem MCP server example.
 
-## Roadmap (Phase 4 Focus)
+## Roadmap
 
-According to [`IMPLEMENTATION_PLAN_PHASE4.md`](./IMPLEMENTATION_PLAN_PHASE4.md):
+Completed in Node v0.5.0 (see [`IMPLEMENTATION_PLAN_PHASE4.md`](./IMPLEMENTATION_PLAN_PHASE4.md)):
 
-- Restore full ACM spec contracts across SDK/runtime/replay.
-- Deliver structured planner tool calls with deterministic selection.
-- Introduce the Nucleus contract and enforce tool-call discipline throughout.
-- Enhance context orchestration with immutable internal scope handling.
-- Default CLI/examples to tool-native execution backed by MCP/LLM providers.
-- Expand replay bundles with Nucleus inferences, policy transcripts, and tamper-evident hashes.
+- Restored ACM v0.5 contracts across SDK/runtime/replay.
+- Delivered structured planner tool calls with deterministic selection.
+- Introduced the Nucleus contract and enforced tool-call discipline.
+- Enhanced context orchestration with immutable internal scope handling.
+- Expanded replay bundles with Nucleus inferences, policy transcripts, and tamper-evident hashes.
 
-Expect incremental updates as each workstream lands; the roadmap banner at the top of this README will be updated accordingly.
+Next up (post v0.5.0):
+
+- CLI consolidation (`@acm/cli`).
+- Adapter improvements for checkpoint/resume in LangGraph/MSAF.
+- Additional audit metadata in ledger entries (phase/decision fields, fuller LLM params).
 
 ## Contributing
 
@@ -450,6 +453,6 @@ MIT
 ## Resources
 
 - [ACM Specification v0.5](../../spec/acm-spec%20v0.5.md)
-- [Implementation Plan (Phase 4)](./IMPLEMENTATION_PLAN_PHASE4.md)
+- [Implementation Plan (Phase 4) — Completed for Node v0.5.0](./IMPLEMENTATION_PLAN_PHASE4.md)
 - [Resumable Executor Runbook](./docs/RUNBOOK_RESUMABLE.md)
 - [Monorepo Implementation Guide](./framework-implementation-plan-node.md)

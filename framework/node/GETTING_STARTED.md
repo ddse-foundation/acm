@@ -86,7 +86,7 @@ pnpm --filter @acm/examples demo -- --goal refund --save-bundle --checkpoint-dir
 
 ✅ **Benefits**: Restart from the last successful task, inspect intermediate state, and validate execution offline.
 
-⚠️ **Adapters**: LangGraph and MSAF adapters currently warn when checkpoint flags are provided; resumable support will follow the Phase 4 roadmap.
+⚠️ **Adapters**: LangGraph and MSAF adapters currently warn when checkpoint flags are provided; resumable support will be improved in upcoming releases.
 
 ## 5. Inspect Planner & Runtime Output
 
@@ -190,7 +190,7 @@ npx tsx my-agent.ts
 
 - Swap in your own `Tool` subclasses for real APIs or databases.
 - Implement policy and verification checks via `PolicyEngine`/`VerificationEngine`.
-- Experiment with structured planner overrides once the Phase 4 Nucleus contract lands.
+- Experiment with structured planner overrides; the Nucleus contract is available in Node v0.5.0.
 
 ## 7. Level Up with the `@acm/framework` Helper
 

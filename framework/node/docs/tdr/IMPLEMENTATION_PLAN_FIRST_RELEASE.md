@@ -28,8 +28,6 @@ A release is considered **ready** when:
 |----------|------------|-------------|-------|---------------------|
 | P0 | Distribution & CI | Update package metadata (`publishConfig`, `files`, `author`, LICENSE copies), adopt Changesets, bump versions to 0.5.0, and add GitHub Actions (build/lint/test/validate + publish). | Release engineering | `pnpm publish --dry-run -r` passes; CI workflows green; release pipeline runs on tag. |
 
-> **Note:** Secondary enhancements (e.g., advanced guard DSL, telemetry enrichment) remain backlog unless they block the above acceptance criteria.
-
 ---
 
 ## 3. Example Modernization Program

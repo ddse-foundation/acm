@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-10-06
+
+### Added
+
+- Phase 4 completion for Node: Nucleus contract available across planner/runtime; structured planner tool-call envelopes; expanded replay bundles with Nucleus inferences and policy transcripts.
+- `@acm/framework` orchestration helper wiring nucleus, planner, runtime, and adapters with a single API.
+
+### Changed
+
+- Docs updated to reflect Nucleus availability in Node v0.5.0 and remove "in progress" phrasing.
+
+### Known Issues / Roadmap
+
+- CLI consolidation (`@acm/cli`) is planned; use package-specific CLIs for now.
+- Adapter resumability: LangGraph/MSAF checkpoint/resume path emits warnings; improvements targeted in the next release.
+- Ledger enrichment: Additional audit fields (phase/decision for Nucleus inferences, full LLM params, canonical digests) are planned enhancements; current behavior is functional and will be extended without breaking changes.
+
 ## [0.1.0] - 2025-01-XX
 
 ### Added
@@ -135,12 +152,13 @@ These features are planned for future releases:
 
 ## Links
 
-- [Repository](https://github.com/ddse-foundation/acm)
-- [ACM Specification v0.5](../../spec/acm-spec%20v0.5.md)
-- [Issues](https://github.com/ddse-foundation/acm/issues)
-- [Discussions](https://github.com/ddse-foundation/acm/discussions)
+- Repository: <https://github.com/ddse-foundation/acm>
+- ACM Specification v0.5: ../../spec/acm-spec%20v0.5.md
+- Issues: <https://github.com/ddse-foundation/acm/issues>
+- Discussions: <https://github.com/ddse-foundation/acm/discussions>
 
 ---
 
-[Unreleased]: https://github.com/ddse-foundation/acm/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ddse-foundation/acm/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/ddse-foundation/acm/releases/tag/v0.5.0
 [0.1.0]: https://github.com/ddse-foundation/acm/releases/tag/v0.1.0
