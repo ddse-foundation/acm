@@ -1,0 +1,8 @@
+{
+  "label": "Announcements",
+  "position": 11,
+  "link": {
+    "type": "doc",
+    "id": "announcements/index"
+  }
+}

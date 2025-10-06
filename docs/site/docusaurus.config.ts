@@ -72,7 +72,8 @@ const config: Config = {
         {to: '/docs/scenarios/examples', label: 'Examples', position: 'left'},
         {to: '/docs/ai-coder/overview', label: 'AI Coder', position: 'left'},
         {to: '/docs/integrations/overview', label: 'Integrations', position: 'left'},
-        {to: '/docs/governance/overview', label: 'Governance', position: 'left'},
+    {to: '/docs/governance/overview', label: 'Governance', position: 'left'},
+    {to: '/docs/announcements', label: 'Announcements', position: 'left'},
   {to: '/docs/specification/overview', label: 'Specification', position: 'left'},
   {to: '/docs/contribute/overview', label: 'Contribute', position: 'left'},
         {href: 'https://github.com/ddse-foundation/acm', label: 'GitHub', position: 'right'}
