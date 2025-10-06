@@ -1,0 +1,19 @@
+<svg width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">DDSE Logo Dark</title>
+  <desc id="desc">High-contrast DDSE emblem optimized for dark backgrounds.</desc>
+  <circle cx="80" cy="80" r="72" fill="#1e293b" stroke="#93c5fd" stroke-width="8" />
+  <line x1="80" y1="38" x2="80" y2="106" stroke="#bfdbfe" stroke-width="10" stroke-linecap="round" />
+  <line x1="47" y1="56" x2="113" y2="104" stroke="#bfdbfe" stroke-width="8" stroke-linecap="round" />
+  <line x1="47" y1="104" x2="113" y2="56" stroke="#bfdbfe" stroke-width="8" stroke-linecap="round" />
+  <circle cx="80" cy="70" r="11" fill="#fb923c" />
+  <circle cx="80" cy="106" r="11" fill="#fb923c" />
+  <circle cx="47" cy="56" r="10" fill="#34d399" />
+  <circle cx="113" cy="56" r="10" fill="#34d399" />
+  <circle cx="47" cy="104" r="10" fill="#34d399" />
+  <circle cx="113" cy="104" r="10" fill="#34d399" />
+  <g transform="translate(102 22)">
+    <circle cx="26" cy="26" r="20" fill="none" stroke="#fbbf24" stroke-width="8" />
+    <circle cx="26" cy="26" r="7" fill="#fbbf24" />
+  </g>
+  <text x="80" y="138" text-anchor="middle" font-family="'Inter', 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#bfdbfe">DDSE</text>
+</svg>

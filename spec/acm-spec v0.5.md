@@ -1,9 +1,8 @@
 # Agentic Contract Model (ACM) — Core Specification v0.5
 
-**Status:** Draft for Working-Group Review
-**Supersedes:** ACM v0.1 Core, ACM v0.2 Draft
+**Authors:** Mahmudur R Manna, Founder, DDSE (Decision Driven Software Engineering) Foundation
+**Status:** Implemented - https://github.com/ddse-foundation/acm/releases
 **Date:** 2025-10-03
-**License:** Apache-2.0 (recommended)
 
 ---
 

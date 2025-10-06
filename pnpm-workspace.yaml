@@ -1,0 +1,4 @@
+packages:
+  - 'framework/node'
+  - 'framework/node/packages/*'
+  - 'docs/site'

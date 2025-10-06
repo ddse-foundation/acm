@@ -140,3 +140,7 @@ coverage/
 # ACM specific
 replay/
 *.bundle.json
+
+# Docusaurus docs build artifacts
+docs/site/.docusaurus/
+docs/site/build/
