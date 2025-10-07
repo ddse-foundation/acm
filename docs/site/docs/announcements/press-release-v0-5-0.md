@@ -32,6 +32,14 @@ author: DDSE Foundation
 
 These showcase ACM’s contract layer converting stochastic planning into **reproducible execution** across common enterprise workflows.
 
+### Enterprise Benefits
+
+- **Capabilities OS for every workflow** — ACM gives enterprises a governed contract layer that can front any approved capability—internal systems, SaaS adapters, or third-party providers—through one chat or orchestrator surface, with versioned capability maps and deterministic runtimes keeping every action auditable.
+- **Replayable trust signals** — Each run exports a portable replay bundle capturing prompts, tool calls, policy verdicts, and checkpoints so auditors, regulators, and customer teams can independently verify outcomes.
+- **Interoperable by design** — Bridges for LangGraph, Microsoft Agent Framework, and MCP let you reuse existing planners, context servers, or adapters while preserving ACM’s contract guarantees.
+- **Operational guardrails, not black boxes** — Identity, consent, spend controls, and verification hooks ship out of the box; fairness or risk policies stay under your control with full transparency into every decision.
+- **Faster path to production pilots** — The reference implementations, demos, and AI Coder TUI shorten enterprise onboarding, helping teams prove value quickly without sacrificing governance or extensibility.
+
 ### Availability & Quick Start
 
 ACM Framework v0.5.0 is available today under the **MIT License**. The reference implementation targets **Node.js 18+** in a **pnpm** monorepo. Quick start:

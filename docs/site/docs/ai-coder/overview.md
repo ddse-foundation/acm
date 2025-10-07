@@ -6,6 +6,8 @@ title: ACM AI Coder Overview
 
 ACM AI Coder is a full-screen terminal experience that showcases every aspect of the Agentic Contract Model. Built entirely on ACM v0.5.0 primitives, it combines planning, execution, budgeting, and governance for developer workflows.
 
+![Screenshot of the ACM AI Coder terminal experience](/img/aicoder.png)
+
 ## Key capabilities
 
 - **Streaming planner reasoning** — Watch tool-call deliberations token-by-token.
