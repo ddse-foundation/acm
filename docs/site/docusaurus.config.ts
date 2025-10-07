@@ -11,11 +11,15 @@ const config: Config = {
   projectName: 'acm',
   deploymentBranch: 'gh-pages',
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
   trailingSlash: false,
   i18n: {
     defaultLocale: 'en',
     locales: ['en']
+  },
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn'
+    }
   },
   customFields: {
     releaseVersion: 'v0.5.0'
@@ -40,7 +44,18 @@ const config: Config = {
             }
           }
         },
-        blog: false,
+        blog: {
+          routeBasePath: 'blog',
+          showReadingTime: true,
+          blogTitle: 'ACM Updates',
+          blogDescription: 'Announcements, blueprints, and integration guides for the Agentic Contract Model.',
+          editUrl: 'https://github.com/ddse-foundation/acm/tree/main/docs/site/blog',
+          feedOptions: {
+            type: 'all',
+            title: 'ACM Framework Blog',
+            description: 'Latest tutorials and release commentary from the DDSE Foundation.'
+          }
+        },
         theme: {
           customCss: require.resolve('./src/css/custom.css')
         },
@@ -65,17 +80,18 @@ const config: Config = {
         srcDark: 'img/logo-dark.svg'
       },
       items: [
-  {to: '/docs/overview', label: 'Overview', position: 'left'},
+        {to: '/docs/overview', label: 'Overview', position: 'left'},
         {to: '/docs/get-started/quickstart', label: 'Get Started', position: 'left'},
         {to: '/docs/core-concepts/introduction', label: 'Core Concepts', position: 'left'},
-  {to: '/docs/packages', label: 'Packages', position: 'left'},
+        {to: '/docs/packages', label: 'Packages', position: 'left'},
         {to: '/docs/scenarios/examples', label: 'Examples', position: 'left'},
         {to: '/docs/ai-coder/overview', label: 'AI Coder', position: 'left'},
         {to: '/docs/integrations/overview', label: 'Integrations', position: 'left'},
-    {to: '/docs/governance/overview', label: 'Governance', position: 'left'},
-    {to: '/docs/announcements', label: 'Announcements', position: 'left'},
-  {to: '/docs/specification/overview', label: 'Specification', position: 'left'},
-  {to: '/docs/contribute/overview', label: 'Contribute', position: 'left'},
+        {to: '/docs/governance/overview', label: 'Governance', position: 'left'},
+        {to: '/docs/announcements', label: 'Announcements', position: 'left'},
+        {to: '/blog', label: 'Blog', position: 'left'},
+        {to: '/docs/specification/overview', label: 'Specification', position: 'left'},
+        {to: '/docs/contribute/overview', label: 'Contribute', position: 'left'},
         {href: 'https://github.com/ddse-foundation/acm', label: 'GitHub', position: 'right'}
       ]
     },
