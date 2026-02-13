@@ -1,6 +1,6 @@
 {
   "name": "@ddse/acm-examples",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "ACM v0.5 Examples - CLI demo and sample implementations",
   "type": "module",
   "bin": {

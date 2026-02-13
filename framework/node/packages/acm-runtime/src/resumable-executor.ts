@@ -237,6 +237,7 @@ export async function executeResumablePlan(
         outputs,
         metrics,
         getTool,
+        getToolRegistry: () => toolRegistry,
         getCapabilityRegistry: () => capabilityRegistry,
         stream,
         nucleus,

@@ -2,6 +2,8 @@
 
 A developer-first, code-centric implementation of the Agentic Contract Model (ACM) v0.5 specification for building deterministic, auditable AI agents in Node.js.
 
+> **Latest release: v0.5.2** (2026-02-14) — Browser compatibility fixes, nucleus round caps, universal hashing. See [CHANGELOG.md](./CHANGELOG.md) for details.
+
 ## Overview
 
 The ACM Node.js Framework gives engineers a coherent set of SDKs, runtime services, and reference tooling to implement ACM-compliant agents without wrestling with bespoke YAML or ad-hoc orchestration. Everything is authored in TypeScript/JavaScript, wired to the formal ACM contracts, and designed to run locally or inside existing CI/CD pipelines.

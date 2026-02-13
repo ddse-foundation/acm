@@ -31,7 +31,7 @@ import type {
   LedgerEntry,
   RunContext,
 } from '@ddse/acm-sdk';
-import { Task, Nucleus } from '@ddse/acm-sdk';
+import { Task, Nucleus, DefaultToolRegistry } from '@ddse/acm-sdk';
 
 // ── Test helpers (same pattern as resumable.test.ts) ─────────
 
@@ -67,10 +67,7 @@ class SimpleCapabilityRegistry implements CapabilityRegistry {
   }
 }
 
-class SimpleToolRegistry implements ToolRegistry {
-  get(name: string): any { return null; }
-  list(): any[] { return []; }
-}
+class SimpleToolRegistry extends DefaultToolRegistry {}
 
 class TestNucleus extends Nucleus {
   private scope?: InternalContextScope;

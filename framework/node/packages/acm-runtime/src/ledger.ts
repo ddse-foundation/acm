@@ -1,6 +1,6 @@
 // Memory ledger implementation
 import type { LedgerEntry } from '@ddse/acm-sdk';
-import { createHash } from 'crypto';
+import { universalDigest } from '@ddse/acm-sdk';
 
 export class MemoryLedger {
   private entries: LedgerEntry[] = [];
@@ -56,8 +56,6 @@ export class MemoryLedger {
       type: entry.type,
       details: entry.details,
     });
-    const hash = createHash('sha256');
-    hash.update(normalized);
-    return hash.digest('hex').substring(0, 32);
+    return universalDigest(normalized).substring(0, 32);
   }
 }

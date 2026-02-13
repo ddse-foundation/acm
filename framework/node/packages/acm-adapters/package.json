@@ -1,6 +1,6 @@
 {
   "name": "@ddse/acm-adapters",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Framework adapters for ACM (LangGraph, Microsoft Agent Framework)",
   "type": "module",
   "main": "./dist/index.js",

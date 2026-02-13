@@ -1,6 +1,6 @@
 // Context orchestration utilities
 
-import { createHash } from 'crypto';
+import { universalDigest } from './hash.js';
 import type { ContextPacket, InternalContextScope, LedgerEntry } from './types.js';
 
 export class ContextBuilder {
@@ -56,35 +56,29 @@ export class ContextBuilder {
   }
 
   private computePacketId(): string {
-    // Compute SHA-256 hash of the normalized packet
+    // Compute digest of the normalized packet
     const normalized = JSON.stringify({
       sources: this.sources,
       facts: this.facts,
       assumptions: this.assumptions,
       augmentations: this.augmentations,
     });
-    const hash = createHash('sha256');
-    hash.update(normalized);
-    return `sha256-${hash.digest('hex')}`;
+    return `sha256-${universalDigest(normalized)}`;
   }
 
   private computeDigest(content: string): string {
-    const hash = createHash('sha256');
-    hash.update(content);
-    return `sha256-${hash.digest('hex').substring(0, 32)}`;
+    return `sha256-${universalDigest(content).substring(0, 32)}`;
   }
 
   static computeContextRef(context: ContextPacket): string {
-    // Compute full SHA-256 hash of the normalized context packet
+    // Compute digest of the normalized context packet
     const normalized = JSON.stringify({
       sources: context.sources,
       facts: context.facts,
       assumptions: context.assumptions,
       augmentations: context.augmentations,
     });
-    const hash = createHash('sha256');
-    hash.update(normalized);
-    return hash.digest('hex');
+    return universalDigest(normalized);
   }
 }
 
@@ -122,7 +116,7 @@ export class InternalContextScopeImpl implements InternalContextScope {
     const id = `artifact-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const serialized = typeof content === 'string' ? content : JSON.stringify(content);
     const digest = this.computeDigest(serialized);
-    const sizeBytes = Buffer.byteLength(serialized, 'utf8');
+    const sizeBytes = new TextEncoder().encode(serialized).byteLength;
 
     this.artifacts.push({
       id,
@@ -189,8 +183,6 @@ export class InternalContextScopeImpl implements InternalContextScope {
   }
 
   private computeDigest(content: string): string {
-    const hash = createHash('sha256');
-    hash.update(content);
-    return hash.digest('hex').substring(0, 32);
+    return universalDigest(content).substring(0, 32);
   }
 }

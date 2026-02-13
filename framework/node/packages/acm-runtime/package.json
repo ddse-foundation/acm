@@ -1,6 +1,6 @@
 {
   "name": "@ddse/acm-runtime",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "ACM v0.5 Runtime - Plan execution engine",
   "type": "module",
   "main": "./dist/src/index.js",

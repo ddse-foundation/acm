@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-02-14
+
+### Fixed
+
+- **Browser crypto compatibility**: Replaced all Node.js `crypto` module imports (`createHash`) with a universal `universalDigest()` function that uses dynamic `require('crypto')` in Node.js and FNV-1a 128-bit hashing in browser environments. This fixes the Vite "Module crypto has been externalized for browser compatibility" error that caused blank screens in Electron renderer.
+  - `acm-sdk`: `nucleus.ts`, `context.ts` — replaced `createHash` and `Buffer.byteLength` with browser-safe alternatives.
+  - `acm-runtime`: `ledger.ts`, `tool-envelope.ts` — replaced `createHash` with `universalDigest` imported from `@ddse/acm-sdk`.
+- **Nucleus round caps enforced**: `maxQueryRounds` capped from default 25 to 3; new `maxRetrievalRounds: 1` added. Prevents runaway LLM loops where the model keeps requesting retrieval indefinitely.
+- **Preflight/postcheck hooks disabled**: Prevents per-task nucleus preflight calls (up to 25 rounds each) that saturated local LLM servers and froze the UI.
+
+### Added
+
+- **`universalDigest(input: string): string`**: New export from `@ddse/acm-sdk` — cross-platform hash function with Node.js SHA-256 primary path and FNV-1a 128-bit browser fallback. Used internally for ledger digests, context refs, and prompt deduplication.
+- **`hash.ts` module**: New source file in `acm-sdk` implementing the universal digest with dynamic Node.js detection to avoid Vite static analysis.
+
+### Changed
+
+- `NucleusConfig.maxQueryRounds` default changed from 25 to 3.
+- `NucleusConfig.maxRetrievalRounds` added (default 1) — removes the retrieval tool after the cap is hit, forcing the LLM to answer with available context.
+- `ContextBuilder` and `InternalContextScopeImpl` now use `TextEncoder` for byte-length calculation instead of Node.js `Buffer`.
+- `MemoryLedger.computeDigest()` and `computeDigest()` in tool-envelope now delegate to `universalDigest` from `@ddse/acm-sdk`.
+
 ## [0.5.1] - 2026-02-14
 
 ### Added

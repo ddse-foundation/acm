@@ -1,5 +1,5 @@
 // MCP Tool Registry for ACM
-import { ToolRegistry } from '@ddse/acm-sdk';
+import { ToolRegistry, type Tool, type ToolSpec } from '@ddse/acm-sdk';
 import { McpTool, McpClientManager } from './client.js';
 
 /**
@@ -43,6 +43,25 @@ export class McpToolRegistry extends ToolRegistry {
   async refresh(): Promise<void> {
     this.syncTools();
   }
+
+  register(tool: Tool<any, any>): void {
+    // MCP tools are managed by the client manager, not registered directly
+    throw new Error('McpToolRegistry does not support direct registration. Tools come from MCP servers.');
+  }
+
+  has(name: string): boolean {
+    return this.tools.has(name);
+  }
+
+  getSpec(name: string): ToolSpec | undefined {
+    return this.tools.get(name)?.spec;
+  }
+
+  listSpecs(): ToolSpec[] {
+    return Array.from(this.tools.values())
+      .map(t => t.spec)
+      .filter((s): s is ToolSpec => s != null);
+  }
 }
 
 /**
@@ -75,5 +94,32 @@ export class CombinedToolRegistry extends ToolRegistry {
     const localTools = this.localRegistry.list();
     const mcpTools = this.mcpRegistry ? this.mcpRegistry.list() : [];
     return [...new Set([...localTools, ...mcpTools])];
+  }
+
+  register(tool: Tool<any, any>): void {
+    this.localRegistry.register(tool);
+  }
+
+  has(name: string): boolean {
+    return this.localRegistry.has(name) || (this.mcpRegistry?.has(name) ?? false);
+  }
+
+  getSpec(name: string): ToolSpec | undefined {
+    return this.localRegistry.getSpec(name) ?? this.mcpRegistry?.getSpec(name);
+  }
+
+  listSpecs(): ToolSpec[] {
+    const localSpecs = this.localRegistry.listSpecs();
+    const mcpSpecs = this.mcpRegistry?.listSpecs() ?? [];
+    // Dedupe by id
+    const seen = new Set<string>();
+    const result: ToolSpec[] = [];
+    for (const spec of [...localSpecs, ...mcpSpecs]) {
+      if (!seen.has(spec.id)) {
+        seen.add(spec.id);
+        result.push(spec);
+      }
+    }
+    return result;
   }
 }

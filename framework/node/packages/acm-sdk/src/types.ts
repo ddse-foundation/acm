@@ -1,4 +1,6 @@
 import type { Nucleus } from './nucleus.js';
+import type { Tool } from './tool.js';
+import type { ToolRegistry } from './registry.js';
 
 // Core types for ACM v0.5
 
@@ -172,7 +174,9 @@ export type RunContext = {
     costUsd: number;
     elapsedSec: number;
   };
-  getTool(name: string): any;
+  getTool(name: string): Tool | undefined;
+  getToolRegistry(): ToolRegistry;
+  /** @deprecated Use getToolRegistry() */
   getCapabilityRegistry(): any;
   stream?: StreamSink;
   nucleus: Nucleus;

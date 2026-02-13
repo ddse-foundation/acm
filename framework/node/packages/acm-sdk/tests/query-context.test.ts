@@ -561,29 +561,27 @@ await runTest('Tool loop: exhausts maxQueryRounds then does final call without q
   assert(!hasQueryInLastRound, 'Last round should NOT include query_context tool');
 });
 
-// ── 17b. Default maxQueryRounds is 25 ─────────────────────────
+// ── 17b. Default maxQueryRounds is 3 ─────────────────────────
 
-await runTest('Default maxQueryRounds is 25', async () => {
+await runTest('Default maxQueryRounds is 3', async () => {
   let callCount = 0;
 
   const llm: LLMCallFn = async () => {
     callCount++;
-    // Stop querying after a few rounds to avoid running 26 calls
-    if (callCount <= 3) {
-      return { toolCalls: [{ name: 'query_context', input: { action: 'list' } }] };
-    }
-    return { toolCalls: [] }; // LLM stops querying on its own
+    // Keep querying every round — LLM never stops on its own
+    return { toolCalls: [{ name: 'query_context', input: { action: 'list' } }] };
   };
 
   const config = makeConfig();
-  // Verify the default is 25 (not 3)
+  // Verify the default is 3 (v0.5.2 cap)
   assert(config.maxQueryRounds === undefined, 'Default config should not set maxQueryRounds');
 
   const nucleus = new DeterministicNucleus(config, llm, noopLedger);
   await nucleus.invoke({ prompt: 'test', tools: [] });
 
-  // LLM queried 3 rounds then stopped on its own → 4 total calls (not capped at 3+1)
-  assert(callCount === 4, `LLM stopped on round 4, got ${callCount}`);
+  // 3 rounds total: rounds 0-1 have builtins, round 2 (last) strips builtins
+  // and treats the response as final — no extra call after the loop
+  assert(callCount === 3, `Expected 3 calls (maxQueryRounds=3), got ${callCount}`);
 });
 
 // ── 18. Multiple query_context calls in single round ──────────

@@ -20,7 +20,7 @@ import type {
   InternalContextScope,
   LedgerEntry,
 } from '@ddse/acm-sdk';
-import { Task, Nucleus } from '@ddse/acm-sdk';
+import { Task, Nucleus, DefaultToolRegistry } from '@ddse/acm-sdk';
 
 // Simple test capability
 class TestTask extends Task {
@@ -62,15 +62,7 @@ class SimpleCapabilityRegistry implements CapabilityRegistry {
   }
 }
 
-class SimpleToolRegistry implements ToolRegistry {
-  get(name: string): any {
-    return null;
-  }
-
-  list(): any[] {
-    return [];
-  }
-}
+class SimpleToolRegistry extends DefaultToolRegistry {}
 
 class TestNucleus extends Nucleus {
   private scope?: InternalContextScope;

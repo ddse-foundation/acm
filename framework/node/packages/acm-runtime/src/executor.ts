@@ -179,6 +179,7 @@ export async function executePlan(options: ExecutePlanOptions): Promise<ExecuteP
         outputs,
         metrics,
         getTool,
+        getToolRegistry: () => toolRegistry,
         getCapabilityRegistry: () => capabilityRegistry,
         stream,
         nucleus,

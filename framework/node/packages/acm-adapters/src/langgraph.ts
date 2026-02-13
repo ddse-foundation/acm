@@ -127,6 +127,7 @@ export class LangGraphAdapter {
           outputs: Object.fromEntries(state.outputs),
           metrics: { costUsd: 0, elapsedSec: 0 },
           getTool,
+          getToolRegistry: () => toolRegistry,
           getCapabilityRegistry: () => capabilityRegistry,
           stream,
           nucleus,

@@ -1,6 +1,6 @@
 {
   "name": "@ddse/acm-replay",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Replay bundle export and import for ACM",
   "type": "module",
   "main": "./dist/index.js",

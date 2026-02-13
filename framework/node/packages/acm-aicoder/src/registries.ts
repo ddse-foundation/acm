@@ -59,6 +59,20 @@ export class SimpleToolRegistry extends ToolRegistry {
   list(): string[] {
     return Array.from(this.tools.keys());
   }
+
+  has(name: string): boolean {
+    return this.tools.has(name);
+  }
+
+  getSpec(name: string) {
+    return this.tools.get(name)?.spec;
+  }
+
+  listSpecs() {
+    return Array.from(this.tools.values())
+      .map(t => t.spec)
+      .filter((s): s is NonNullable<typeof s> => s != null);
+  }
 }
 
 /**

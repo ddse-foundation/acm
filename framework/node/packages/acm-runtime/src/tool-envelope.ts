@@ -1,5 +1,5 @@
-import { createHash } from 'crypto';
 import type { Tool, ToolCallEnvelope, ToolRegistry } from '@ddse/acm-sdk';
+import { universalDigest } from '@ddse/acm-sdk';
 import type { MemoryLedger } from './ledger.js';
 
 type ToolGetterOptions = {
@@ -15,9 +15,7 @@ type InstrumentedTool = Tool<any, any> & {
 
 function computeDigest(payload: unknown): string {
   const normalized = typeof payload === 'string' ? payload : JSON.stringify(payload ?? {});
-  const hash = createHash('sha256');
-  hash.update(normalized);
-  return hash.digest('hex').substring(0, 32);
+  return universalDigest(normalized).substring(0, 32);
 }
 
 function cloneWithInstrumentedCall(

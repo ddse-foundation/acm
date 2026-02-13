@@ -1,7 +1,7 @@
 // Nucleus contract for LLM-native task and planner execution
-import { createHash } from 'crypto';
 import type { Context, InternalContextScope, LedgerEntry, ToolCallEnvelope } from './types.js';
 import type { ExternalContextProviderAdapter } from './context-provider.js';
+import { universalDigest } from './hash.js';
 
 export type NucleusToolDefinition = {
   name: string;
@@ -67,8 +67,18 @@ export type NucleusConfig = {
   };
   promptTemplate?: string;
   promptDigest?: string;
-  /** Max query_context rounds the LLM may use before forced to answer. Default 25. */
+  /** Max callLLM rounds the nucleus may execute before forced to answer. Default 3. */
   maxQueryRounds?: number;
+  /**
+   * Max times request_context_retrieval may be fulfilled per invoke/preflight.
+   * After this many fulfillments, the retrieval tool is removed so the LLM
+   * must produce a final answer with whatever context it has.  Default 1.
+   *
+   * NOTE: Each fulfillment itself may run multiple inner iterations
+   * (e.g. IterativePhasedRetrievalExecution with 6 rounds).  This cap
+   * prevents the *outer* nucleus loop from re-triggering retrieval.
+   */
+  maxRetrievalRounds?: number;
   /** External context provider for mid-invoke retrieval. When set, request_context_retrieval calls are fulfilled inline. */
   contextProvider?: ExternalContextProviderAdapter;
   /**
@@ -347,13 +357,18 @@ export class DeterministicNucleus extends Nucleus {
     const builtInTools: NucleusToolDefinition[] = [];
     if (hasQueryableContext) builtInTools.push(QUERY_CONTEXT_TOOL);
     builtInTools.push(REQUEST_CONTEXT_RETRIEVAL_TOOL); // always available
-    const effectiveTools = [...tools, ...builtInTools];
+    let effectiveTools = [...tools, ...builtInTools];
     // Tools without retrieval built-ins (for last-round fallback)
     const toolsWithoutBuiltins = tools;
 
     let currentPrompt = prompt;
     let finalResult: NucleusInvokeResult | undefined;
-    const maxRounds = this.config.maxQueryRounds ?? 25;
+    const maxRounds = this.config.maxQueryRounds ?? 3;
+
+    // Retrieval round cap — prevents outer loop from re-triggering
+    // the inner IterativePhasedRetrievalExecution engine repeatedly.
+    const maxRetrievalRounds = this.config.maxRetrievalRounds ?? 1;
+    let retrievalFulfillments = 0;
 
     // Token budget tracking
     const maxContextTokens = this.config.maxContextTokens;
@@ -433,7 +448,16 @@ export class DeterministicNucleus extends Nucleus {
             scope: this.internalContext,
           });
 
+          retrievalFulfillments++;
           this.recordInference(this.computePromptDigest(currentPrompt), retrievalCalls, result.reasoning);
+
+          // If we've hit the retrieval cap, remove the retrieval tool
+          // so the LLM must produce a final answer with current context.
+          if (retrievalFulfillments >= maxRetrievalRounds) {
+            effectiveTools = effectiveTools.filter(
+              t => t.name !== 'request_context_retrieval'
+            );
+          }
 
           // Re-render context snapshot since new artifacts were added
           currentPrompt = `${currentPrompt}\n\n--- External Context Retrieved ---\nNew artifacts have been added to your internal context scope for directives: ${directives.join(', ')}\nUse query_context(action="list") to see updated available data, then read what you need.\n--- End ---\n\nContinue with the original task.`;
@@ -650,15 +674,11 @@ If escalation is needed, call escalate_issue.`;
   }
 
   private computePromptDigest(prompt: string): string {
-    const hash = createHash('sha256');
-    hash.update(prompt);
-    return hash.digest('hex').substring(0, 16);
+    return universalDigest(prompt).substring(0, 16);
   }
 
   private computeDigest(content: string): string {
-    const hash = createHash('sha256');
-    hash.update(content);
-    return hash.digest('hex').substring(0, 16);
+    return universalDigest(content).substring(0, 16);
   }
 
   private renderContextSnapshot(): string {
