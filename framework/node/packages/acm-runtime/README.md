@@ -22,7 +22,9 @@ pnpm add @ddse/acm-runtime @ddse/acm-sdk
 - ✅ Memory ledger (append-only decision log)
 - ✅ Streaming progress updates
 - ✅ Error handling and compensation
-- ✅ **Resumable execution with checkpointing** (NEW in Phase 2)
+- ✅ **Resumable execution with checkpointing**
+- ✅ **Task scope filtering** — restrict DAG execution to a subset of tasks via `taskScope`
+- ✅ **Context provider integration** — `ExternalContextProviderAdapter` for mid-execution context retrieval
 
 ## Usage
 

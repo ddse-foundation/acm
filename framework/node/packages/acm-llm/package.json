@@ -1,6 +1,6 @@
 {
   "name": "@ddse/acm-llm",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "ACM v0.5 LLM - Provider-agnostic LLM client",
   "type": "module",
   "main": "./dist/index.js",
@@ -19,6 +19,24 @@
   "dependencies": {
     "@ddse/acm-sdk": "workspace:*"
   },
-  "keywords": ["acm", "llm", "openai"],
-  "license": "MIT"
+  "keywords": [
+    "acm",
+    "llm",
+    "openai"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ddse-foundation/acm.git",
+    "directory": "framework/node/packages/acm-llm"
+  },
+  "author": "Mahmudur R. Manna <hello@ddse.io>",
+  "homepage": "https://github.com/ddse-foundation/acm/tree/main/framework/node/packages/acm-llm#readme"
 }

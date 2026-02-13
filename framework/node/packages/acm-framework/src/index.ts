@@ -89,6 +89,7 @@ export interface ACMExecuteRequest extends ACMPlanRequest {
   checkpointInterval?: ResumableExecutePlanOptions['checkpointInterval'];
   checkpointStore?: ResumableExecutePlanOptions['checkpointStore'];
   runId?: ResumableExecutePlanOptions['runId'];
+  taskScope?: string[];
   ledger?: MemoryLedger;
   existingPlan?: {
     plan: Plan;
@@ -164,6 +165,7 @@ export class ACMFramework {
         hooks: this.nucleusOptions.hooks,
         allowedTools: this.nucleusOptions.allowedTools,
       },
+      contextProvider: this.contextProvider,
       stream,
       planCount,
     });
@@ -195,6 +197,7 @@ export class ACMFramework {
     const checkpointInterval = request.checkpointInterval ?? this.executionDefaults.checkpointInterval;
     const checkpointStore = request.checkpointStore ?? this.executionDefaults.checkpointStore;
     const runId = request.runId ?? this.executionDefaults.runId;
+    const taskScope = request.taskScope;
 
     const ledger = request.ledger ?? new MemoryLedger();
     const nucleusFactory = this.getNucleusFactory(ledger);
@@ -215,6 +218,7 @@ export class ACMFramework {
           hooks: this.nucleusOptions.hooks,
           allowedTools: this.nucleusOptions.allowedTools,
         },
+        contextProvider: this.contextProvider,
         stream,
         planCount,
       });
@@ -295,6 +299,7 @@ export class ACMFramework {
           checkpointInterval,
           checkpointStore,
           runId,
+          taskScope,
         });
         break;
       }

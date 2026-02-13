@@ -94,10 +94,12 @@ export class InternalContextScopeImpl implements InternalContextScope {
     type: string;
     content: any;
     digest: string;
+    sizeBytes?: number;
     provenance?: {
       retrievedAt: number;
       tool?: string;
       rationale?: string;
+      [key: string]: any;
     };
   }> = [];
 
@@ -114,16 +116,20 @@ export class InternalContextScopeImpl implements InternalContextScope {
     provenance?: {
       tool?: string;
       rationale?: string;
+      [extra: string]: any;  // allow sourceId, path, artifactId, etc.
     }
   ): string {
     const id = `artifact-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-    const digest = this.computeDigest(JSON.stringify(content));
+    const serialized = typeof content === 'string' ? content : JSON.stringify(content);
+    const digest = this.computeDigest(serialized);
+    const sizeBytes = Buffer.byteLength(serialized, 'utf8');
 
     this.artifacts.push({
       id,
       type,
       content,
       digest,
+      sizeBytes,
       provenance: provenance
         ? {
             retrievedAt: Date.now(),

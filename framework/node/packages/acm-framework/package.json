@@ -1,6 +1,6 @@
 {
   "name": "@ddse/acm-framework",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "High-level developer wrapper for the ACM planner and runtime",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,6 +22,25 @@
     "@ddse/acm-runtime": "workspace:*",
     "@ddse/acm-adapters": "workspace:*"
   },
-  "keywords": ["acm", "framework", "planner", "runtime"],
-  "license": "MIT"
+  "keywords": [
+    "acm",
+    "framework",
+    "planner",
+    "runtime"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ddse-foundation/acm.git",
+    "directory": "framework/node/packages/acm-framework"
+  },
+  "author": "Mahmudur R. Manna <hello@ddse.io>",
+  "homepage": "https://github.com/ddse-foundation/acm/tree/main/framework/node/packages/acm-framework#readme"
 }

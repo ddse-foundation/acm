@@ -13,7 +13,11 @@ The ACM Node.js Framework gives engineers a coherent set of SDKs, runtime servic
 - **Deterministic Runtime**: Enforces guard evaluation, policy hooks, typed errors, and replay bundle generation for every execution.
 - **Resumable Execution**: Built-in checkpointing and resume mechanics for long-running workflows (Phase 2 complete).
 - **Tool Discipline**: Uniform `ToolCallEnvelope` instrumentation across native tools, MCP integrations, and LLM-backed utilities.
-- **Nucleus Abstraction**: Shared reasoning core that standardizes LLM calls, internal context retrieval, and ledger recording. Available in Node v0.5.0.
+- **Nucleus Abstraction**: Shared reasoning core that standardizes LLM calls, internal context retrieval, and ledger recording.
+- **Built-in Context Tools**: `query_context` for reading scoped data and `request_context_retrieval` for fetching external context — both auto-injected into the Nucleus tool loop.
+- **Anti-Hallucination Grounding**: Prompts include GROUNDING RULES, VALIDATION RULES, and GROUNDING CONSTRAINT warnings that force the LLM to cite context keys and refuse to fabricate.
+- **Token Budget Enforcement**: `maxContextTokens` on NucleusConfig lets infrastructure pass the model's context window size; the callLLM loop estimates cumulative prompt tokens and forces a final answer at 85% capacity.
+- **Task Scope Filtering**: `taskScope` on the resumable executor restricts which tasks execute in a DAG, enabling partial re-runs and targeted task execution.
 - **Open LLM Support**: OpenAI-compatible client with presets for Ollama and vLLM; bring your own provider via configuration.
 - **MCP Integration**: Discover and invoke Model Context Protocol servers as first-class tools.
 - **High-Level Orchestration**: Ship the `@ddse/acm-framework` helper for wiring planning + execution behind a single call while preserving ACM v0.5 guarantees.
@@ -297,6 +301,9 @@ const result = await executePlan({
 - `PolicyEngine`, `VerificationEngine` — Interfaces for plugging in governance logic.
 - `LedgerEntry`, `ToolCallEnvelope` — Typed artifacts for audit trails and replay.
 - `ExternalContextProviderAdapter` — Bridges Nucleus `request_context_retrieval` directives to developer-supplied tools and auto-promotes resulting artifacts.
+- `estimateTokens(text)` — Heuristic token estimator aligned with production BudgetManager (code-aware char/token ratios).
+- `NucleusConfig.maxContextTokens` — Pass the model's context window; the callLLM loop enforces an 85% safety threshold.
+- `NucleusInvokeResult.metrics` — Reports `rounds`, `estimatedPromptTokens`, and `budgetExhausted` for observability.
 
 ### Runtime
 
@@ -306,6 +313,7 @@ const result = await executePlan({
 - `MemoryLedger` — Append-only decision log with tamper-evident hashes.
 - `evaluateGuard(expr, context)` — Guard evaluation utilities.
 - `withRetry(fn, config)` — Deterministic retry/backoff.
+- `taskScope` — Restrict DAG execution to a subset of tasks for partial re-runs.
 
 ### Planner
 
@@ -409,6 +417,10 @@ pnpm test           # Run monorepo test suites
 - ✅ MCP tool integration alongside deterministic local tools.
 - ✅ Resumable runtime (checkpoint/resume) with hash-verified artifacts.
 - ✅ Nucleus contract, structured planner tool calls, enriched telemetry (Node v0.5.0).
+- ✅ Built-in `query_context` and `request_context_retrieval` tools with auto-injection and mid-invoke fulfillment.
+- ✅ Anti-hallucination prompt grounding (GROUNDING RULES, VALIDATION RULES, GROUNDING CONSTRAINT).
+- ✅ Token budget enforcement via `maxContextTokens` with 85% safety threshold and per-invoke metrics.
+- ✅ Task scope filtering on resumable executor for partial DAG execution.
 
 ## Development Workflow
 

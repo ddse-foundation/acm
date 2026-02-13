@@ -1,6 +1,6 @@
 {
   "name": "@ddse/acm-sdk",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "ACM v0.5 SDK - Abstract classes and types",
   "type": "module",
   "main": "./dist/src/index.js",
@@ -13,10 +13,28 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "tsc && node ./dist/tests/phase4-integration.test.js",
+    "test": "tsc && node ./dist/tests/phase4-integration.test.js && node ./dist/tests/query-context.test.js",
     "clean": "rm -rf dist",
     "dev": "tsc --watch"
   },
-  "keywords": ["acm", "sdk", "types"],
-  "license": "MIT"
+  "keywords": [
+    "acm",
+    "sdk",
+    "types"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ddse-foundation/acm.git",
+    "directory": "framework/node/packages/acm-sdk"
+  },
+  "author": "Mahmudur R. Manna <hello@ddse.io>",
+  "homepage": "https://github.com/ddse-foundation/acm/tree/main/framework/node/packages/acm-sdk#readme"
 }

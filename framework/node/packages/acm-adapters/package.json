@@ -1,6 +1,6 @@
 {
   "name": "@ddse/acm-adapters",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Framework adapters for ACM (LangGraph, Microsoft Agent Framework)",
   "type": "module",
   "main": "./dist/index.js",
@@ -38,5 +38,19 @@
     "microsoft-agent-framework",
     "adapters"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ddse-foundation/acm.git",
+    "directory": "framework/node/packages/acm-adapters"
+  },
+  "author": "Mahmudur R. Manna <hello@ddse.io>",
+  "homepage": "https://github.com/ddse-foundation/acm/tree/main/framework/node/packages/acm-adapters#readme"
 }

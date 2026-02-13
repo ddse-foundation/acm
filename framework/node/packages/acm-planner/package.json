@@ -1,6 +1,6 @@
 {
   "name": "@ddse/acm-planner",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "ACM v0.5 Planner - LLM-based plan generation",
   "type": "module",
   "main": "./dist/index.js",
@@ -20,6 +20,24 @@
     "@ddse/acm-sdk": "workspace:*",
     "@ddse/acm-llm": "workspace:*"
   },
-  "keywords": ["acm", "planner", "llm"],
-  "license": "MIT"
+  "keywords": [
+    "acm",
+    "planner",
+    "llm"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ddse-foundation/acm.git",
+    "directory": "framework/node/packages/acm-planner"
+  },
+  "author": "Mahmudur R. Manna <hello@ddse.io>",
+  "homepage": "https://github.com/ddse-foundation/acm/tree/main/framework/node/packages/acm-planner#readme"
 }

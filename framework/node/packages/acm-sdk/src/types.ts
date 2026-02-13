@@ -213,10 +213,12 @@ export type InternalContextScope = {
     type: string;
     content: any;
     digest: string;
+    sizeBytes?: number;
     provenance?: {
       retrievedAt: number;
       tool?: string;
       rationale?: string;
+      [key: string]: any;  // sourceId, path, artifactId, etc.
     };
   }>;
   addArtifact(

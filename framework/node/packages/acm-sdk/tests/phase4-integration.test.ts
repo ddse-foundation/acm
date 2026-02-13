@@ -97,8 +97,11 @@ const nucleusConfig: NucleusConfig = {
 };
 
 const mockLLMCall = async (prompt: string, tools: any[], config: any) => {
-  if (!prompt.includes('"orderId": "O123"')) {
-    throw new Error('Prompt missing context facts');
+  // After the query_context change, renderContextSnapshot() shows a catalog
+  // (keys + sizes) instead of dumping full JSON. The prompt should contain
+  // the fact key name in the catalog listing.
+  if (!prompt.includes('orderId')) {
+    throw new Error('Prompt missing context fact keys in catalog');
   }
   return {
     reasoning: 'Context is sufficient',

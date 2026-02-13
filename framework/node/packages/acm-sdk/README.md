@@ -20,6 +20,8 @@ pnpm add @ddse/acm-sdk
 - **Task<I, O>**: Base class for logical task units
 - **CapabilityRegistry**: Interface for task registries
 - **ToolRegistry**: Interface for tool registries
+- **Nucleus**: Abstract reasoning core with preflight, invoke, and postcheck lifecycle
+- **DeterministicNucleus**: Concrete nucleus with built-in context tools, token budget enforcement, and anti-hallucination grounding
 
 ### Types
 
@@ -30,11 +32,17 @@ pnpm add @ddse/acm-sdk
 - **LedgerEntry**: Memory ledger entry
 - **PolicyDecision**: Authorization result
 - **RunContext**: Execution context passed to tasks
+- **NucleusConfig**: Nucleus configuration including `maxContextTokens`, `maxQueryRounds`, and `contextProvider`
+- **NucleusInvokeResult**: Invoke result with optional `metrics` (rounds, estimatedPromptTokens, budgetExhausted)
 
 ### Utilities
 
 - **DefaultStreamSink**: Stream multiplexer for real-time updates
 - **PolicyEngine**: Interface for policy decision points
+- **ContextBuilder**: Fluent builder for constructing Context objects with content-addressable refs
+- **InternalContextScopeImpl**: Runtime artifact scope with `sizeBytes` tracking and wide provenance support
+- **ExternalContextProviderAdapter**: Bridges Nucleus retrieval directives to developer-supplied tools
+- **estimateTokens(text)**: Heuristic token estimator with code-aware char/token ratios (aligned with production BudgetManager)
 
 ## Usage
 
@@ -215,7 +223,48 @@ This package implements the core abstractions from ACM v0.5:
 - **Tool**: Section 2.5
 - **Context**: Section 4
 - **Plan**: Section 5.4
+- **Nucleus**: Reasoning core with context tools and token budget
+
+## Nucleus Features
+
+### Built-in Context Tools
+
+The `DeterministicNucleus` auto-injects two tools into every LLM call:
+
+1. **`query_context`** — Read data already in scope (`list`, `read_fact`, `read_augmentation`, `read_assumptions`, `read_artifact`).
+2. **`request_context_retrieval`** — Fetch external data not in scope; fulfilled inline when a `contextProvider` is configured.
+
+### Token Budget Enforcement
+
+Set `maxContextTokens` on `NucleusConfig` to pass the model's context window size. The `callLLM` loop estimates cumulative prompt tokens using `estimateTokens()` and forces a final answer (stripping built-in tools) when usage exceeds 85% of the budget.
+
+```typescript
+const config: NucleusConfig = {
+  goalId: 'g1',
+  goalIntent: 'Analyze the codebase',
+  contextRef: 'sha256-abc',
+  llmCall: { provider: 'vllm', model: 'Qwen/Qwen3-4B', maxTokens: 4096 },
+  maxContextTokens: 20480,  // model's context window
+  maxQueryRounds: 25,       // max tool loop iterations (default 25)
+};
+```
+
+The result includes metrics:
+
+```typescript
+const result = await nucleus.invoke({ input: task, tools: myTools });
+console.log(result.metrics);
+// { rounds: 3, estimatedPromptTokens: 12400, budgetExhausted: false }
+```
+
+### Anti-Hallucination Grounding
+
+All prompts include grounding directives that force the LLM to:
+- Use `query_context` before generating output
+- Cite which fact keys, augmentation indices, or artifact IDs were read
+- Refuse to fabricate information not present in context
+- Call `request_context_retrieval` when needed data is missing
 
 ## License
 
-Apache-2.0
+MIT

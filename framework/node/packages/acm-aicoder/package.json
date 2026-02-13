@@ -1,6 +1,6 @@
 {
   "name": "@ddse/acm-aicoder",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "ACM AI Coder Demo - Production-ready developer workflow automation",
   "type": "module",
   "main": "./dist/src/index.js",
@@ -48,5 +48,19 @@
     "developer",
     "automation"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ddse-foundation/acm.git",
+    "directory": "framework/node/packages/acm-aicoder"
+  },
+  "author": "Mahmudur R. Manna <hello@ddse.io>",
+  "homepage": "https://github.com/ddse-foundation/acm/tree/main/framework/node/packages/acm-aicoder#readme"
 }

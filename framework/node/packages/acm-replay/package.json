@@ -1,6 +1,6 @@
 {
   "name": "@ddse/acm-replay",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Replay bundle export and import for ACM",
   "type": "module",
   "main": "./dist/index.js",
@@ -30,5 +30,19 @@
     "audit",
     "bundle"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ddse-foundation/acm.git",
+    "directory": "framework/node/packages/acm-replay"
+  },
+  "author": "Mahmudur R. Manna <hello@ddse.io>",
+  "homepage": "https://github.com/ddse-foundation/acm/tree/main/framework/node/packages/acm-replay#readme"
 }

@@ -34,6 +34,7 @@ export interface ResumableExecutePlanOptions extends ExecutePlanOptions {
   checkpointInterval?: number;   // Checkpoint after N tasks (default: 1)
   checkpointStore?: CheckpointStore;  // Storage backend
   runId?: string;                // Execution run identifier
+  taskScope?: string[];          // Run only these task IDs from the plan DAG
 }
 
 /**
@@ -58,6 +59,7 @@ export async function executeResumablePlan(
     checkpointInterval = 1,
     checkpointStore = new MemoryCheckpointStore(),
     runId = `run-${Date.now()}`,
+    taskScope,
   } = options;
 
   const ledger = options.ledger ?? new MemoryLedger();
@@ -131,10 +133,18 @@ export async function executeResumablePlan(
     return checkpoint;
   };
 
-  // Build execution order based on edges
-  const pending = plan.tasks.filter(t => !executed.has(t.id));
+  // Build execution order based on edges — filtered by taskScope when set
+  const scopeSet = taskScope ? new Set(taskScope) : undefined;
+  const pending = plan.tasks.filter(t =>
+    !executed.has(t.id) && (!scopeSet || scopeSet.has(t.id))
+  );
 
   while (pending.length > 0) {
+    // Early-break if all scoped tasks are done
+    if (scopeSet && [...scopeSet].every(id => executed.has(id))) {
+      break;
+    }
+
     const readyTasks = pending.filter(taskSpec => {
       // Skip already executed tasks
       if (executed.has(taskSpec.id)) {

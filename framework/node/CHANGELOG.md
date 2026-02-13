@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-02-14
+
+### Added
+
+- **Nucleus built-in context tools**: `query_context` (list, read_fact, read_augmentation, read_assumptions, read_artifact) and `request_context_retrieval` auto-injected into every LLM call.
+- **Token budget enforcement**: `NucleusConfig.maxContextTokens` — callLLM loop estimates cumulative prompt tokens via `estimateTokens()` and forces a final answer when usage exceeds 85%.
+- **estimateTokens(text)**: Exported heuristic token estimator with code-aware char/token ratios.
+- **NucleusInvokeResult.metrics**: Reports `rounds`, `estimatedPromptTokens`, and `budgetExhausted`.
+- **Anti-hallucination prompt grounding**: GROUNDING RULES, VALIDATION RULES, and GROUNDING CONSTRAINT directives across all prompt stages.
+- **Task scope filtering**: `taskScope` on resumable executor restricts DAG execution to a subset of tasks with early-break optimization.
+- **Configurable query rounds**: `NucleusConfig.maxQueryRounds` (default 25).
+- **ExternalContextProviderAdapter**: Bridges Nucleus retrieval directives to developer-registered tools with auto-promotion.
+- **ContextBuilder / InternalContextScopeImpl**: Fluent context construction with `sizeBytes` tracking and widened provenance type.
+- **Planner context provider**: `contextProvider` on `PlannerOptions` for mid-planning context hydration.
+- **Two-stage planner**: Thinking + Emit stages for improved plan quality.
+- **describeType() catalog hints**: Context snapshots show type metadata instead of raw JSON dumps.
+- **Comprehensive test suites**: 56 tests (acm-sdk), 13 tests (acm-runtime).
+
+### Changed
+
+- Provenance type widened with `[key: string]: any` for production compatibility.
+- Context snapshot renders catalog with type hints instead of full payloads.
+- All prompt templates include ## CONTEXT TOOLS guidance sections.
+- `ACMFramework.execute()` now accepts `taskScope` and passes `contextProvider` to planner/executor.
+
+### Known Issues / Roadmap
+
+- Token estimation uses heuristic char/token ratios; for production precision, integrate a tokenizer.
+- CLI consolidation (`@ddse/acm-cli`) is planned; use package-specific CLIs for now.
+
 ## [0.5.0] - 2025-10-06
 
 ### Added
@@ -159,6 +189,7 @@ These features are planned for future releases:
 
 ---
 
-[Unreleased]: https://github.com/ddse-foundation/acm/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/ddse-foundation/acm/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/ddse-foundation/acm/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/ddse-foundation/acm/releases/tag/v0.5.0
 [0.1.0]: https://github.com/ddse-foundation/acm/releases/tag/v0.1.0

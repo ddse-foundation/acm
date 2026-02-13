@@ -1,6 +1,6 @@
 {
   "name": "@ddse/acm-examples",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "ACM v0.5 Examples - CLI demo and sample implementations",
   "type": "module",
   "bin": {
@@ -11,7 +11,7 @@
     "clean": "rm -rf dist",
     "dev": "tsc --watch",
     "demo": "node ./dist/bin/acm-demo.js",
-  "test": "node ./dist/tests/integration.test.js && node ./dist/tests/plan-hydration.test.js",
+    "test": "node ./dist/tests/integration.test.js && node ./dist/tests/plan-hydration.test.js",
     "test:bm25": "node ./dist/tests/bm25.test.js"
   },
   "dependencies": {
@@ -24,6 +24,23 @@
     "@ddse/acm-adapters": "workspace:*",
     "@ddse/acm-replay": "workspace:*"
   },
-  "keywords": ["acm", "examples", "cli"],
-  "license": "MIT"
+  "keywords": [
+    "acm",
+    "examples",
+    "cli"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ddse-foundation/acm.git",
+    "directory": "framework/node/packages/acm-examples"
+  },
+  "author": "Mahmudur R. Manna <hello@ddse.io>",
+  "homepage": "https://github.com/ddse-foundation/acm/tree/main/framework/node/packages/acm-examples#readme"
 }

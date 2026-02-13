@@ -1,7 +1,7 @@
 # ACM Framework
 
 [![ACM Spec](https://img.shields.io/badge/ACM%20Spec-v0.5-0b7285.svg)](spec/acm-spec%20v0.5.md)
-[![Release](https://img.shields.io/badge/release-v0.5.0-2563eb.svg)](framework/node/CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.5.1-2563eb.svg)](framework/node/CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-22c55e.svg)](LICENSE)
 [![Runtime](https://img.shields.io/badge/runtime-node%2018+-f59e0b.svg)](framework/node/README.md#prerequisites)
 [![pnpm](https://img.shields.io/badge/pnpm-monorepo-eb6f92.svg)](framework/node/pnpm-workspace.yaml)
@@ -48,9 +48,9 @@ The framework follows the [ACM specification](spec/acm-spec%20v0.5.md), treating
 
 | Pillar | What You Get | Key Packages |
 |--------|---------------|---------------|
-| **Contract-First SDK** | Typed contracts for tools, tasks, capabilities, ledger entries, guard expressions, policy hooks, and verification adapters. | [`@ddse/acm-sdk`](framework/node/packages/acm-sdk/README.md) |
-| **Structured Planning** | Multi-plan generation with rationale, prompt digests, tool-call envelopes, and deterministic selectors. | [`@ddse/acm-planner`](framework/node/packages/acm-planner/README.md) |
-| **Deterministic Runtime** | Guard evaluation, policy gates, retries/backoff, checkpointing, streaming sinks, and ledger emission. | [`@ddse/acm-runtime`](framework/node/packages/acm-runtime/README.md) |
+| **Contract-First SDK** | Typed contracts for tools, tasks, capabilities, ledger entries, guard expressions, policy hooks, and verification adapters. Built-in context tools (`query_context`, `request_context_retrieval`), token budget enforcement, and anti-hallucination grounding. | [`@ddse/acm-sdk`](framework/node/packages/acm-sdk/README.md) |
+| **Structured Planning** | Multi-plan generation with rationale, prompt digests, tool-call envelopes, context provider integration, and deterministic selectors. | [`@ddse/acm-planner`](framework/node/packages/acm-planner/README.md) |
+| **Deterministic Runtime** | Guard evaluation, policy gates, retries/backoff, checkpointing, streaming sinks, ledger emission, and task scope filtering. | [`@ddse/acm-runtime`](framework/node/packages/acm-runtime/README.md) |
 | **High-Level Orchestrator** | Single-call helper that wires planner, runtime, nucleus, context providers, and adapters. | [`@ddse/acm-framework`](framework/node/packages/acm-framework/README.md) |
 | **Adapters & Integrations** | LangGraph / Microsoft Agent Framework bridges plus Model Context Protocol tooling. | [`@ddse/acm-adapters`](framework/node/packages/acm-adapters/README.md), [`@ddse/acm-mcp`](framework/node/packages/acm-mcp/README.md) |
 | **Replay & Analysis** | Export/import replay bundles with ledger verification and tool-call inspection. | [`@ddse/acm-replay`](framework/node/packages/acm-replay/README.md) |
@@ -91,16 +91,16 @@ acm/
 
 | Package | Description | Status |
 |---------|-------------|--------|
-| [`@ddse/acm-sdk`](framework/node/packages/acm-sdk/) | Base contracts, registries, policy/verification interfaces, ledger types. | ✅ Stable @ v0.5.0 |
-| [`@ddse/acm-runtime`](framework/node/packages/acm-runtime/) | Deterministic runtime, checkpointing, resumable execution, guard evaluation. | ✅ Stable @ v0.5.0 |
-| [`@ddse/acm-planner`](framework/node/packages/acm-planner/) | Structured LLM planner with plan alternatives, prompt hashing, tool envelopes. | ✅ Stable @ v0.5.0 |
-| [`@ddse/acm-framework`](framework/node/packages/acm-framework/) | High-level façade combining planner + runtime + nucleus wiring. | ✅ Stable @ v0.5.0 |
-| [`@ddse/acm-llm`](framework/node/packages/acm-llm/) | OpenAI-compatible clients for Ollama, vLLM, and custom providers. | ✅ Stable @ v0.5.0 |
-| [`@ddse/acm-adapters`](framework/node/packages/acm-adapters/) | LangGraph/MSAF adapters preserving ACM contracts. | ✅ Stable @ v0.5.0 |
-| [`@ddse/acm-mcp`](framework/node/packages/acm-mcp/) | Model Context Protocol tooling and registries. | ✅ Stable @ v0.5.0 |
-| [`@ddse/acm-replay`](framework/node/packages/acm-replay/) | Replay bundle export/import, ledger validation utilities. | ✅ Stable @ v0.5.0 |
-| [`@ddse/acm-examples`](framework/node/packages/acm-examples/) | CLI demos, refund/issue flows, replay bundle samples. | ✅ Stable @ v0.5.0 |
-| [`@ddse/acm-aicoder`](framework/node/packages/acm-aicoder/) | Developer assistant with streaming TUI and budgeting. | ✅ Stable @ v0.5.0 |
+| [`@ddse/acm-sdk`](framework/node/packages/acm-sdk/) | Base contracts, registries, policy/verification interfaces, ledger types, Nucleus with context tools and token budget. | ✅ Stable @ v0.5.1 |
+| [`@ddse/acm-runtime`](framework/node/packages/acm-runtime/) | Deterministic runtime, checkpointing, resumable execution, guard evaluation, task scope filtering. | ✅ Stable @ v0.5.1 |
+| [`@ddse/acm-planner`](framework/node/packages/acm-planner/) | Structured LLM planner with plan alternatives, prompt hashing, tool envelopes. | ✅ Stable @ v0.5.1 |
+| [`@ddse/acm-framework`](framework/node/packages/acm-framework/) | High-level façade combining planner + runtime + nucleus wiring. | ✅ Stable @ v0.5.1 |
+| [`@ddse/acm-llm`](framework/node/packages/acm-llm/) | OpenAI-compatible clients for Ollama, vLLM, and custom providers. | ✅ Stable @ v0.5.1 |
+| [`@ddse/acm-adapters`](framework/node/packages/acm-adapters/) | LangGraph/MSAF adapters preserving ACM contracts. | ✅ Stable @ v0.5.1 |
+| [`@ddse/acm-mcp`](framework/node/packages/acm-mcp/) | Model Context Protocol tooling and registries. | ✅ Stable @ v0.5.1 |
+| [`@ddse/acm-replay`](framework/node/packages/acm-replay/) | Replay bundle export/import, ledger validation utilities. | ✅ Stable @ v0.5.1 |
+| [`@ddse/acm-examples`](framework/node/packages/acm-examples/) | CLI demos, refund/issue flows, replay bundle samples. | ✅ Stable @ v0.5.1 |
+| [`@ddse/acm-aicoder`](framework/node/packages/acm-aicoder/) | Developer assistant with streaming TUI and budgeting. | ✅ Stable @ v0.5.1 |
 
 > **Language Ports:** Python and Java bindings follow the same specification and architecture; see `framework/python/` and `framework/java/` for progress trackers.
 
@@ -198,8 +198,8 @@ console.log(run.execution.outputsByTask);
 ## Architecture Overview
 
 - **Three-Layer Intent:** Planner (reasoning), Framework (coordination), Runtime (deterministic execution) &mdash; see [framework/architecture.md](framework/architecture.md).
-- **Nucleus Gateway:** Centralized LLM governance with prompt hashing, deterministic tool allow-lists, and streaming support.
-- **External Context Provider Adapter:** Bridges nucleus context directives (`request_context_retrieval`) to developer-owned retrieval tools.
+- **Nucleus Gateway:** Centralized LLM governance with prompt hashing, deterministic tool allow-lists, built-in context tools (`query_context`, `request_context_retrieval`), anti-hallucination grounding, token budget enforcement, and streaming support.
+- **External Context Provider Adapter:** Bridges nucleus context directives (`request_context_retrieval`) to developer-owned retrieval tools, with inline fulfillment during the tool loop.
 - **Decision Memory:** Append-only ledger + checkpoints produce tamper-evident replay bundles for compliance and analytics.
 - **Interoperability:** Adapters maintain parity with popular agent ecosystems while preserving ACM guarantees.
 
@@ -221,7 +221,8 @@ Runbook for resumable execution lives in [framework/node/docs/tdr/RUNBOOK_RESUMA
 
 ## Roadmap
 
-- ✅ **v0.5.0 (Current)** — Contract-complete Node implementation, resumable runtime, replay bundles, MCP integration, AI Coder experience.
+- ✅ **v0.5.1 (Current)** — Nucleus context intelligence, token budget enforcement, anti-hallucination grounding, task scope filtering, two-stage planner.
+- ✅ **v0.5.0** — Contract-complete Node implementation, resumable runtime, replay bundles, MCP integration, AI Coder experience.
 - 🚧 **Python Port** — Tracking in `framework/python/` with parity milestones.
 - 🚧 **Java Port** — Tracking in `framework/java/` aligned to the same spec artifacts.
 - 🧭 **Future** — Unified CLI (`@ddse/acm-cli`), extended verification grammars, hosted replay dashboards.
