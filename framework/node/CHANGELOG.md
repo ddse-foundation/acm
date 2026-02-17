@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-02-18
+
+### Added
+
+- **Fast planning mode** (`@ddse/acm-framework`, `@ddse/acm-planner`): `ACMPlanRequest.fastMode` skips the planner's Stage 1 "thinking" LLM call and goes straight to structured plan emission. Cuts planning latency roughly in half — useful for narrow/append goals where full analysis is unnecessary. Default: `false` (thinking enabled).
+  - `@ddse/acm-planner@0.5.3`: `PlannerOptions.skipThinking` guards the thinking stage.
+  - `@ddse/acm-framework@0.5.5`: Surfaces `fastMode` on `ACMPlanRequest` and passes it through as `skipThinking` to the planner.
+
+## [0.5.4] - 2026-02-17
+
+### Added
+
+- **Deterministic capability filtering for planning** (`@ddse/acm-framework`): `ACMPlanRequest` now accepts an optional `capabilities` array. When provided, the planner uses the supplied capabilities instead of `capabilityRegistry.list()`, enabling callers to scope plan generation to a specific artifact-type subset. This is essential for role-based DDSE workflows where only a subset of registered capabilities should be considered (e.g., only developer capabilities during an append-to-plan pass).
+
+## [0.5.3] - 2026-02-17 [DEPRECATED]
+
+_Broken publish — `workspace:*` dependencies were not resolved. Use 0.5.4._
+
 ## [0.5.2] - 2026-02-14
 
 ### Fixed

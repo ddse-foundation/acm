@@ -29,6 +29,12 @@ export type PlannerOptions = {
   capabilityMapVersion?: string;
   planCount?: 1 | 2;
   planId?: string;
+  /**
+   * When true, skip the Stage 1 "thinking" LLM call and go straight
+   * to structured plan emission.  Cuts latency roughly in half at the
+   * cost of potentially lower decomposition quality for complex goals.
+   */
+  skipThinking?: boolean;
 };
 
 export type PlannerResult = {
@@ -136,19 +142,25 @@ export class StructuredLLMPlanner {
     }
 
     // ── Stage 1: Think — analyze goal and plan decomposition (no tools) ──
-    const thinkingPrompt = this.buildThinkingPrompt(goal, context, capabilities, planCount);
-    if (stream) {
-      stream.emit('planner', { phase: 'thinking', done: false });
-    }
-    const thinkResult = await nucleus.invoke({ prompt: thinkingPrompt, tools: [] });
-    const analysis = thinkResult.reasoning?.trim() ?? '';
+    // Skipped in fast mode — the emit prompt handles missing analysis gracefully.
+    let analysis = '';
+    if (!options.skipThinking) {
+      const thinkingPrompt = this.buildThinkingPrompt(goal, context, capabilities, planCount);
+      if (stream) {
+        stream.emit('planner', { phase: 'thinking', done: false });
+      }
+      const thinkResult = await nucleus.invoke({ prompt: thinkingPrompt, tools: [] });
+      analysis = thinkResult.reasoning?.trim() ?? '';
 
-    if (stream) {
-      stream.emit('planner', {
-        phase: 'thinking',
-        done: true,
-        analysis: analysis.slice(0, 500),
-      });
+      if (stream) {
+        stream.emit('planner', {
+          phase: 'thinking',
+          done: true,
+          analysis: analysis.slice(0, 500),
+        });
+      }
+    } else if (stream) {
+      stream.emit('planner', { phase: 'thinking', done: true, skipped: true });
     }
 
     // ── Stage 2: Emit — produce structured plan using analysis ───────────

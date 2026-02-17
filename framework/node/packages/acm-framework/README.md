@@ -64,6 +64,8 @@ Both methods accept either a plain string or a full `Goal` object and will synth
   Per-call overrides are also supported via `execute({ engine: ... })`.
 - `execution.resumeFrom`, `execution.checkpointInterval`, `execution.checkpointStore`, `execution.runId` — ACM-only resume controls.
 - `plan({ ledger })` / `execute({ ledger })` — reuse an existing `MemoryLedger` so external observers (e.g., UI stores) can tap into log events while the wrapper runs.
+- `plan({ capabilities })` — override the capabilities exposed to the planner. When provided, these are used instead of `capabilityRegistry.list()`, enabling deterministic planning scoped to a specific artifact-type subset (e.g., only developer capabilities during a role-based append pass).
+- `plan({ fastMode: true })` — skip the planner's "thinking" stage and emit the plan directly. Cuts planning latency roughly in half — useful for narrow append goals where full analysis is unnecessary.
 - `execute({ existingPlan })` — skip re-planning by providing a preselected plan plus the original `PlannerResult`.
 
 ### Execution Engines

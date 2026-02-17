@@ -1,6 +1,7 @@
 import {
   DeterministicNucleus,
   ExternalContextProviderAdapter,
+  type Capability,
   type CapabilityRegistry,
   type Context,
   type Goal,
@@ -71,6 +72,20 @@ export interface ACMPlanRequest {
   stream?: StreamSink;
   planSelector?: PlanSelector;
   ledger?: MemoryLedger;
+  /**
+   * Override the capabilities exposed to the planner.
+   * When provided, these capabilities are used instead of
+   * `capabilityRegistry.list()`, enabling deterministic
+   * planning scoped to a specific artifact-type subset.
+   */
+  capabilities?: Capability[];
+  /**
+   * When true, skip the planner's "thinking" stage and go straight
+   * to structured plan emission.  Cuts planning latency roughly in
+   * half — useful for narrow/append goals where full analysis is
+   * unnecessary.  Defaults to false (thinking enabled).
+   */
+  fastMode?: boolean;
 }
 
 export interface ACMPlanResponse {
@@ -158,7 +173,7 @@ export class ACMFramework {
     const plannerResult = await this.planner.plan({
       goal,
       context,
-      capabilities: this.capabilityRegistry.list(),
+      capabilities: request.capabilities ?? this.capabilityRegistry.list(),
       nucleusFactory,
       nucleusConfig: {
         llmCall: this.nucleusOptions.llmConfig,
@@ -168,6 +183,7 @@ export class ACMFramework {
       contextProvider: this.contextProvider,
       stream,
       planCount,
+      skipThinking: request.fastMode,
     });
 
     if (!plannerResult.plans.length) {
@@ -211,7 +227,7 @@ export class ACMFramework {
       plannerResult = await this.planner.plan({
         goal,
         context,
-        capabilities: this.capabilityRegistry.list(),
+        capabilities: request.capabilities ?? this.capabilityRegistry.list(),
         nucleusFactory,
         nucleusConfig: {
           llmCall: this.nucleusOptions.llmConfig,
@@ -221,6 +237,7 @@ export class ACMFramework {
         contextProvider: this.contextProvider,
         stream,
         planCount,
+        skipThinking: request.fastMode,
       });
 
       if (!plannerResult.plans.length) {
