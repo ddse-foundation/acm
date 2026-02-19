@@ -17,8 +17,18 @@ pnpm add @ddse/acm-planner @ddse/acm-llm @ddse/acm-sdk
 - ✅ Structured tool-call planning loops
 - ✅ Plan-A and Plan-B alternatives
 - ✅ Context reference computation (SHA-256)
+- ✅ Fast mode (`skipThinking`) with Stage 2 context-facts carry-over
 - ✅ Deterministic fallback when tool calls fail
 - ✅ ACM v0.5 compliant plan format
+
+## Fast Mode Behavior
+
+`PlannerOptions.skipThinking` enables fast planning by skipping Stage 1 (thinking) and going directly to Stage 2 (emit).
+
+- When Stage 1 runs (default), Stage 2 uses the Stage 1 analysis.
+- When Stage 1 is skipped, Stage 2 receives `context.facts` directly in the emit prompt.
+
+This preserves context grounding in fast mode while keeping phased/default planning behavior unchanged.
 
 ## Usage
 

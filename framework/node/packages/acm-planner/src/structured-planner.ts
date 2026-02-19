@@ -247,6 +247,10 @@ Write your analysis as a structured breakdown. Be thorough — this analysis wil
     const constraints = goal.constraints
       ? `\n**Constraints:**\n${JSON.stringify(goal.constraints, null, 2)}`
       : '';
+    const hasAnalysis = analysis.trim().length > 0;
+    const contextFactsForFastMode = !hasAnalysis
+      ? `\n\n**Context Facts (fast mode carry-over):**\n${JSON.stringify(context.facts, null, 2)}`
+      : '';
 
     return `You are an expert task planner. You have already analyzed the goal. Now produce the structured plan.
 
@@ -255,7 +259,7 @@ ${goal.intent}
 ${constraints}
 
 **Your Prior Analysis:**
-${analysis || '(No analysis available — decompose the goal directly.)'}
+${hasAnalysis ? analysis : '(No analysis available — decompose the goal directly, using the Context Facts below.)'}${contextFactsForFastMode}
 
 **Available Capabilities:**
 ${capList}

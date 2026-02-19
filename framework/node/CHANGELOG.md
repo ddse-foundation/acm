@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-02-18
+
+### Fixed
+
+- **Fast mode planner context carry-over** (`@ddse/acm-planner`): when `skipThinking=true` (via `ACMPlanRequest.fastMode`), Stage 2 Emit now receives `context.facts` directly in the prompt when Stage 1 analysis is unavailable. This preserves build/discussion context in fast planning while keeping phased planning behavior unchanged.
+
 ## [0.5.5] - 2026-02-18
 
 ### Added
